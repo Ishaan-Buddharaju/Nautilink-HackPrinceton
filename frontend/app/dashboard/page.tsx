@@ -657,51 +657,6 @@ const HomePage: React.FC = () => {
               </p>
             </div>
 
-            <div
-              style={{
-                padding: '18px 20px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, rgba(70,98,171,0.22), rgba(17,23,38,0.8))',
-                border: '1px solid rgba(198, 218, 236, 0.25)',
-                boxShadow: '0 18px 26px rgba(12, 22, 46, 0.35)'
-              }}
-            >
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, marginBottom: '10px' }}>
-                Situation Overview
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.45, color: '#d6e6ff' }}>
-                Monitoring active vessel clusters. Select a contact on the globe to populate this briefing
-                with telemetry, compliance, and recommended actions.
-              </p>
-            </div>
-
-            <div style={{ display: 'grid', gap: '14px' }}>
-              {[
-                { label: 'Priority Watchlist', value: '5 vessels under observation' },
-                { label: 'Last Update', value: new Date().toLocaleString() },
-                { label: 'Weather Advisory', value: 'Moderate swells, 1.5m - 2m' }
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  style={{
-                    borderRadius: '12px',
-                    padding: '14px 16px',
-                    backgroundColor: 'rgba(23, 32, 51, 0.75)',
-                    border: '1px solid rgba(198, 218, 236, 0.16)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px'
-                  }}
-                >
-                  <span style={{ fontSize: '0.78rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7f93b8' }}>
-                    {item.label}
-                  </span>
-                  <span style={{ fontSize: '0.96rem', color: '#e8f3ff', fontWeight: 500 }}>
-                    {item.value}
-                  </span>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div
