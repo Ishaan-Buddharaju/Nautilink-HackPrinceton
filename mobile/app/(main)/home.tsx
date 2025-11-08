@@ -102,7 +102,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.content}>
         {/* Network Nodes Visualization */}
         <View style={styles.logoSection}>
           <View style={styles.nodesContainer}>
@@ -137,7 +137,7 @@ export default function HomeScreen() {
         <View style={styles.transactionSection}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
           
-          <View style={styles.transactionList}>
+          <ScrollView style={styles.transactionList} showsVerticalScrollIndicator={false}>
             {transactions.map((transaction) => (
               <TouchableOpacity
                 key={transaction.id}
@@ -159,9 +159,9 @@ export default function HomeScreen() {
                 <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         </View>
-      </ScrollView>
+      </View>
 
       {/* Transaction Details Slide-over */}
       <Modal
@@ -278,14 +278,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-  },
-  contentContainer: {
     padding: 20,
   },
   logoSection: {
     alignItems: 'center',
-    paddingVertical: 40,
-    marginBottom: 40,
+    paddingVertical: 20,
+    marginBottom: 20,
   },
   nodesContainer: {
     width: 200,
