@@ -120,6 +120,25 @@ export default function Profile() {
                 <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>USER ID</label>
                 <p className="font-mono text-sm" style={{ color: '#b7c9e4', marginTop: '4px' }}>{user.sub || 'Not provided'}</p>
               </div>
+              <div>
+                <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>BADGE ID</label>
+                <div style={{ marginTop: '6px', display: 'inline-block' }}>
+                  <div style={{
+                    padding: '8px 16px',
+                    background: 'linear-gradient(135deg, rgba(70, 98, 171, 0.3), rgba(198, 218, 236, 0.2))',
+                    border: '2px solid rgba(70, 98, 171, 0.6)',
+                    borderRadius: '8px',
+                    fontFamily: 'monospace',
+                    fontSize: '15px',
+                    fontWeight: '700',
+                    color: '#e0f2fd',
+                    letterSpacing: '1px',
+                    boxShadow: '0 4px 12px rgba(70, 98, 171, 0.3)',
+                  }}>
+                    {user.sub ? `NTL-${user.sub.slice(-8).toUpperCase()}` : 'NTL-XXXXXXXX'}
+                  </div>
+                </div>
+              </div>
               {user.roles && user.roles.length > 0 && (
                 <div>
                   <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>ROLES</label>

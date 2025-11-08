@@ -203,6 +203,171 @@ const HomePage: React.FC = () => {
       vessel: { name: 'FV Viking Explorer', imo_number: '9423456', model: 'Factory Trawler 98m', flag_state: 'Norway', year_built: 2020 },
       sustainability_score: { total_score: 89, grade: 'A+', categories: { vessel_efficiency: { score: 92 }, fishing_method: { score: 88 }, environmental_practices: { score: 94 }, compliance_and_transparency: { score: 95 }, social_responsibility: { score: 85 } } }
     },
+    {
+      id: 'fishing-zone-21',
+      lat: -8,
+      lng: 115,
+      name: 'Bali Sea (Indonesia)',
+      vessel: { name: 'FV Bali Sunrise', imo_number: '9434567', model: 'Purse Seiner 68m', flag_state: 'Indonesia', year_built: 2016 },
+      sustainability_score: { total_score: 69, grade: 'C+', categories: { vessel_efficiency: { score: 67 }, fishing_method: { score: 65 }, environmental_practices: { score: 72 }, compliance_and_transparency: { score: 80 }, social_responsibility: { score: 71 } } }
+    },
+    {
+      id: 'fishing-zone-22',
+      lat: 25,
+      lng: 122,
+      name: 'East China Sea (Taiwan)',
+      vessel: { name: 'FV Taiwan Fortune', imo_number: '9445678', model: 'Longliner 72m', flag_state: 'Taiwan', year_built: 2018 },
+      sustainability_score: { total_score: 75, grade: 'B', categories: { vessel_efficiency: { score: 76 }, fishing_method: { score: 72 }, environmental_practices: { score: 78 }, compliance_and_transparency: { score: 85 }, social_responsibility: { score: 74 } } }
+    },
+    {
+      id: 'fishing-zone-23',
+      lat: -52,
+      lng: -70,
+      name: 'Strait of Magellan',
+      vessel: { name: 'FV Southern Star', imo_number: '9456789', model: 'Trawler 70m', flag_state: 'Chile', year_built: 2019 },
+      sustainability_score: { total_score: 86, grade: 'A', categories: { vessel_efficiency: { score: 88 }, fishing_method: { score: 84 }, environmental_practices: { score: 90 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 82 } } }
+    },
+    {
+      id: 'fishing-zone-24',
+      lat: 10,
+      lng: 125,
+      name: 'Philippine Sea',
+      vessel: { name: 'FV Manila Bay', imo_number: '9467890', model: 'Purse Seiner 66m', flag_state: 'Philippines', year_built: 2014 },
+      sustainability_score: { total_score: 64, grade: 'C', categories: { vessel_efficiency: { score: 62 }, fishing_method: { score: 60 }, environmental_practices: { score: 66 }, compliance_and_transparency: { score: 75 }, social_responsibility: { score: 69 } } }
+    },
+    {
+      id: 'fishing-zone-25',
+      lat: 42,
+      lng: -67,
+      name: 'Georges Bank (USA/Canada)',
+      vessel: { name: 'FV Atlantic Bounty', imo_number: '9478901', model: 'Factory Trawler 89m', flag_state: 'USA', year_built: 2021 },
+      sustainability_score: { total_score: 88, grade: 'A+', categories: { vessel_efficiency: { score: 90 }, fishing_method: { score: 86 }, environmental_practices: { score: 92 }, compliance_and_transparency: { score: 94 }, social_responsibility: { score: 86 } } }
+    },
+    {
+      id: 'fishing-zone-26',
+      lat: -12,
+      lng: 45,
+      name: 'Comoros Channel',
+      vessel: { name: 'FV Indian Ocean Pearl', imo_number: '9489012', model: 'Longliner 65m', flag_state: 'Madagascar', year_built: 2015 },
+      sustainability_score: { total_score: 71, grade: 'B-', categories: { vessel_efficiency: { score: 69 }, fishing_method: { score: 68 }, environmental_practices: { score: 74 }, compliance_and_transparency: { score: 82 }, social_responsibility: { score: 72 } } }
+    },
+    {
+      id: 'fishing-zone-27',
+      lat: 58,
+      lng: -155,
+      name: 'Gulf of Alaska',
+      vessel: { name: 'FV Alaskan Pioneer', imo_number: '9490123', model: 'Factory Trawler 95m', flag_state: 'USA', year_built: 2020 },
+      sustainability_score: { total_score: 87, grade: 'A', categories: { vessel_efficiency: { score: 89 }, fishing_method: { score: 85 }, environmental_practices: { score: 91 }, compliance_and_transparency: { score: 93 }, social_responsibility: { score: 84 } } }
+    },
+    {
+      id: 'fishing-zone-28',
+      lat: -35,
+      lng: 138,
+      name: 'Great Australian Bight',
+      vessel: { name: 'FV Southern Ocean', imo_number: '9501234', model: 'Trawler 73m', flag_state: 'Australia', year_built: 2018 },
+      sustainability_score: { total_score: 85, grade: 'A', categories: { vessel_efficiency: { score: 87 }, fishing_method: { score: 83 }, environmental_practices: { score: 89 }, compliance_and_transparency: { score: 91 }, social_responsibility: { score: 82 } } }
+    },
+    {
+      id: 'fishing-zone-29',
+      lat: 70,
+      lng: 25,
+      name: 'Barents Sea',
+      vessel: { name: 'FV Arctic Voyager', imo_number: '9512345', model: 'Factory Trawler 102m', flag_state: 'Russia', year_built: 2019 },
+      sustainability_score: { total_score: 79, grade: 'B+', categories: { vessel_efficiency: { score: 81 }, fishing_method: { score: 76 }, environmental_practices: { score: 82 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 78 } } }
+    },
+    {
+      id: 'fishing-zone-30',
+      lat: -20,
+      lng: 165,
+      name: 'New Caledonia Waters',
+      vessel: { name: 'FV Pacific Guardian', imo_number: '9523456', model: 'Longliner 71m', flag_state: 'New Caledonia', year_built: 2017 },
+      sustainability_score: { total_score: 82, grade: 'A-', categories: { vessel_efficiency: { score: 84 }, fishing_method: { score: 80 }, environmental_practices: { score: 86 }, compliance_and_transparency: { score: 89 }, social_responsibility: { score: 81 } } }
+    },
+    {
+      id: 'fishing-zone-31',
+      lat: 52,
+      lng: -165,
+      name: 'Aleutian Islands',
+      vessel: { name: 'FV Aleutian Hunter', imo_number: '9534567', model: 'Factory Trawler 96m', flag_state: 'USA', year_built: 2019 },
+      sustainability_score: { total_score: 86, grade: 'A', categories: { vessel_efficiency: { score: 88 }, fishing_method: { score: 84 }, environmental_practices: { score: 90 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 83 } } }
+    },
+    {
+      id: 'fishing-zone-32',
+      lat: 35,
+      lng: -140,
+      name: 'Central Pacific',
+      vessel: { name: 'FV Pacific Horizon', imo_number: '9545678', model: 'Longliner 74m', flag_state: 'USA', year_built: 2020 },
+      sustainability_score: { total_score: 84, grade: 'A', categories: { vessel_efficiency: { score: 86 }, fishing_method: { score: 82 }, environmental_practices: { score: 88 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 81 } } }
+    },
+    {
+      id: 'fishing-zone-33',
+      lat: 48,
+      lng: -135,
+      name: 'Gulf of Alaska (Southeast)',
+      vessel: { name: 'FV Sitka Sound', imo_number: '9556789', model: 'Trawler 78m', flag_state: 'USA', year_built: 2021 },
+      sustainability_score: { total_score: 89, grade: 'A+', categories: { vessel_efficiency: { score: 91 }, fishing_method: { score: 88 }, environmental_practices: { score: 93 }, compliance_and_transparency: { score: 94 }, social_responsibility: { score: 86 } } }
+    },
+    {
+      id: 'fishing-zone-34',
+      lat: 20,
+      lng: -155,
+      name: 'Hawaiian Waters',
+      vessel: { name: 'FV Aloha Spirit', imo_number: '9567890', model: 'Longliner 69m', flag_state: 'USA', year_built: 2018 },
+      sustainability_score: { total_score: 83, grade: 'A-', categories: { vessel_efficiency: { score: 85 }, fishing_method: { score: 81 }, environmental_practices: { score: 87 }, compliance_and_transparency: { score: 89 }, social_responsibility: { score: 80 } } }
+    },
+    {
+      id: 'fishing-zone-35',
+      lat: 10,
+      lng: -150,
+      name: 'Equatorial Pacific',
+      vessel: { name: 'FV Tropical Star', imo_number: '9578901', model: 'Purse Seiner 72m', flag_state: 'USA', year_built: 2017 },
+      sustainability_score: { total_score: 80, grade: 'B+', categories: { vessel_efficiency: { score: 82 }, fishing_method: { score: 78 }, environmental_practices: { score: 84 }, compliance_and_transparency: { score: 87 }, social_responsibility: { score: 79 } } }
+    },
+    {
+      id: 'fishing-zone-36',
+      lat: 5,
+      lng: 120,
+      name: 'Celebes Sea (Unregistered)',
+      vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Trawler ~55m', flag_state: 'Unknown', year_built: 2012 },
+      sustainability_score: { total_score: 35, grade: 'F', categories: { vessel_efficiency: { score: 30 }, fishing_method: { score: 25 }, environmental_practices: { score: 40 }, compliance_and_transparency: { score: 20 }, social_responsibility: { score: 35 } } },
+      registered: false
+    },
+    {
+      id: 'fishing-zone-37',
+      lat: -8,
+      lng: 50,
+      name: 'Seychelles EEZ (Unregistered)',
+      vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Longliner ~48m', flag_state: 'Unknown', year_built: 2010 },
+      sustainability_score: { total_score: 42, grade: 'F', categories: { vessel_efficiency: { score: 38 }, fishing_method: { score: 35 }, environmental_practices: { score: 45 }, compliance_and_transparency: { score: 30 }, social_responsibility: { score: 42 } } },
+      registered: false
+    },
+    {
+      id: 'fishing-zone-38',
+      lat: 18,
+      lng: 110,
+      name: 'South China Sea (Unregistered)',
+      vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Trawler ~62m', flag_state: 'Unknown', year_built: 2014 },
+      sustainability_score: { total_score: 38, grade: 'F', categories: { vessel_efficiency: { score: 35 }, fishing_method: { score: 30 }, environmental_practices: { score: 42 }, compliance_and_transparency: { score: 25 }, social_responsibility: { score: 38 } } },
+      registered: false
+    },
+    {
+      id: 'fishing-zone-39',
+      lat: -15,
+      lng: -75,
+      name: 'Peru Coast (Unregistered)',
+      vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Purse Seiner ~58m', flag_state: 'Unknown', year_built: 2011 },
+      sustainability_score: { total_score: 40, grade: 'F', categories: { vessel_efficiency: { score: 37 }, fishing_method: { score: 32 }, environmental_practices: { score: 44 }, compliance_and_transparency: { score: 28 }, social_responsibility: { score: 40 } } },
+      registered: false
+    },
+    {
+      id: 'fishing-zone-40',
+      lat: 8,
+      lng: -15,
+      name: 'West Africa EEZ (Unregistered)',
+      vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Trawler ~52m', flag_state: 'Unknown', year_built: 2013 },
+      sustainability_score: { total_score: 36, grade: 'F', categories: { vessel_efficiency: { score: 33 }, fishing_method: { score: 28 }, environmental_practices: { score: 38 }, compliance_and_transparency: { score: 22 }, social_responsibility: { score: 36 } } },
+      registered: false
+    },
   ];
 
   const globeEl = useRef<any>(null);
@@ -283,9 +448,12 @@ const HomePage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     registered: 'all', // 'all', 'registered', 'unregistered'
-    gearType: 'all', // 'all', 'trawler', 'longliner', 'purse_seiner'
+    gearType: 'all', // 'all', 'trawler', 'longliner', 'purse_seiner', 'factory_trawler'
     flag: 'all', // 'all' or specific country
     minSustainability: 0, // 0-100
+    grade: 'all', // 'all', 'A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C'
+    minYear: 2010, // Minimum year built
+    maxYear: 2025, // Maximum year built
   });
 
   const markerSvg = `<svg viewBox="-4 0 36 36">
@@ -520,12 +688,38 @@ const HomePage: React.FC = () => {
     });
   }, [vesselData, filters]);
 
-  // Filter fishing zones based on sustainability
+  // Filter fishing zones based on multiple criteria
   const filteredFishingZones = useMemo(() => {
     return fishingZones.filter(zone => {
-      return zone.sustainability_score.total_score >= filters.minSustainability;
+      // Registration filter
+      const isRegistered = zone.registered !== false; // Default to true if not specified
+      if (filters.registered === 'registered' && !isRegistered) return false;
+      if (filters.registered === 'unregistered' && isRegistered) return false;
+      
+      // Sustainability score filter
+      if (zone.sustainability_score.total_score < filters.minSustainability) return false;
+      
+      // Grade filter
+      if (filters.grade !== 'all' && zone.sustainability_score.grade !== filters.grade) return false;
+      
+      // Gear type filter (check vessel model)
+      if (filters.gearType !== 'all') {
+        const modelLower = zone.vessel.model.toLowerCase();
+        if (filters.gearType === 'trawler' && !modelLower.includes('trawler') && !modelLower.includes('factory')) return false;
+        if (filters.gearType === 'longliner' && !modelLower.includes('longlin')) return false;
+        if (filters.gearType === 'purse_seiner' && !modelLower.includes('purse')) return false;
+        if (filters.gearType === 'factory_trawler' && !modelLower.includes('factory')) return false;
+      }
+      
+      // Flag/Country filter
+      if (filters.flag !== 'all' && zone.vessel.flag_state !== filters.flag) return false;
+      
+      // Year built filter (skip for unregistered vessels with unknown year)
+      if (isRegistered && (zone.vessel.year_built < filters.minYear || zone.vessel.year_built > filters.maxYear)) return false;
+      
+      return true;
     });
-  }, [filters.minSustainability]);
+  }, [filters]);
 
   // Re-cluster whenever filtered data changes
   useEffect(() => {
@@ -774,22 +968,21 @@ const HomePage: React.FC = () => {
               top: '20px',
               right: '20px',
               zIndex: 1000,
-              padding: '12px 20px',
-              background: showFilters ? '#4662ab' : 'rgba(23, 23, 23, 0.9)',
+              padding: '10px 18px',
+              background: showFilters ? 'rgba(70, 98, 171, 0.95)' : 'rgba(23, 23, 23, 0.85)',
               color: '#e0f2fd',
-              border: '1px solid rgba(198, 218, 236, 0.3)',
-              borderRadius: '8px',
+              border: '1px solid rgba(198, 218, 236, 0.35)',
+              borderRadius: '10px',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-              backdropFilter: 'blur(10px)',
+              letterSpacing: '0.5px',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+              backdropFilter: 'blur(12px)',
+              transition: 'all 0.2s ease',
             }}
           >
-            🔍 Filters {showFilters ? '▼' : '▶'}
+            FILTERS {showFilters ? '▼' : '▶'}
           </button>
 
           {/* Filter Panel */}
@@ -797,22 +990,31 @@ const HomePage: React.FC = () => {
             <div
               style={{
                 position: 'absolute',
-                top: '70px',
+                top: '65px',
                 right: '20px',
                 zIndex: 1000,
-                width: '320px',
-                maxHeight: '80vh',
+                width: '300px',
+                maxHeight: '75vh',
                 overflowY: 'auto',
-                background: 'rgba(23, 23, 23, 0.95)',
-                border: '1px solid rgba(198, 218, 236, 0.3)',
+                background: 'rgba(16, 23, 34, 0.92)',
+                border: '1px solid rgba(198, 218, 236, 0.18)',
                 borderRadius: '12px',
-                padding: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                padding: '18px',
+                boxShadow: '-8px 8px 28px rgba(10, 14, 28, 0.35)',
                 backdropFilter: 'blur(16px)',
               }}
             >
-              <h3 style={{ margin: '0 0 16px 0', color: '#e0f2fd', fontSize: '16px', fontWeight: '600' }}>
-                Filter Vessels & Zones
+              <h3 style={{ 
+                margin: '0 0 14px 0', 
+                color: '#e0f2fd', 
+                fontSize: '14px', 
+                fontWeight: '600',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                borderBottom: '1px solid rgba(198, 218, 236, 0.15)',
+                paddingBottom: '10px'
+              }}>
+                Filter Data
               </h3>
 
               {/* Registration Status */}
@@ -859,9 +1061,53 @@ const HomePage: React.FC = () => {
                 >
                   <option value="all">All Types</option>
                   <option value="trawler">Trawler</option>
+                  <option value="factory_trawler">Factory Trawler</option>
                   <option value="longliner">Longliner</option>
                   <option value="purse_seiner">Purse Seiner</option>
                 </select>
+              </div>
+
+
+              {/* Year Built Range */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
+                  YEAR BUILT: {filters.minYear} - {filters.maxYear}
+                </label>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    min="2010"
+                    max="2025"
+                    value={filters.minYear}
+                    onChange={(e) => setFilters({ ...filters, minYear: parseInt(e.target.value) || 2010 })}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      background: 'rgba(70, 98, 171, 0.15)',
+                      border: '1px solid rgba(198, 218, 236, 0.3)',
+                      borderRadius: '6px',
+                      color: '#e0f2fd',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <span style={{ color: '#9fb7d8' }}>to</span>
+                  <input
+                    type="number"
+                    min="2010"
+                    max="2025"
+                    value={filters.maxYear}
+                    onChange={(e) => setFilters({ ...filters, maxYear: parseInt(e.target.value) || 2025 })}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      background: 'rgba(70, 98, 171, 0.15)',
+                      border: '1px solid rgba(198, 218, 236, 0.3)',
+                      borderRadius: '6px',
+                      color: '#e0f2fd',
+                      fontSize: '13px',
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Sustainability Score */}
@@ -895,18 +1141,30 @@ const HomePage: React.FC = () => {
                 borderRadius: '8px',
                 fontSize: '13px',
                 color: '#e0f2fd',
+                textAlign: 'center',
               }}>
-                <div style={{ marginBottom: '4px' }}>
-                  <strong>Vessels:</strong> {filteredVesselData.length} / {vesselData.length}
+                <div style={{ fontSize: '11px', color: '#9fb7d8', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Showing
                 </div>
-                <div>
-                  <strong>Zones:</strong> {filteredFishingZones.length} / {fishingZones.length}
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#e0f2fd' }}>
+                  {filteredFishingZones.length} <span style={{ fontSize: '14px', fontWeight: '400', color: '#9fb7d8' }}>/ {fishingZones.length}</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#9fb7d8', marginTop: '2px' }}>
+                  Fishing Zones
                 </div>
               </div>
 
               {/* Reset Button */}
               <button
-                onClick={() => setFilters({ registered: 'all', gearType: 'all', flag: 'all', minSustainability: 0 })}
+                onClick={() => setFilters({ 
+                  registered: 'all', 
+                  gearType: 'all', 
+                  flag: 'all', 
+                  minSustainability: 0,
+                  grade: 'all',
+                  minYear: 2010,
+                  maxYear: 2025
+                })}
                 style={{
                   width: '100%',
                   marginTop: '16px',
@@ -920,7 +1178,7 @@ const HomePage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                Reset Filters
+                Reset All Filters
               </button>
             </div>
           )}
