@@ -3,17 +3,7 @@ import { View, Text, StyleSheet, Animated, Alert, Platform, TouchableOpacity } f
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
-
-// Dynamically import NFC manager (won't work in Expo Go)
-let NfcManager: any = null;
-let NfcTech: any = null;
-try {
-  const nfcModule = require('react-native-nfc-manager');
-  NfcManager = nfcModule.default;
-  NfcTech = nfcModule.NfcTech;
-} catch (e) {
-  console.log('NFC Manager not available - using fallback mode');
-}
+import { nfcManager, initNFC, readNFC, isNFCAvailable, simulateNFC, cleanupNFC } from '../../utils/nfcManager';
 
 export default function NFCTapScreen() {
   const router = useRouter();
@@ -64,46 +54,42 @@ export default function NFCTapScreen() {
   };
 
   const initNfc = async () => {
-    // Check if NFC Manager is available (development build)
-    if (!NfcManager) {
-      console.log('Running in Expo Go - NFC not available');
-      setNfcSupported(false);
-      return;
-    }
-
     try {
-      const supported = await NfcManager.isSupported();
-      setNfcSupported(supported);
+      const result = await initNFC();
       
-      if (supported) {
-        await NfcManager.start();
+      if (result.success) {
+        setNfcSupported(true);
         readNfcTag();
       } else {
-        Alert.alert(
-          'NFC Not Supported',
-          'Your device does not support NFC functionality.',
-          [{ text: 'OK', onPress: () => router.back() }]
-        );
+        console.log('NFC init failed:', result.error);
+        setNfcSupported(false);
+        
+        if (result.error?.includes('not supported')) {
+          Alert.alert(
+            'NFC Not Supported',
+            'Your device does not support NFC functionality.',
+            [{ text: 'OK', onPress: () => router.back() }]
+          );
+        }
       }
     } catch (error) {
       console.error('NFC init error:', error);
-      Alert.alert('Error', 'Failed to initialize NFC');
+      setNfcSupported(false);
     }
   };
 
   const readNfcTag = async () => {
     try {
-      await NfcManager.requestTechnology(NfcTech.Ndef);
+      const result = await readNFC();
       
-      const tag = await NfcManager.getTag();
-      console.log('NFC Tag detected:', tag);
-      
-      // Successful NFC read
-      handleNFCSuccess();
+      if (result.success) {
+        console.log('NFC Tag detected:', result.data);
+        handleNFCSuccess();
+      } else {
+        console.warn('NFC read failed:', result.error);
+      }
     } catch (error) {
       console.warn('NFC read cancelled or failed:', error);
-    } finally {
-      NfcManager.cancelTechnologyRequest();
     }
   };
 
@@ -132,7 +118,7 @@ export default function NFCTapScreen() {
 
   const cleanupNfc = async () => {
     try {
-      await NfcManager.cancelTechnologyRequest();
+      await cleanupNFC();
     } catch (error) {
       console.warn('NFC cleanup error:', error);
     }
@@ -180,7 +166,13 @@ export default function NFCTapScreen() {
         {!nfcSupported && !tapped && (
           <TouchableOpacity
             style={styles.simulateButton}
-            onPress={handleNFCSuccess}
+            onPress={() => {
+              const result = simulateNFC();
+              if (result.success) {
+                console.log('Simulated NFC tap:', result.data);
+                handleNFCSuccess();
+              }
+            }}
           >
             <Text style={styles.simulateButtonText}>Simulate NFC Tap</Text>
             <Text style={styles.simulateNote}>(Development build required for real NFC)</Text>

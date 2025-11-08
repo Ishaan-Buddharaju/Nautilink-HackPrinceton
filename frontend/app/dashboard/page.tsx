@@ -36,6 +36,19 @@ interface HotspotData {
   size: number;
 }
 
+// Utility function to compute grade from score
+const getSustainabilityGrade = (score: number) => {
+  if (score >= 90) return 'A+';
+  if (score >= 85) return 'A';
+  if (score >= 80) return 'A-';
+  if (score >= 75) return 'B+';
+  if (score >= 70) return 'B';
+  if (score >= 65) return 'B-';
+  if (score >= 60) return 'C+';
+  if (score >= 55) return 'C';
+  return 'F';
+};
+
 const HomePage: React.FC = () => {
   const GREEN = "#2eb700";
   const RED = "#fc0303";
@@ -49,7 +62,8 @@ const HomePage: React.FC = () => {
       lng: -30,
       name: 'North Atlantic Central',
       vessel: { name: 'FV Ocean Star', imo_number: '9234567', model: 'Purse Seiner 85m', flag_state: 'Norway', year_built: 2012 },
-      sustainability_score: { total_score: 78, grade: 'B', categories: { vessel_efficiency: { score: 70 }, fishing_method: { score: 65 }, environmental_practices: { score: 82 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 75 } } }
+      sustainability_score: { total_score: 78, categories: { vessel_efficiency: { score: 70 }, fishing_method: { score: 65 }, environmental_practices: { score: 82 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 75 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-2',
@@ -57,7 +71,8 @@ const HomePage: React.FC = () => {
       lng: -52,
       name: 'Grand Banks (Canada)',
       vessel: { name: 'FV Atlantic Pride', imo_number: '9245678', model: 'Trawler 72m', flag_state: 'Canada', year_built: 2015 },
-      sustainability_score: { total_score: 85, grade: 'A', categories: { vessel_efficiency: { score: 88 }, fishing_method: { score: 82 }, environmental_practices: { score: 90 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 80 } } }
+      sustainability_score: { total_score: 85, categories: { vessel_efficiency: { score: 88 }, fishing_method: { score: 82 }, environmental_practices: { score: 90 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 80 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-3',
@@ -65,7 +80,8 @@ const HomePage: React.FC = () => {
       lng: 3,
       name: 'North Sea',
       vessel: { name: 'FV Nordic Harvest', imo_number: '9256789', model: 'Factory Trawler 95m', flag_state: 'Netherlands', year_built: 2018 },
-      sustainability_score: { total_score: 82, grade: 'A-', categories: { vessel_efficiency: { score: 85 }, fishing_method: { score: 78 }, environmental_practices: { score: 88 }, compliance_and_transparency: { score: 95 }, social_responsibility: { score: 78 } } }
+      sustainability_score: { total_score: 82, categories: { vessel_efficiency: { score: 85 }, fishing_method: { score: 78 }, environmental_practices: { score: 88 }, compliance_and_transparency: { score: 95 }, social_responsibility: { score: 78 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-4',
@@ -73,7 +89,8 @@ const HomePage: React.FC = () => {
       lng: -178,
       name: 'Bering Sea',
       vessel: { name: 'FV Alaska Gold', imo_number: '9267890', model: 'Longliner 68m', flag_state: 'USA', year_built: 2010 },
-      sustainability_score: { total_score: 73, grade: 'B-', categories: { vessel_efficiency: { score: 68 }, fishing_method: { score: 70 }, environmental_practices: { score: 75 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 72 } } }
+      sustainability_score: { total_score: 73, categories: { vessel_efficiency: { score: 68 }, fishing_method: { score: 70 }, environmental_practices: { score: 75 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 72 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-5',
@@ -81,7 +98,8 @@ const HomePage: React.FC = () => {
       lng: 141,
       name: 'Sanriku (Japan)',
       vessel: { name: 'FV Pacific Dawn', imo_number: '9278901', model: 'Purse Seiner 78m', flag_state: 'Japan', year_built: 2016 },
-      sustainability_score: { total_score: 80, grade: 'B+', categories: { vessel_efficiency: { score: 82 }, fishing_method: { score: 75 }, environmental_practices: { score: 85 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 76 } } }
+      sustainability_score: { total_score: 80, categories: { vessel_efficiency: { score: 82 }, fishing_method: { score: 75 }, environmental_practices: { score: 85 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 76 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-6',
@@ -89,7 +107,8 @@ const HomePage: React.FC = () => {
       lng: 148,
       name: 'Tasmania Coast',
       vessel: { name: 'FV Southern Cross', imo_number: '9289012', model: 'Trawler 65m', flag_state: 'Australia', year_built: 2019 },
-      sustainability_score: { total_score: 87, grade: 'A', categories: { vessel_efficiency: { score: 90 }, fishing_method: { score: 85 }, environmental_practices: { score: 92 }, compliance_and_transparency: { score: 93 }, social_responsibility: { score: 82 } } }
+      sustainability_score: { total_score: 87, categories: { vessel_efficiency: { score: 90 }, fishing_method: { score: 85 }, environmental_practices: { score: 92 }, compliance_and_transparency: { score: 93 }, social_responsibility: { score: 82 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-7',
@@ -97,7 +116,8 @@ const HomePage: React.FC = () => {
       lng: -77,
       name: 'Peru Current',
       vessel: { name: 'FV Humboldt Star', imo_number: '9290123', model: 'Purse Seiner 82m', flag_state: 'Peru', year_built: 2014 },
-      sustainability_score: { total_score: 68, grade: 'C+', categories: { vessel_efficiency: { score: 65 }, fishing_method: { score: 62 }, environmental_practices: { score: 70 }, compliance_and_transparency: { score: 85 }, social_responsibility: { score: 68 } } }
+      sustainability_score: { total_score: 68, categories: { vessel_efficiency: { score: 65 }, fishing_method: { score: 62 }, environmental_practices: { score: 70 }, compliance_and_transparency: { score: 85 }, social_responsibility: { score: 68 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-8',
@@ -105,7 +125,8 @@ const HomePage: React.FC = () => {
       lng: -72,
       name: 'Chile Coast',
       vessel: { name: 'FV Andean Wave', imo_number: '9301234', model: 'Trawler 70m', flag_state: 'Chile', year_built: 2017 },
-      sustainability_score: { total_score: 76, grade: 'B', categories: { vessel_efficiency: { score: 78 }, fishing_method: { score: 72 }, environmental_practices: { score: 80 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 74 } } }
+      sustainability_score: { total_score: 76, categories: { vessel_efficiency: { score: 78 }, fishing_method: { score: 72 }, environmental_practices: { score: 80 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 74 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-9',
@@ -113,7 +134,8 @@ const HomePage: React.FC = () => {
       lng: 115,
       name: 'South China Sea',
       vessel: { name: 'FV Dragon Pearl', imo_number: '9312345', model: 'Purse Seiner 75m', flag_state: 'China', year_built: 2013 },
-      sustainability_score: { total_score: 62, grade: 'C', categories: { vessel_efficiency: { score: 60 }, fishing_method: { score: 58 }, environmental_practices: { score: 65 }, compliance_and_transparency: { score: 75 }, social_responsibility: { score: 65 } } }
+      sustainability_score: { total_score: 62, categories: { vessel_efficiency: { score: 60 }, fishing_method: { score: 58 }, environmental_practices: { score: 65 }, compliance_and_transparency: { score: 75 }, social_responsibility: { score: 65 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-10',
@@ -121,7 +143,8 @@ const HomePage: React.FC = () => {
       lng: 105,
       name: 'Java Sea',
       vessel: { name: 'FV Nusantara', imo_number: '9323456', model: 'Trawler 62m', flag_state: 'Indonesia', year_built: 2011 },
-      sustainability_score: { total_score: 65, grade: 'C+', categories: { vessel_efficiency: { score: 63 }, fishing_method: { score: 60 }, environmental_practices: { score: 68 }, compliance_and_transparency: { score: 78 }, social_responsibility: { score: 70 } } }
+      sustainability_score: { total_score: 65, categories: { vessel_efficiency: { score: 63 }, fishing_method: { score: 60 }, environmental_practices: { score: 68 }, compliance_and_transparency: { score: 78 }, social_responsibility: { score: 70 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-11',
@@ -129,7 +152,8 @@ const HomePage: React.FC = () => {
       lng: 124,
       name: 'Yellow Sea',
       vessel: { name: 'FV East Wind', imo_number: '9334567', model: 'Factory Trawler 88m', flag_state: 'South Korea', year_built: 2015 },
-      sustainability_score: { total_score: 74, grade: 'B-', categories: { vessel_efficiency: { score: 76 }, fishing_method: { score: 70 }, environmental_practices: { score: 78 }, compliance_and_transparency: { score: 82 }, social_responsibility: { score: 72 } } }
+      sustainability_score: { total_score: 74, categories: { vessel_efficiency: { score: 76 }, fishing_method: { score: 70 }, environmental_practices: { score: 78 }, compliance_and_transparency: { score: 82 }, social_responsibility: { score: 72 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-12',
@@ -137,7 +161,8 @@ const HomePage: React.FC = () => {
       lng: 73,
       name: 'Arabian Sea (India)',
       vessel: { name: 'FV Mumbai Express', imo_number: '9345678', model: 'Longliner 66m', flag_state: 'India', year_built: 2012 },
-      sustainability_score: { total_score: 70, grade: 'B-', categories: { vessel_efficiency: { score: 68 }, fishing_method: { score: 67 }, environmental_practices: { score: 72 }, compliance_and_transparency: { score: 80 }, social_responsibility: { score: 75 } } }
+      sustainability_score: { total_score: 70, categories: { vessel_efficiency: { score: 68 }, fishing_method: { score: 67 }, environmental_practices: { score: 72 }, compliance_and_transparency: { score: 80 }, social_responsibility: { score: 75 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-13',
@@ -145,7 +170,8 @@ const HomePage: React.FC = () => {
       lng: 35,
       name: 'Mozambique Channel',
       vessel: { name: 'FV African Queen', imo_number: '9356789', model: 'Trawler 64m', flag_state: 'South Africa', year_built: 2018 },
-      sustainability_score: { total_score: 79, grade: 'B+', categories: { vessel_efficiency: { score: 80 }, fishing_method: { score: 75 }, environmental_practices: { score: 82 }, compliance_and_transparency: { score: 85 }, social_responsibility: { score: 78 } } }
+      sustainability_score: { total_score: 79, categories: { vessel_efficiency: { score: 80 }, fishing_method: { score: 75 }, environmental_practices: { score: 82 }, compliance_and_transparency: { score: 85 }, social_responsibility: { score: 78 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-14',
@@ -153,7 +179,8 @@ const HomePage: React.FC = () => {
       lng: -17,
       name: 'West Africa (Senegal)',
       vessel: { name: 'FV Dakar Spirit', imo_number: '9367890', model: 'Purse Seiner 71m', flag_state: 'Senegal', year_built: 2014 },
-      sustainability_score: { total_score: 66, grade: 'C+', categories: { vessel_efficiency: { score: 64 }, fishing_method: { score: 62 }, environmental_practices: { score: 68 }, compliance_and_transparency: { score: 78 }, social_responsibility: { score: 72 } } }
+      sustainability_score: { total_score: 66, categories: { vessel_efficiency: { score: 64 }, fishing_method: { score: 62 }, environmental_practices: { score: 68 }, compliance_and_transparency: { score: 78 }, social_responsibility: { score: 72 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-15',
@@ -161,7 +188,8 @@ const HomePage: React.FC = () => {
       lng: 16,
       name: 'Benguela Current',
       vessel: { name: 'FV Namibian Pride', imo_number: '9378901', model: 'Factory Trawler 92m', flag_state: 'Namibia', year_built: 2016 },
-      sustainability_score: { total_score: 81, grade: 'A-', categories: { vessel_efficiency: { score: 83 }, fishing_method: { score: 78 }, environmental_practices: { score: 85 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 80 } } }
+      sustainability_score: { total_score: 81, categories: { vessel_efficiency: { score: 83 }, fishing_method: { score: 78 }, environmental_practices: { score: 85 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 80 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-16',
@@ -169,7 +197,8 @@ const HomePage: React.FC = () => {
       lng: 15,
       name: 'Mediterranean Sea',
       vessel: { name: 'FV Mare Nostrum', imo_number: '9389012', model: 'Purse Seiner 69m', flag_state: 'Italy', year_built: 2013 },
-      sustainability_score: { total_score: 77, grade: 'B', categories: { vessel_efficiency: { score: 75 }, fishing_method: { score: 73 }, environmental_practices: { score: 80 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 76 } } }
+      sustainability_score: { total_score: 77, categories: { vessel_efficiency: { score: 75 }, fishing_method: { score: 73 }, environmental_practices: { score: 80 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 76 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-17',
@@ -177,7 +206,8 @@ const HomePage: React.FC = () => {
       lng: -5,
       name: 'Irish Sea',
       vessel: { name: 'FV Celtic Tide', imo_number: '9390123', model: 'Trawler 67m', flag_state: 'Ireland', year_built: 2017 },
-      sustainability_score: { total_score: 84, grade: 'A', categories: { vessel_efficiency: { score: 86 }, fishing_method: { score: 82 }, environmental_practices: { score: 88 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 79 } } }
+      sustainability_score: { total_score: 84, categories: { vessel_efficiency: { score: 86 }, fishing_method: { score: 82 }, environmental_practices: { score: 88 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 79 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-18',
@@ -185,7 +215,8 @@ const HomePage: React.FC = () => {
       lng: -80,
       name: 'Eastern Pacific (Panama)',
       vessel: { name: 'FV Panama Blue', imo_number: '9401234', model: 'Longliner 74m', flag_state: 'Panama', year_built: 2015 },
-      sustainability_score: { total_score: 72, grade: 'B-', categories: { vessel_efficiency: { score: 70 }, fishing_method: { score: 68 }, environmental_practices: { score: 75 }, compliance_and_transparency: { score: 82 }, social_responsibility: { score: 73 } } }
+      sustainability_score: { total_score: 72, categories: { vessel_efficiency: { score: 70 }, fishing_method: { score: 68 }, environmental_practices: { score: 75 }, compliance_and_transparency: { score: 82 }, social_responsibility: { score: 73 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-19',
@@ -193,7 +224,8 @@ const HomePage: React.FC = () => {
       lng: -58,
       name: 'Argentina Coast',
       vessel: { name: 'FV Patagonian Wind', imo_number: '9412345', model: 'Trawler 76m', flag_state: 'Argentina', year_built: 2019 },
-      sustainability_score: { total_score: 83, grade: 'A-', categories: { vessel_efficiency: { score: 85 }, fishing_method: { score: 80 }, environmental_practices: { score: 87 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 81 } } }
+      sustainability_score: { total_score: 83, categories: { vessel_efficiency: { score: 85 }, fishing_method: { score: 80 }, environmental_practices: { score: 87 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 81 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-20',
@@ -201,7 +233,8 @@ const HomePage: React.FC = () => {
       lng: 12,
       name: 'Norwegian Sea',
       vessel: { name: 'FV Viking Explorer', imo_number: '9423456', model: 'Factory Trawler 98m', flag_state: 'Norway', year_built: 2020 },
-      sustainability_score: { total_score: 89, grade: 'A+', categories: { vessel_efficiency: { score: 92 }, fishing_method: { score: 88 }, environmental_practices: { score: 94 }, compliance_and_transparency: { score: 95 }, social_responsibility: { score: 85 } } }
+      sustainability_score: { total_score: 89, categories: { vessel_efficiency: { score: 92 }, fishing_method: { score: 88 }, environmental_practices: { score: 94 }, compliance_and_transparency: { score: 95 }, social_responsibility: { score: 85 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-21',
@@ -209,7 +242,8 @@ const HomePage: React.FC = () => {
       lng: 115,
       name: 'Bali Sea (Indonesia)',
       vessel: { name: 'FV Bali Sunrise', imo_number: '9434567', model: 'Purse Seiner 68m', flag_state: 'Indonesia', year_built: 2016 },
-      sustainability_score: { total_score: 69, grade: 'C+', categories: { vessel_efficiency: { score: 67 }, fishing_method: { score: 65 }, environmental_practices: { score: 72 }, compliance_and_transparency: { score: 80 }, social_responsibility: { score: 71 } } }
+      sustainability_score: { total_score: 69, categories: { vessel_efficiency: { score: 67 }, fishing_method: { score: 65 }, environmental_practices: { score: 72 }, compliance_and_transparency: { score: 80 }, social_responsibility: { score: 71 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-22',
@@ -217,7 +251,8 @@ const HomePage: React.FC = () => {
       lng: 122,
       name: 'East China Sea (Taiwan)',
       vessel: { name: 'FV Taiwan Fortune', imo_number: '9445678', model: 'Longliner 72m', flag_state: 'Taiwan', year_built: 2018 },
-      sustainability_score: { total_score: 75, grade: 'B', categories: { vessel_efficiency: { score: 76 }, fishing_method: { score: 72 }, environmental_practices: { score: 78 }, compliance_and_transparency: { score: 85 }, social_responsibility: { score: 74 } } }
+      sustainability_score: { total_score: 75, categories: { vessel_efficiency: { score: 76 }, fishing_method: { score: 72 }, environmental_practices: { score: 78 }, compliance_and_transparency: { score: 85 }, social_responsibility: { score: 74 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-23',
@@ -225,7 +260,8 @@ const HomePage: React.FC = () => {
       lng: -70,
       name: 'Strait of Magellan',
       vessel: { name: 'FV Southern Star', imo_number: '9456789', model: 'Trawler 70m', flag_state: 'Chile', year_built: 2019 },
-      sustainability_score: { total_score: 86, grade: 'A', categories: { vessel_efficiency: { score: 88 }, fishing_method: { score: 84 }, environmental_practices: { score: 90 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 82 } } }
+      sustainability_score: { total_score: 86, categories: { vessel_efficiency: { score: 88 }, fishing_method: { score: 84 }, environmental_practices: { score: 90 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 82 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-24',
@@ -233,7 +269,8 @@ const HomePage: React.FC = () => {
       lng: 125,
       name: 'Philippine Sea',
       vessel: { name: 'FV Manila Bay', imo_number: '9467890', model: 'Purse Seiner 66m', flag_state: 'Philippines', year_built: 2014 },
-      sustainability_score: { total_score: 64, grade: 'C', categories: { vessel_efficiency: { score: 62 }, fishing_method: { score: 60 }, environmental_practices: { score: 66 }, compliance_and_transparency: { score: 75 }, social_responsibility: { score: 69 } } }
+      sustainability_score: { total_score: 64, categories: { vessel_efficiency: { score: 62 }, fishing_method: { score: 60 }, environmental_practices: { score: 66 }, compliance_and_transparency: { score: 75 }, social_responsibility: { score: 69 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-25',
@@ -241,7 +278,8 @@ const HomePage: React.FC = () => {
       lng: -67,
       name: 'Georges Bank (USA/Canada)',
       vessel: { name: 'FV Atlantic Bounty', imo_number: '9478901', model: 'Factory Trawler 89m', flag_state: 'USA', year_built: 2021 },
-      sustainability_score: { total_score: 88, grade: 'A+', categories: { vessel_efficiency: { score: 90 }, fishing_method: { score: 86 }, environmental_practices: { score: 92 }, compliance_and_transparency: { score: 94 }, social_responsibility: { score: 86 } } }
+      sustainability_score: { total_score: 88, categories: { vessel_efficiency: { score: 90 }, fishing_method: { score: 86 }, environmental_practices: { score: 92 }, compliance_and_transparency: { score: 94 }, social_responsibility: { score: 86 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-26',
@@ -249,7 +287,8 @@ const HomePage: React.FC = () => {
       lng: 45,
       name: 'Comoros Channel',
       vessel: { name: 'FV Indian Ocean Pearl', imo_number: '9489012', model: 'Longliner 65m', flag_state: 'Madagascar', year_built: 2015 },
-      sustainability_score: { total_score: 71, grade: 'B-', categories: { vessel_efficiency: { score: 69 }, fishing_method: { score: 68 }, environmental_practices: { score: 74 }, compliance_and_transparency: { score: 82 }, social_responsibility: { score: 72 } } }
+      sustainability_score: { total_score: 71, categories: { vessel_efficiency: { score: 69 }, fishing_method: { score: 68 }, environmental_practices: { score: 74 }, compliance_and_transparency: { score: 82 }, social_responsibility: { score: 72 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-27',
@@ -257,7 +296,8 @@ const HomePage: React.FC = () => {
       lng: -155,
       name: 'Gulf of Alaska',
       vessel: { name: 'FV Alaskan Pioneer', imo_number: '9490123', model: 'Factory Trawler 95m', flag_state: 'USA', year_built: 2020 },
-      sustainability_score: { total_score: 87, grade: 'A', categories: { vessel_efficiency: { score: 89 }, fishing_method: { score: 85 }, environmental_practices: { score: 91 }, compliance_and_transparency: { score: 93 }, social_responsibility: { score: 84 } } }
+      sustainability_score: { total_score: 87, categories: { vessel_efficiency: { score: 89 }, fishing_method: { score: 85 }, environmental_practices: { score: 91 }, compliance_and_transparency: { score: 93 }, social_responsibility: { score: 84 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-28',
@@ -265,7 +305,8 @@ const HomePage: React.FC = () => {
       lng: 138,
       name: 'Great Australian Bight',
       vessel: { name: 'FV Southern Ocean', imo_number: '9501234', model: 'Trawler 73m', flag_state: 'Australia', year_built: 2018 },
-      sustainability_score: { total_score: 85, grade: 'A', categories: { vessel_efficiency: { score: 87 }, fishing_method: { score: 83 }, environmental_practices: { score: 89 }, compliance_and_transparency: { score: 91 }, social_responsibility: { score: 82 } } }
+      sustainability_score: { total_score: 85, categories: { vessel_efficiency: { score: 87 }, fishing_method: { score: 83 }, environmental_practices: { score: 89 }, compliance_and_transparency: { score: 91 }, social_responsibility: { score: 82 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-29',
@@ -273,7 +314,8 @@ const HomePage: React.FC = () => {
       lng: 25,
       name: 'Barents Sea',
       vessel: { name: 'FV Arctic Voyager', imo_number: '9512345', model: 'Factory Trawler 102m', flag_state: 'Russia', year_built: 2019 },
-      sustainability_score: { total_score: 79, grade: 'B+', categories: { vessel_efficiency: { score: 81 }, fishing_method: { score: 76 }, environmental_practices: { score: 82 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 78 } } }
+      sustainability_score: { total_score: 79, categories: { vessel_efficiency: { score: 81 }, fishing_method: { score: 76 }, environmental_practices: { score: 82 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 78 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-30',
@@ -281,7 +323,8 @@ const HomePage: React.FC = () => {
       lng: 165,
       name: 'New Caledonia Waters',
       vessel: { name: 'FV Pacific Guardian', imo_number: '9523456', model: 'Longliner 71m', flag_state: 'New Caledonia', year_built: 2017 },
-      sustainability_score: { total_score: 82, grade: 'A-', categories: { vessel_efficiency: { score: 84 }, fishing_method: { score: 80 }, environmental_practices: { score: 86 }, compliance_and_transparency: { score: 89 }, social_responsibility: { score: 81 } } }
+      sustainability_score: { total_score: 82, categories: { vessel_efficiency: { score: 84 }, fishing_method: { score: 80 }, environmental_practices: { score: 86 }, compliance_and_transparency: { score: 89 }, social_responsibility: { score: 81 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-31',
@@ -289,7 +332,8 @@ const HomePage: React.FC = () => {
       lng: -165,
       name: 'Aleutian Islands',
       vessel: { name: 'FV Aleutian Hunter', imo_number: '9534567', model: 'Factory Trawler 96m', flag_state: 'USA', year_built: 2019 },
-      sustainability_score: { total_score: 86, grade: 'A', categories: { vessel_efficiency: { score: 88 }, fishing_method: { score: 84 }, environmental_practices: { score: 90 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 83 } } }
+      sustainability_score: { total_score: 86, categories: { vessel_efficiency: { score: 88 }, fishing_method: { score: 84 }, environmental_practices: { score: 90 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 83 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-32',
@@ -297,7 +341,8 @@ const HomePage: React.FC = () => {
       lng: -140,
       name: 'Central Pacific',
       vessel: { name: 'FV Pacific Horizon', imo_number: '9545678', model: 'Longliner 74m', flag_state: 'USA', year_built: 2020 },
-      sustainability_score: { total_score: 84, grade: 'A', categories: { vessel_efficiency: { score: 86 }, fishing_method: { score: 82 }, environmental_practices: { score: 88 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 81 } } }
+      sustainability_score: { total_score: 84, categories: { vessel_efficiency: { score: 86 }, fishing_method: { score: 82 }, environmental_practices: { score: 88 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 81 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-33',
@@ -305,7 +350,8 @@ const HomePage: React.FC = () => {
       lng: -135,
       name: 'Gulf of Alaska (Southeast)',
       vessel: { name: 'FV Sitka Sound', imo_number: '9556789', model: 'Trawler 78m', flag_state: 'USA', year_built: 2021 },
-      sustainability_score: { total_score: 89, grade: 'A+', categories: { vessel_efficiency: { score: 91 }, fishing_method: { score: 88 }, environmental_practices: { score: 93 }, compliance_and_transparency: { score: 94 }, social_responsibility: { score: 86 } } }
+      sustainability_score: { total_score: 89, categories: { vessel_efficiency: { score: 91 }, fishing_method: { score: 88 }, environmental_practices: { score: 93 }, compliance_and_transparency: { score: 94 }, social_responsibility: { score: 86 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-34',
@@ -313,7 +359,8 @@ const HomePage: React.FC = () => {
       lng: -155,
       name: 'Hawaiian Waters',
       vessel: { name: 'FV Aloha Spirit', imo_number: '9567890', model: 'Longliner 69m', flag_state: 'USA', year_built: 2018 },
-      sustainability_score: { total_score: 83, grade: 'A-', categories: { vessel_efficiency: { score: 85 }, fishing_method: { score: 81 }, environmental_practices: { score: 87 }, compliance_and_transparency: { score: 89 }, social_responsibility: { score: 80 } } }
+      sustainability_score: { total_score: 83, categories: { vessel_efficiency: { score: 85 }, fishing_method: { score: 81 }, environmental_practices: { score: 87 }, compliance_and_transparency: { score: 89 }, social_responsibility: { score: 80 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-35',
@@ -321,7 +368,8 @@ const HomePage: React.FC = () => {
       lng: -150,
       name: 'Equatorial Pacific',
       vessel: { name: 'FV Tropical Star', imo_number: '9578901', model: 'Purse Seiner 72m', flag_state: 'USA', year_built: 2017 },
-      sustainability_score: { total_score: 80, grade: 'B+', categories: { vessel_efficiency: { score: 82 }, fishing_method: { score: 78 }, environmental_practices: { score: 84 }, compliance_and_transparency: { score: 87 }, social_responsibility: { score: 79 } } }
+      sustainability_score: { total_score: 80, categories: { vessel_efficiency: { score: 82 }, fishing_method: { score: 78 }, environmental_practices: { score: 84 }, compliance_and_transparency: { score: 87 }, social_responsibility: { score: 79 } } },
+      registered: true
     },
     {
       id: 'fishing-zone-36',
@@ -329,7 +377,7 @@ const HomePage: React.FC = () => {
       lng: 120,
       name: 'Celebes Sea (Unregistered)',
       vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Trawler ~55m', flag_state: 'Unknown', year_built: 2012 },
-      sustainability_score: { total_score: 35, grade: 'F', categories: { vessel_efficiency: { score: 30 }, fishing_method: { score: 25 }, environmental_practices: { score: 40 }, compliance_and_transparency: { score: 20 }, social_responsibility: { score: 35 } } },
+      sustainability_score: { total_score: 35, categories: { vessel_efficiency: { score: 30 }, fishing_method: { score: 25 }, environmental_practices: { score: 40 }, compliance_and_transparency: { score: 20 }, social_responsibility: { score: 35 } } },
       registered: false
     },
     {
@@ -338,7 +386,7 @@ const HomePage: React.FC = () => {
       lng: 50,
       name: 'Seychelles EEZ (Unregistered)',
       vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Longliner ~48m', flag_state: 'Unknown', year_built: 2010 },
-      sustainability_score: { total_score: 42, grade: 'F', categories: { vessel_efficiency: { score: 38 }, fishing_method: { score: 35 }, environmental_practices: { score: 45 }, compliance_and_transparency: { score: 30 }, social_responsibility: { score: 42 } } },
+      sustainability_score: { total_score: 42, categories: { vessel_efficiency: { score: 38 }, fishing_method: { score: 35 }, environmental_practices: { score: 45 }, compliance_and_transparency: { score: 30 }, social_responsibility: { score: 42 } } },
       registered: false
     },
     {
@@ -347,7 +395,7 @@ const HomePage: React.FC = () => {
       lng: 110,
       name: 'South China Sea (Unregistered)',
       vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Trawler ~62m', flag_state: 'Unknown', year_built: 2014 },
-      sustainability_score: { total_score: 38, grade: 'F', categories: { vessel_efficiency: { score: 35 }, fishing_method: { score: 30 }, environmental_practices: { score: 42 }, compliance_and_transparency: { score: 25 }, social_responsibility: { score: 38 } } },
+      sustainability_score: { total_score: 38, categories: { vessel_efficiency: { score: 35 }, fishing_method: { score: 30 }, environmental_practices: { score: 42 }, compliance_and_transparency: { score: 25 }, social_responsibility: { score: 38 } } },
       registered: false
     },
     {
@@ -356,7 +404,7 @@ const HomePage: React.FC = () => {
       lng: -75,
       name: 'Peru Coast (Unregistered)',
       vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Purse Seiner ~58m', flag_state: 'Unknown', year_built: 2011 },
-      sustainability_score: { total_score: 40, grade: 'F', categories: { vessel_efficiency: { score: 37 }, fishing_method: { score: 32 }, environmental_practices: { score: 44 }, compliance_and_transparency: { score: 28 }, social_responsibility: { score: 40 } } },
+      sustainability_score: { total_score: 40, categories: { vessel_efficiency: { score: 37 }, fishing_method: { score: 32 }, environmental_practices: { score: 44 }, compliance_and_transparency: { score: 28 }, social_responsibility: { score: 40 } } },
       registered: false
     },
     {
@@ -365,7 +413,7 @@ const HomePage: React.FC = () => {
       lng: -15,
       name: 'West Africa EEZ (Unregistered)',
       vessel: { name: '[UNREGISTERED VESSEL]', imo_number: 'UNKNOWN', model: 'Trawler ~52m', flag_state: 'Unknown', year_built: 2013 },
-      sustainability_score: { total_score: 36, grade: 'F', categories: { vessel_efficiency: { score: 33 }, fishing_method: { score: 28 }, environmental_practices: { score: 38 }, compliance_and_transparency: { score: 22 }, social_responsibility: { score: 36 } } },
+      sustainability_score: { total_score: 36, categories: { vessel_efficiency: { score: 33 }, fishing_method: { score: 28 }, environmental_practices: { score: 38 }, compliance_and_transparency: { score: 22 }, social_responsibility: { score: 36 } } },
       registered: false
     },
   ];
@@ -451,7 +499,6 @@ const HomePage: React.FC = () => {
     gearType: 'all', // 'all', 'trawler', 'longliner', 'purse_seiner', 'factory_trawler'
     flag: 'all', // 'all' or specific country
     minSustainability: 0, // 0-100
-    grade: 'all', // 'all', 'A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C'
     minYear: 2010, // Minimum year built
     maxYear: 2025, // Maximum year built
   });
@@ -698,9 +745,6 @@ const HomePage: React.FC = () => {
       
       // Sustainability score filter
       if (zone.sustainability_score.total_score < filters.minSustainability) return false;
-      
-      // Grade filter
-      if (filters.grade !== 'all' && zone.sustainability_score.grade !== filters.grade) return false;
       
       // Gear type filter (check vessel model)
       if (filters.gearType !== 'all') {
@@ -997,7 +1041,7 @@ const HomePage: React.FC = () => {
                 maxHeight: '75vh',
                 overflowY: 'auto',
                 background: 'rgba(16, 23, 34, 0.92)',
-                border: '1px solid rgba(198, 218, 236, 0.18)',
+                border: '1px solid rgba(198, 218, 236, 0.3)',
                 borderRadius: '12px',
                 padding: '18px',
                 boxShadow: '-8px 8px 28px rgba(10, 14, 28, 0.35)',
@@ -1161,7 +1205,6 @@ const HomePage: React.FC = () => {
                   gearType: 'all', 
                   flag: 'all', 
                   minSustainability: 0,
-                  grade: 'all',
                   minYear: 2010,
                   maxYear: 2025
                 })}
@@ -1413,7 +1456,7 @@ const HomePage: React.FC = () => {
                   fontSize: '12px',
                   fontWeight: '700'
                 }}>
-                  Grade: {hoveredFishingZone.sustainability_score.grade}
+                  Grade: {getSustainabilityGrade(hoveredFishingZone.sustainability_score.total_score)}
                 </div>
               </div>
 

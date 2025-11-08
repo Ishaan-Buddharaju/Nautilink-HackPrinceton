@@ -34,7 +34,7 @@ export default function DashboardScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([
     {
       id: '1',
-      number: 1234,
+      number: 1,
       timestamp: new Date(),
       hash: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
       blockNumber: '15234567',
@@ -43,7 +43,7 @@ export default function DashboardScreen() {
     },
     {
       id: '2',
-      number: 1235,
+      number: 2,
       timestamp: new Date(Date.now() - 3600000),
       hash: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
       blockNumber: '15234566',
@@ -52,7 +52,7 @@ export default function DashboardScreen() {
     },
     {
       id: '3',
-      number: 1236,
+      number: 3,
       timestamp: new Date(Date.now() - 7200000),
       hash: '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6',
       blockNumber: '15234565',
@@ -61,7 +61,7 @@ export default function DashboardScreen() {
     },
     {
       id: '4',
-      number: 1237,
+      number: 4,
       timestamp: new Date(Date.now() - 10800000),
       hash: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
       blockNumber: '15234564',
@@ -70,7 +70,7 @@ export default function DashboardScreen() {
     },
     {
       id: '5',
-      number: 1238,
+      number: 5,
       timestamp: new Date(Date.now() - 14400000),
       hash: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
       blockNumber: '15234563',
@@ -79,7 +79,7 @@ export default function DashboardScreen() {
     },
     {
       id: '6',
-      number: 1239,
+      number: 6,
       timestamp: new Date(Date.now() - 18000000),
       hash: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
       blockNumber: '15234562',
@@ -88,7 +88,7 @@ export default function DashboardScreen() {
     },
     {
       id: '7',
-      number: 1240,
+      number: 7,
       timestamp: new Date(Date.now() - 21600000),
       hash: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
       blockNumber: '15234561',
@@ -97,7 +97,7 @@ export default function DashboardScreen() {
     },
     {
       id: '8',
-      number: 1241,
+      number: 8,
       timestamp: new Date(Date.now() - 25200000),
       hash: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
       blockNumber: '15234560',
@@ -167,34 +167,40 @@ export default function DashboardScreen() {
       </View>
 
       <View style={styles.content}>
-        {/* Network Nodes Visualization */}
+        {/* Transaction Chain Visualization */}
         <View style={styles.logoSection}>
-          <View style={styles.nodesContainer}>
-            {/* Central Node */}
-            <View style={[styles.node, styles.centralNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            
-            {/* Connected Nodes */}
-            <View style={[styles.node, styles.topLeftNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            <View style={[styles.node, styles.topRightNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            <View style={[styles.node, styles.bottomLeftNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            <View style={[styles.node, styles.bottomRightNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            
-            {/* Connection Lines */}
-            <View style={[styles.connectionLine, styles.lineTopLeft]} />
-            <View style={[styles.connectionLine, styles.lineTopRight]} />
-            <View style={[styles.connectionLine, styles.lineBottomLeft]} />
-            <View style={[styles.connectionLine, styles.lineBottomRight]} />
-          </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.chainContainer}
+            contentContainerStyle={styles.chainContent}
+          >
+            {transactions.map((transaction, index) => (
+              <View key={transaction.id} style={styles.chainNodeContainer}>
+                {/* Node */}
+                <TouchableOpacity
+                  style={[
+                    styles.chainNode,
+                    selectedTransaction?.id === transaction.id && styles.chainNodeHighlighted
+                  ]}
+                  onPress={() => handleTransactionPress(transaction)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.chainNodeText,
+                    selectedTransaction?.id === transaction.id && styles.chainNodeTextHighlighted
+                  ]}>
+                    {transaction.number}
+                  </Text>
+                </TouchableOpacity>
+                
+                {/* Connection Line to next node */}
+                {index < transactions.length - 1 && (
+                  <View style={styles.chainLine} />
+                )}
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Transaction Log Section */}
@@ -204,15 +210,26 @@ export default function DashboardScreen() {
             {transactions.map((transaction) => (
               <TouchableOpacity
                 key={transaction.id}
-                style={styles.transactionItem}
+                style={[
+                  styles.transactionItem,
+                  selectedTransaction?.id === transaction.id && styles.transactionItemHighlighted
+                ]}
                 onPress={() => handleTransactionPress(transaction)}
                 activeOpacity={0.7}
               >
-                <View style={styles.transactionIcon}>
-                  <Ionicons name="document-text-outline" size={20} color={Colors.accentPrimary} />
+                <View style={[
+                  styles.transactionIcon,
+                  selectedTransaction?.id === transaction.id && styles.transactionIconHighlighted
+                ]}>
+                  <Ionicons name="document-text-outline" size={20} color={
+                    selectedTransaction?.id === transaction.id ? Colors.background : Colors.accentPrimary
+                  } />
                 </View>
                 <View style={styles.transactionInfo}>
-                  <Text style={styles.transactionTitle}>Log #{transaction.number}</Text>
+                  <Text style={[
+                    styles.transactionTitle,
+                    selectedTransaction?.id === transaction.id && styles.transactionTitleHighlighted
+                  ]}>Log #{transaction.number}</Text>
                   <Text style={styles.transactionTime}>{transaction.timestamp.toLocaleTimeString()}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
@@ -349,22 +366,24 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   logoSection: {
-    alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 20,
     marginBottom: 20,
   },
-  nodesContainer: {
-    width: 200,
-    height: 200,
-    position: 'relative',
-    justifyContent: 'center',
+  chainContainer: {
+    height: 80,
+  },
+  chainContent: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  chainNodeContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  node: {
-    position: 'absolute',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  chainNode: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: Colors.surfaceGlass,
     borderWidth: 2,
     borderColor: Colors.accentPrimary,
@@ -372,70 +391,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: Colors.accentPrimary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  centralNode: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 3,
-  },
-  nodeCore: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  chainNodeHighlighted: {
     backgroundColor: Colors.accentPrimary,
+    borderColor: Colors.accentLight,
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    transform: [{ scale: 1.1 }],
   },
-  topLeftNode: {
-    top: 20,
-    left: 40,
+  chainNodeText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.accentPrimary,
   },
-  topRightNode: {
-    top: 20,
-    right: 40,
+  chainNodeTextHighlighted: {
+    color: Colors.background,
   },
-  bottomLeftNode: {
-    bottom: 20,
-    left: 40,
-  },
-  bottomRightNode: {
-    bottom: 20,
-    right: 40,
-  },
-  connectionLine: {
-    position: 'absolute',
+  chainLine: {
+    width: 30,
+    height: 3,
     backgroundColor: Colors.accentPrimary,
-    opacity: 0.4,
-  },
-  lineTopLeft: {
-    width: 80,
-    height: 2,
-    top: 90,
-    left: 50,
-    transform: [{ rotate: '-45deg' }],
-  },
-  lineTopRight: {
-    width: 80,
-    height: 2,
-    top: 90,
-    right: 50,
-    transform: [{ rotate: '45deg' }],
-  },
-  lineBottomLeft: {
-    width: 80,
-    height: 2,
-    bottom: 90,
-    left: 50,
-    transform: [{ rotate: '45deg' }],
-  },
-  lineBottomRight: {
-    width: 80,
-    height: 2,
-    bottom: 90,
-    right: 50,
-    transform: [{ rotate: '-45deg' }],
+    opacity: 0.6,
+    marginHorizontal: 5,
   },
   transactionSection: {
     flex: 1,
@@ -572,6 +552,19 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   statusConfirmed: {
+    color: Colors.accentPrimary,
+    fontWeight: '700',
+  },
+  transactionItemHighlighted: {
+    backgroundColor: Colors.accentPrimary + '20',
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.accentPrimary,
+  },
+  transactionIconHighlighted: {
+    backgroundColor: Colors.accentPrimary,
+    borderColor: Colors.accentLight,
+  },
+  transactionTitleHighlighted: {
     color: Colors.accentPrimary,
     fontWeight: '700',
   },

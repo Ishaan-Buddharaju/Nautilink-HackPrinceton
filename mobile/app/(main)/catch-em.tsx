@@ -8,16 +8,9 @@ import { Colors } from '../../constants/Colors';
 
 const { width, height } = Dimensions.get('window');
 
-// NFC Manager - same as nfc-tap.tsx
-let NfcManager: any = null;
-let NfcTech: any = null;
-try {
-  const nfcModule = require('react-native-nfc-manager');
-  NfcManager = nfcModule.default;
-  NfcTech = nfcModule.NfcTech;
-} catch (e) {
-  console.log('NFC Manager not available - using fallback mode');
-}
+// Import unified NFC module
+import { nfcManager, initNFC, readNFC, isNFCAvailable, simulateNFC, cleanupNFC } from '../../utils/nfcManager';
+import MiniGlobe, { FishLocation } from '../../components/MiniGlobe';
 
 interface Catch {
   id: string;
@@ -49,6 +42,34 @@ export default function CatchEmScreen() {
   const [nfcScale] = useState(new Animated.Value(1));
   const [nfcOpacity] = useState(new Animated.Value(0.3));
   const cameraRef = useRef<CameraView>(null);
+
+  // Convert catches to FishLocation format for MiniGlobe
+  const convertCatchesToFishLocations = (catches: Catch[]): FishLocation[] => {
+    return catches.map(catchItem => ({
+      id: catchItem.id,
+      lat: catchItem.location.lat,
+      lng: catchItem.location.lng,
+      name: catchItem.location.name,
+      vessel: {
+        name: `Catch: ${catchItem.species}`,
+        imo_number: catchItem.nfcTagId,
+        model: `${catchItem.weight}kg ${catchItem.species}`,
+        flag_state: 'Consumer',
+        year_built: new Date(catchItem.timestamp).getFullYear()
+      },
+      sustainability_score: {
+        total_score: catchItem.sustainabilityScore || 75,
+        categories: {
+          vessel_efficiency: { score: 75 },
+          fishing_method: { score: 80 },
+          environmental_practices: { score: catchItem.sustainabilityScore || 75 },
+          compliance_and_transparency: { score: 85 },
+          social_responsibility: { score: 70 }
+        }
+      },
+      registered: true
+    }));
+  };
 
   // Mock data for caught fish
   useEffect(() => {
@@ -98,44 +119,41 @@ export default function CatchEmScreen() {
     }
   }, [status]);
 
-  // NFC Functions from nfc-tap.tsx
+  // NFC Functions using unified module
   const initNfc = async () => {
-    if (!NfcManager) {
-      console.log('Running in Expo Go - NFC not available');
-      setNfcSupported(false);
-      return;
-    }
-
     try {
-      const supported = await NfcManager.isSupported();
-      setNfcSupported(supported);
+      const result = await initNFC();
+      setNfcSupported(result.success);
+      
+      if (!result.success) {
+        console.log('NFC init failed:', result.error);
+      }
     } catch (error) {
       console.error('NFC init error:', error);
+      setNfcSupported(false);
     }
   };
 
   const startNfcScan = async () => {
     if (!nfcSupported) {
       // Simulate NFC in development
-      setTimeout(() => {
-        const mockTagId = `NFC-${Math.floor(Math.random() * 10000)}`;
-        handleNfcDetected(mockTagId);
-      }, 1000);
+      const result = simulateNFC();
+      if (result.success) {
+        handleNfcDetected(result.data.id);
+      }
       return;
     }
 
     try {
-      await NfcManager.start();
-      await NfcManager.requestTechnology(NfcTech.Ndef);
-      const tag = await NfcManager.getTag();
-      console.log('NFC Tag detected:', tag);
-      handleNfcDetected(tag.id);
+      const result = await readNFC();
+      if (result.success) {
+        console.log('NFC Tag detected:', result.data);
+        handleNfcDetected(result.data.id);
+      } else {
+        console.warn('NFC read failed:', result.error);
+      }
     } catch (error) {
       console.warn('NFC read cancelled or failed:', error);
-    } finally {
-      if (NfcManager) {
-        await NfcManager.cancelTechnologyRequest();
-      }
     }
   };
 
@@ -233,78 +251,34 @@ export default function CatchEmScreen() {
   // Render Log List View
   const renderListView = () => (
     <View style={styles.content}>
-      {/* Globe Widget - Sophisticated visualization */}
-      <View style={styles.mapContainer}>
-        <Text style={styles.sectionTitle}>🌊 Global Fish Tracker</Text>
-        <View style={styles.globeContainer}>
-          {/* 3D-style Globe with shadow */}
-          <View style={styles.globeWrapper}>
-            <View style={styles.globeShadow} />
-            <View style={styles.globe}>
-              {/* Continents representation (simplified) */}
-              <View style={styles.continent1} />
-              <View style={styles.continent2} />
-              <View style={styles.continent3} />
-              
-              {/* Globe grid lines - latitude/longitude */}
-              <View style={styles.globeGrid}>
-                <View style={[styles.horizontalLine, { top: '15%' }]} />
-                <View style={[styles.horizontalLine, { top: '35%' }]} />
-                <View style={[styles.horizontalLine, { top: '50%' }]} />
-                <View style={[styles.horizontalLine, { top: '65%' }]} />
-                <View style={[styles.horizontalLine, { top: '85%' }]} />
-                <View style={[styles.verticalLine, { left: '25%' }]} />
-                <View style={[styles.verticalLine, { left: '50%' }]} />
-                <View style={[styles.verticalLine, { left: '75%' }]} />
-              </View>
-              
-              {/* Fish markers positioned around globe */}
-              {catches.map((catchItem, index) => {
-                // Distribute markers in a spherical pattern
-                const phi = (index * 137.5) % 360; // Golden angle
-                const theta = Math.acos(1 - 2 * (index + 0.5) / catches.length);
-                const radius = 55;
-                const x = radius * Math.sin(theta) * Math.cos(phi * Math.PI / 180) + 70;
-                const y = radius * Math.sin(theta) * Math.sin(phi * Math.PI / 180) + 70;
-                
-                return (
-                  <View
-                    key={catchItem.id}
-                    style={[
-                      styles.fishMarker,
-                      { 
-                        left: x, 
-                        top: y,
-                        zIndex: 10,
-                      }
-                    ]}
-                  >
-                    <View style={styles.markerPulse} />
-                    <Ionicons name="location" size={24} color="#00d4ff" />
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-          
-          {/* Stats cards below globe */}
-          <View style={styles.globeStats}>
-            <View style={styles.globeStatCard}>
-              <Ionicons name="fish" size={20} color="#00d4ff" />
-              <Text style={styles.globeStatNumber}>{catches.length}</Text>
-              <Text style={styles.globeStatLabel}>Catches</Text>
-            </View>
-            <View style={styles.globeStatCard}>
-              <Ionicons name="trophy" size={20} color="#FFD700" />
-              <Text style={styles.globeStatNumber}>{catches.reduce((sum, c) => sum + c.points, 0)}</Text>
-              <Text style={styles.globeStatLabel}>Points</Text>
-            </View>
-            <View style={styles.globeStatCard}>
-              <Ionicons name="earth" size={20} color="#4CAF50" />
-              <Text style={styles.globeStatNumber}>{catches.length}</Text>
-              <Text style={styles.globeStatLabel}>Locations</Text>
-            </View>
-          </View>
+      {/* High-Quality MiniGlobe */}
+      <MiniGlobe 
+        fishData={convertCatchesToFishLocations(catches)} 
+        onLocationSelect={(location) => {
+          // Find the corresponding catch and show details
+          const correspondingCatch = catches.find(c => c.id === location.id);
+          if (correspondingCatch) {
+            handleCatchPress(correspondingCatch);
+          }
+        }}
+      />
+
+      {/* Stats cards */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Ionicons name="fish" size={20} color="#00d4ff" />
+          <Text style={styles.statNumber}>{catches.length}</Text>
+          <Text style={styles.statLabel}>Catches</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="trophy" size={20} color="#FFD700" />
+          <Text style={styles.statNumber}>{catches.reduce((sum, c) => sum + c.points, 0)}</Text>
+          <Text style={styles.statLabel}>Points</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="earth" size={20} color="#4CAF50" />
+          <Text style={styles.statNumber}>{catches.length}</Text>
+          <Text style={styles.statLabel}>Locations</Text>
         </View>
       </View>
 
@@ -1224,5 +1198,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#FFD700',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  statCard: {
+    backgroundColor: Colors.surfaceGlass,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginTop: 8,
   },
 });
