@@ -1,9 +1,13 @@
 import Constants from 'expo-constants';
 
 export const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:8000';
-export const AUTH0_DOMAIN = Constants.expoConfig?.extra?.auth0Domain || 'demo.auth0.com';
-export const AUTH0_CLIENT_ID = Constants.expoConfig?.extra?.auth0ClientId || 'demo-client-id';
-export const AUTH0_REDIRECT_URI = 'nautilink://callback';
+
+// Supabase Configuration (replacing Auth0)
+export const SUPABASE_URL = Constants.expoConfig?.extra?.supabaseUrl || '';
+export const SUPABASE_ANON_KEY = Constants.expoConfig?.extra?.supabaseAnonKey || '';
+
+// OAuth Redirect URI for mobile
+export const REDIRECT_URI = 'nautilink://auth/callback';
 
 export const ROLES = {
   PUBLIC_TRUST: 'public-trust',

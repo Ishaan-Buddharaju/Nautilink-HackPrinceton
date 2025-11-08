@@ -10,6 +10,7 @@ export default function MainLayout() {
       <Stack.Screen name="add-trip" />
       <Stack.Screen name="nfc-tap" />
       <Stack.Screen name="qr-scanner" />
+      <Stack.Screen name="catch-em" />
     </Stack>
   );
 }
