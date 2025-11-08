@@ -63,8 +63,8 @@ pub mod nautilink {
     }
 
     /// Mixes multiple parent crates into one child crate
-    pub fn mix_crates(
-        ctx: Context<MixCrates>,
+    pub fn mix_crates<'info>(
+        ctx: Context<'_, '_, '_, 'info, MixCrates<'info>>,
         crate_id: String,
         timestamp: i64,
         hash: String,
