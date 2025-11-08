@@ -39,6 +39,12 @@ const LandingPage: React.FC = () => {
   // Minimal data for landing page globe background
   const [clusteredData, setClusteredData] = useState<ClusterData[]>([]);
   const [vesselData, setVesselData] = useState<VesselData[]>([]); // To simulate data for the background globe
+  const [decorativeMarkers, setDecorativeMarkers] = useState<
+    Array<{ id: string; lat: number; lng: number; label: string }>
+  >([]);
+  const [routeArcs, setRouteArcs] = useState<
+    Array<{ startLat: number; startLng: number; endLat: number; endLng: number; color: string }>
+  >([]);
 
   const GREEN = "#2eb700";
   const RED = "#fc0303";
@@ -109,6 +115,89 @@ const LandingPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    const seeds = [
+      { lat: 12, lng: -150 },
+      { lat: -5, lng: -135 },
+      { lat: 28, lng: -120 },
+      { lat: -22, lng: -108 },
+      { lat: 15, lng: -80 },
+      { lat: -10, lng: -60 },
+      { lat: 18, lng: -30 },
+      { lat: -25, lng: -18 },
+      { lat: 30, lng: 10 },
+      { lat: -12, lng: 40 },
+      { lat: 20, lng: 65 },
+      { lat: -30, lng: 75 },
+      { lat: 8, lng: 95 },
+      { lat: -18, lng: 110 },
+      { lat: 14, lng: 135 },
+      { lat: -20, lng: 150 },
+      { lat: 22, lng: 170 },
+      { lat: -5, lng: 160 },
+      { lat: -32, lng: -150 }
+    ];
+
+    const labels = ['Fleet', 'Port', 'SOS', 'Relay', 'Waypoint', 'Beacon'];
+    const generated: Array<{ id: string; lat: number; lng: number; label: string }> = Array.from(
+      { length: 50 }
+    ).map((_, idx) => {
+      const seed = seeds[idx % seeds.length];
+      const lat = seed.lat + (Math.random() - 0.5) * 8;
+      const lng = seed.lng + (Math.random() - 0.5) * 8;
+      return {
+        id: `decor-${idx}`,
+        lat,
+        lng,
+        label: labels[idx % labels.length]
+      };
+    });
+    setDecorativeMarkers(generated);
+  }, []);
+
+  useEffect(() => {
+    const colors = ['rgba(79, 189, 255, 0.55)', 'rgba(118, 157, 255, 0.55)', 'rgba(95, 214, 189, 0.6)'];
+    const routes: Array<{ startLat: number; startLng: number; endLat: number; endLng: number; color: string }> = [
+      // Trans-Pacific & Trans-Atlantic
+      { startLat: 35.7, startLng: 139.7, endLat: 37.7, endLng: -122.4, color: colors[0] }, // Tokyo -> San Francisco
+      { startLat: 23.1, startLng: 113.3, endLat: 33.7, endLng: -118.2, color: colors[1] }, // Guangzhou -> Los Angeles
+      { startLat: 1.3, startLng: 103.8, endLat: 35.0, endLng: 129.0, color: colors[2] },   // Singapore -> Busan
+      { startLat: 31.2, startLng: 121.5, endLat: -33.9, endLng: 18.4, color: colors[0] }, // Shanghai -> Cape Town
+      { startLat: 25.8, startLng: -80.2, endLat: 51.5, endLng: -0.1, color: colors[1] },  // Miami -> London
+      { startLat: 29.7, startLng: -95.3, endLat: 50.9, endLng: 1.4, color: colors[2] },   // Houston -> Dover
+      { startLat: 40.7, startLng: -74.0, endLat: 48.9, endLng: 2.3, color: colors[0] },   // New York -> Le Havre
+      { startLat: -23.5, startLng: -46.6, endLat: 30.0, endLng: -15.0, color: colors[1] },// Santos -> Canary Islands
+
+      // Indian Ocean / Middle East
+      { startLat: 24.5, startLng: 54.4, endLat: 19.1, endLng: 72.8, color: colors[2] },   // Abu Dhabi -> Mumbai
+      { startLat: 25.3, startLng: 55.3, endLat: -32.0, endLng: 115.8, color: colors[0] }, // Jebel Ali -> Perth
+      { startLat: 29.9, startLng: 32.5, endLat: 1.3, endLng: 103.8, color: colors[1] },   // Suez -> Singapore
+      { startLat: 22.3, startLng: 114.2, endLat: -41.3, endLng: 174.8, color: colors[2] },// Hong Kong -> Wellington
+
+      // South Atlantic / Pacific
+      { startLat: -34.9, startLng: -56.2, endLat: -33.9, endLng: 18.4, color: colors[0] }, // Montevideo -> Cape Town
+      { startLat: -12.0, startLng: -77.0, endLat: 34.7, endLng: 135.5, color: colors[1] }, // Callao -> Osaka
+      { startLat: -33.9, startLng: 18.4, endLat: -36.8, endLng: 174.7, color: colors[2] }, // Cape Town -> Auckland
+      { startLat: -23.6, startLng: -70.4, endLat: -12.0, endLng: -77.0, color: colors[0] },// Antofagasta -> Callao
+
+      // Europe & North America coastal routes
+      { startLat: 60.1, startLng: -149.4, endLat: 22.3, endLng: 114.2, color: colors[1] }, // Anchorage -> Hong Kong
+      { startLat: 43.7, startLng: -79.4, endLat: 18.0, endLng: -63.1, color: colors[2] },  // Toronto -> Hamilton
+      { startLat: 50.1, startLng: 8.6, endLat: 55.7, endLng: 12.6, color: colors[0] },    // Hamburg -> Copenhagen
+
+      // Additional cross routes
+      { startLat: -6.1, startLng: 106.8, endLat: 35.7, endLng: 139.7, color: colors[1] }, // Jakarta -> Tokyo
+      { startLat: 4.9, startLng: -1.7, endLat: 39.9, endLng: 32.8, color: colors[2] },     // Tema -> Istanbul
+      { startLat: 21.3, startLng: -157.8, endLat: 1.3, endLng: 103.8, color: colors[0] }, // Honolulu -> Singapore
+      { startLat: 35.2, startLng: 129.1, endLat: 59.9, endLng: 30.3, color: colors[1] },  // Busan -> St. Petersburg
+      { startLat: -34.0, startLng: 25.6, endLat: -12.8, endLng: 45.2, color: colors[2] }, // Port Elizabeth -> Madagascar
+      { startLat: 44.6, startLng: -63.6, endLat: 10.4, endLng: -61.5, color: colors[0] }, // Halifax -> Trinidad
+      { startLat: 40.8, startLng: 14.3, endLat: 12.6, endLng: 70.0, color: colors[1] },   // Naples -> Colombo
+      { startLat: -14.3, startLng: -170.7, endLat: -36.8, endLng: 174.7, color: colors[2] } // Pago Pago -> Auckland
+    ];
+    setRouteArcs(routes);
+  }, []);
+
   const handleEnterDashboard = () => {
     router.push('/dashboard'); // Navigate to the dashboard page
   };
@@ -176,26 +265,47 @@ const LandingPage: React.FC = () => {
               polygonAltitude={0}
               polygonStrokeColor={() => 'rgba(255, 255, 255, 1)'}
               showGraticules={true}
-              htmlElementsData={clusteredData}
+              arcsData={routeArcs}
+              arcColor={(d: any) => d.color}
+              arcAltitude={0.22}
+              arcStroke={2.6}
+              arcDashLength={0.4}
+              arcDashGap={0.15}
+              arcDashAnimateTime={2600}
+              htmlElementsData={[...vesselData.slice(0, 50), ...decorativeMarkers]}
               htmlElement={(d: any) => {
-                const el = document.createElement('div');
-                if (d.count > 1) {
-                  el.innerHTML = clusterSvg(d.count);
-                } else {
-                  el.innerHTML = markerSvg;
-                }
-                el.style.color = d.registered ? GREEN : RED;
-                el.style.width = `${40 + d.count / 200}px`;
-                el.style.height = 'auto';
-                el.style.pointerEvents = 'none'; // Disable interaction for background
-                return el;
+                const container = document.createElement('div');
+                container.style.pointerEvents = 'none';
+                container.style.position = 'absolute';
+                container.style.transform = 'translate(-50%, -50%)';
+                const size = d.id?.startsWith('decor-') ? 16 : 18;
+                container.style.width = `${size}px`;
+                container.style.height = `${size * 1.6}px`;
+
+                const svgNS = 'http://www.w3.org/2000/svg';
+                const svg = document.createElementNS(svgNS, 'svg');
+                svg.setAttribute('viewBox', '0 0 24 36');
+                svg.setAttribute('width', `${size}px`);
+                svg.setAttribute('height', `${size * 1.6}px`);
+
+                const path = document.createElementNS(svgNS, 'path');
+                path.setAttribute('d', 'M12 0C7 0 3 4 3 9c0 7.5 9 17 9 17s9-9.5 9-17C21 4 17 0 12 0z');
+                path.setAttribute('fill', '#ffffff');
+
+                const circle = document.createElementNS(svgNS, 'circle');
+                circle.setAttribute('cx', '12');
+                circle.setAttribute('cy', '9');
+                circle.setAttribute('r', '4');
+                circle.setAttribute('fill', '#0f1624');
+
+                svg.appendChild(path);
+                svg.appendChild(circle);
+                container.appendChild(svg);
+
+                return container;
               }}
               htmlElementVisibilityModifier={(el: any, isVisible: Boolean) => {
-                if (isVisible) {
-                  el.style.opacity = '1';
-                } else {
-                  el.style.opacity = '0';
-                }
+                el.style.opacity = isVisible ? '1' : '0';
               }}
               onGlobeReady={() => { 
                 if (globeEl.current) {
@@ -212,52 +322,40 @@ const LandingPage: React.FC = () => {
             position: 'relative',
             zIndex: 10,
             textAlign: 'left',
-            maxWidth: '600px',
+            maxWidth: '520px',
             padding: '0 60px',
-            marginLeft: '-400px',
+            marginLeft: '-520px',
+            marginTop: '-180px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '32px'
+            gap: '24px'
           }}>
             <div>
-              {/* Logo and Title */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                marginBottom: '20px'
-              }}>
-                <img 
-                  src="/nautilink-logo-white.png" 
-                  alt="Nautilink" 
-                  style={{ 
-                    width: '60px', 
-                    height: '60px', 
-                    marginRight: '20px',
-                    borderRadius: '8px'
-                  }} 
+              <div style={{ marginBottom: '20px' }}>
+                <img
+                  src="/logo-landing.png"
+                  alt="Nautilink landing branding"
+                  style={{
+                    width: '360px',
+                    maxWidth: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    filter: 'drop-shadow(0 10px 25px rgba(8, 15, 28, 0.45))'
+                  }}
                 />
-                <h1 style={{
-                  fontSize: '4rem',
-                  fontWeight: 'bold',
-                  margin: 0,
-                  color: '#e0f2fd',
-                  letterSpacing: '0.1em'
-                }}>
-                  Nautilink
-                </h1>
               </div>
-
-              {/* Subtitle */}
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '300',
-                margin: '0 0 40px 0',
-                color: '#d2deea',
-                lineHeight: '1.4'
-              }}>
-                Advanced Maritime Intelligence & Surveillance Platform
-              </h2>
-
+              <p
+                style={{
+                  color: '#c4d6f4',
+                  fontSize: '1.05rem',
+                  fontWeight: 400,
+                  letterSpacing: '0.08em',
+                  margin: '0 0 20px 4px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                protecting fishing supply chains with blockchain technology
+              </p>
               {/* Enter Button */}
               <button
                 onClick={handleEnterDashboard} // Changed to navigate
