@@ -52,6 +52,8 @@ const HomePage: React.FC = () => {
   const [hotspotData, setHotspotData] = useState<HotspotData[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isReportPanelVisible, setIsReportPanelVisible] = useState(false);
+  const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
 
   // Agent panel state
   const [agentPoint, setAgentPoint] = useState<AgentPoint | null>(null);
@@ -60,13 +62,8 @@ const HomePage: React.FC = () => {
   // Auth state
   const { user, hasAnyRole } = useAuth();
 
-  // Timestamp slider state
-  const [minTimestamp, setMinTimestamp] = useState<number>(0); // Unix timestamp
-  const [maxTimestamp, setMaxTimestamp] = useState<number>(1e15); // Unix timestamp
   const [timeL, setTimeL] = useState<number>(0);
   const [timeR, setTimeR] = useState<number>(1e15);
-
-  const [showRegistered, setShowRegistered] = useState<Boolean>(true);
 
   const markerSvg = `<svg viewBox="-4 0 36 36">
     <path fill="currentColor" d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"></path>
@@ -97,7 +94,6 @@ const HomePage: React.FC = () => {
 
       const marker = markers[index];
 
-      if(marker.registered && !showRegistered) continue;
       if (!marker.registered && !hasAnyRole(['confidential', 'secret', 'top-secret'])) continue;
 
       const v = new Date(marker.timestamp).getTime();
@@ -195,7 +191,7 @@ const HomePage: React.FC = () => {
     }
 
     setClusteredData(clusters);
-  }, [globeEl, timeL, timeR, showRegistered]);
+  }, [globeEl, timeL, timeR, hasAnyRole]);
 
   const handleZoom = useCallback(() => { // Removed `pov` as it's not used directly from the param
     clusterMarkers(vesselData); // Cluster filtered data
@@ -218,22 +214,11 @@ const HomePage: React.FC = () => {
         // Extract all timestamps and set min/max for the slider
         const timestamps = data.map(v => new Date(v.timestamp).getTime()).sort();
         if (timestamps.length > 0) {
-          setMinTimestamp(timestamps[0]);
-          setMaxTimestamp(timestamps[timestamps.length - 1]);
-          
           setTimeL(timestamps[0]);
           setTimeR(timestamps[timestamps.length - 1]);
-          const mn : any = document.getElementById("min-timestamp");
-          const mx : any = document.getElementById("max-timestamp");
-          mn.value = timestamps[0];
-          mx.value = timestamps[timestamps.length - 1];
-
-          setShowRegistered(true);
-          const toggler : any = document.getElementById("toggle-registered");
-          toggler.checked = true;
         }
 
-        clusterMarkers(vesselData);
+        clusterMarkers(data);
         setIsDataLoaded(true);
         setIsFirstLoad(false);
       }
@@ -269,6 +254,22 @@ const HomePage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsReportPanelVisible(true);
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsHistoryPanelVisible(true);
+    }, 240);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   // Re-cluster whenever vesselData changes
   useEffect(() => {
     clusterMarkers(vesselData);
@@ -294,21 +295,6 @@ const HomePage: React.FC = () => {
     };
   }, [fetchData]);
 
-  // Helper to format timestamp for display
-  const formatTimestamp = (timestamp: number) => {
-    return new Date(timestamp).toISOString().split('T')[0];
-  };
-
-  const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>, type: 'min' | 'max') => {
-    const value = parseInt(event.target.value);
-
-    if (type === 'min') {
-      setTimeL(value);
-    } else {
-      setTimeR(value);
-    }
-  };
-
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative', overflow: 'hidden' }}>
       {!isDataLoaded && isFirstLoad ? (
@@ -318,8 +304,8 @@ const HomePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#000',
-          color: 'white',
+          backgroundColor: '#171717',
+          color: '#FFFFFF',
           fontSize: '18px',
           fontFamily: 'Arial, sans-serif'
         }}>
@@ -327,8 +313,8 @@ const HomePage: React.FC = () => {
             <div style={{ 
               width: '40px', 
               height: '40px', 
-              border: '3px solid #333', 
-              borderTop: '3px solid #fff', 
+              border: '3px solid #4662ab', 
+              borderTop: '3px solid #e0f2fd', 
               borderRadius: '50%', 
               animation: 'spin 1s linear infinite',
               margin: '0 auto 20px'
@@ -349,11 +335,11 @@ const HomePage: React.FC = () => {
           backgroundImageUrl={"night-sky.png"}
           showGlobe={false}
           showAtmosphere={false}
-          backgroundColor={'rgba(0,0,0,0)'}
+          backgroundColor={'rgba(23,23,23,0)'}
 
           polygonsData={landData.features}
           polygonCapColor={() => 'rgba(130, 130, 130, 0.5)'}
-          polygonSideColor={() => 'rgba(0,0,0,0)'}
+          polygonSideColor={() => 'rgba(23,23,23,0)'}
           polygonAltitude={0}
           polygonStrokeColor={() => 'rgba(255, 255, 255, 1)'}
 
@@ -463,15 +449,15 @@ const HomePage: React.FC = () => {
             position: 'fixed',
             left: popupPosition.x,
             top: popupPosition.y,
-            backgroundColor: 'rgba(0, 0, 0, 0.95)',
-            color: 'white',
+            backgroundColor: 'rgba(23, 23, 23, 0.92)',
+            color: '#e0f2fd',
             padding: '20px',
             borderRadius: '12px',
             fontSize: '14px',
             fontFamily: 'Arial, sans-serif',
             zIndex: 1000,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px rgba(70, 98, 171, 0.25)',
+            border: '1px solid rgba(198, 218, 236, 0.35)',
             maxWidth: '320px',
             minWidth: '280px',
             backdropFilter: 'blur(10px)'
@@ -587,96 +573,157 @@ const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* Rounded window for timestamp slider */}
-    
-      <div
-        style={{
-          position: 'fixed',
-          right: '20px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          color: 'white',
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-          zIndex: 1000,
-          maxWidth: '250px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '15px',
-          backdropFilter: 'blur(5px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}
-      >
-        <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1em', textAlign: 'center' }}>Filters</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <label htmlFor="min-timestamp" style={{ fontSize: '0.9em' }}>Start: {formatTimestamp(timeL)}</label>
-          <input
-            type="range"
-            id="min-timestamp"
-            min={minTimestamp}
-            max={maxTimestamp}
-            onChange={(e) => handleSliderChange(e, 'min')}
-            style={{ width: '100%' }}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: 'min(32vw, 420px)',
+              maxWidth: '100%',
+              background: 'rgba(16, 23, 34, 0.94)',
+              borderRight: '1px solid rgba(198, 218, 236, 0.22)',
+              boxShadow: '12px 0 32px rgba(10, 14, 28, 0.45)',
+              padding: '32px 32px 36px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
+              color: '#e0f2fd',
+              backdropFilter: 'blur(18px)',
+              transform: `translateX(${isReportPanelVisible ? '0' : '-110%'})`,
+              transition: 'transform 640ms cubic-bezier(0.23, 1, 0.32, 1)',
+              zIndex: 800,
+              pointerEvents: isReportPanelVisible ? 'auto' : 'none'
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 600, letterSpacing: '0.04em' }}>
+                Report
+              </h2>
+              <p style={{ marginTop: '8px', color: '#9fb7d8', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                Operational summary for the selected maritime theatre.
+              </p>
+            </div>
+
+            <div
+              style={{
+                padding: '18px 20px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(70,98,171,0.22), rgba(17,23,38,0.8))',
+                border: '1px solid rgba(198, 218, 236, 0.25)',
+                boxShadow: '0 18px 26px rgba(12, 22, 46, 0.35)'
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, marginBottom: '10px' }}>
+                Situation Overview
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.45, color: '#d6e6ff' }}>
+                Monitoring active vessel clusters. Select a contact on the globe to populate this briefing
+                with telemetry, compliance, and recommended actions.
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gap: '14px' }}>
+              {[
+                { label: 'Priority Watchlist', value: '5 vessels under observation' },
+                { label: 'Last Update', value: new Date().toLocaleString() },
+                { label: 'Weather Advisory', value: 'Moderate swells, 1.5m - 2m' }
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  style={{
+                    borderRadius: '12px',
+                    padding: '14px 16px',
+                    backgroundColor: 'rgba(23, 32, 51, 0.75)',
+                    border: '1px solid rgba(198, 218, 236, 0.16)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                  }}
+                >
+                  <span style={{ fontSize: '0.78rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7f93b8' }}>
+                    {item.label}
+                  </span>
+                  <span style={{ fontSize: '0.96rem', color: '#e8f3ff', fontWeight: 500 }}>
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 'min(32vw, 420px)',
+              width: '2px',
+              background: 'linear-gradient(to bottom, transparent, rgba(70, 98, 171, 0.45), transparent)',
+              zIndex: 750,
+              pointerEvents: 'none',
+              opacity: isReportPanelVisible ? 1 : 0,
+              transition: 'opacity 420ms ease'
+            }}
           />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <label htmlFor="max-timestamp" style={{ fontSize: '0.9em' }}>End: {formatTimestamp(timeR)}</label>
-          <input
-            type="range"
-            id="max-timestamp"
-            min={minTimestamp}
-            max={maxTimestamp}
-            onChange={(e) => handleSliderChange(e, 'max')}
-            style={{ width: '100%' }}
-          />
-        </div>
 
-        {/* New toggle button for registered markers */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-          <label htmlFor="toggle-registered" style={{ fontSize: '0.9em' }}>Show Registered</label>
-          <label className="switch">
-            <input
-              type="checkbox"
-              id="toggle-registered"
-              onChange={() => setShowRegistered(!showRegistered)}
-            />
-            <span className="slider round"></span>
-          </label>
-        </div>
-        {/* End new toggle button */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: 'min(18vw, 220px)',
+              maxWidth: '100%',
+              padding: '28px 24px 36px',
+              background: 'rgba(16, 23, 34, 0.92)',
+              borderLeft: '1px solid rgba(198, 218, 236, 0.18)',
+              boxShadow: '-12px 0 28px rgba(10, 14, 28, 0.35)',
+              color: '#e0f2fd',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px',
+              backdropFilter: 'blur(16px)',
+              transform: `translateX(${isHistoryPanelVisible ? '0' : '110%'})`,
+              transition: 'transform 620ms cubic-bezier(0.23, 1, 0.32, 1)',
+              zIndex: 780,
+              pointerEvents: isHistoryPanelVisible ? 'auto' : 'none'
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 600, letterSpacing: '0.04em' }}>
+                History
+              </h2>
+              <p style={{ marginTop: '6px', color: '#94aacd', fontSize: '0.9rem' }}>
+                Recent operational events.
+              </p>
+            </div>
 
-        <button
-          onClick={() => {
-            // Reset to full range if needed, or trigger re-cluster explicitly
-            setTimeL(minTimestamp);
-            setTimeR(maxTimestamp);
-            const mn : any = document.getElementById("min-timestamp");
-            const mx : any = document.getElementById("max-timestamp");
-            mn.value = minTimestamp;
-            mx.value = maxTimestamp;
-
-            setShowRegistered(true);
-            const toggler : any = document.getElementById("toggle-registered");
-            toggler.checked = true;
-          }}
-          style={{
-            padding: '8px 12px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            color: 'white',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '0.9em',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'; }}
-        >
-          Reset Filters
-        </button>
-      </div>
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {[
+                { title: 'Log #1', body: 'Intercepted AIS anomaly from vessel 78211 at 06:42Z.' },
+                { title: 'Log #2', body: 'Weather front moved east; re-tasked patrol drone Alpha-3.' },
+                { title: 'Log #3', body: 'Flagged unregistered contact for further inspection.' }
+              ].map((log, idx) => (
+                <div
+                  key={log.title + idx}
+                  style={{
+                    borderRadius: '14px',
+                    padding: '12px 14px',
+                    backgroundColor: 'rgba(22, 30, 46, 0.85)',
+                    border: '1px solid rgba(198, 218, 236, 0.18)',
+                    boxShadow: '0 14px 20px rgba(12, 18, 32, 0.32)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}
+                >
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e8f3ff' }}>{log.title}</span>
+                  <span style={{ fontSize: '0.82rem', color: '#b7c9e4', lineHeight: 1.35 }}>{log.body}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Agent Panel */}
           <AgentPanel open={isAgentPanelOpen} point={agentPoint} onClose={() => setIsAgentPanelOpen(false)} />
