@@ -223,24 +223,42 @@ const Sidebar = () => {
     [dragProgress, dragPointerProgress]
   );
 
+  const handleOffset = useMemo(() => {
+    if (isOpen) {
+      return { x: 0, y: '50%' };
+    }
+    if (isDragging) {
+      return {
+        x: 16 + dragProgress * MAX_SIDEBAR_WIDTH,
+        y: `${dragPointerProgress * 100}%`,
+      };
+    }
+    return { x: 16, y: '50%' };
+  }, [dragProgress, isDragging, isOpen]);
+
   const shouldShowPreview = (isDragging || (!isOpen && dragProgress > 0));
 
   return (
     <>
       <div
-        className="fixed inset-y-0 left-0 z-[1210] w-8 cursor-ew-resize"
+        className="fixed inset-y-0 z-[1210] flex items-center cursor-ew-resize transition-opacity duration-200"
         onPointerDown={handlePointerDown}
         style={{
           pointerEvents: isOpen ? 'none' : 'auto',
           touchAction: 'none',
+          opacity: isOpen ? 0 : isDragging ? 0.6 : 1,
+          transform: `translate(${handleOffset.x}px, calc(${handleOffset.y} - 50%))`,
+          willChange: 'transform, opacity',
         }}
-      />
-
-      {!isOpen && !isDragging && (
-        <div className="fixed inset-y-0 left-0 z-[1205] flex items-center pointer-events-none">
-          <div className="ml-1 w-1.5 h-20 rounded-full bg-[#4662ab66] blur-[0.3px]" />
-        </div>
-      )}
+      >
+        <img
+          src="/anchor-arrow-blue.png"
+          alt="Open sidebar"
+          className="h-16 w-auto select-none object-contain drop-shadow-[0_0_18px_rgba(70,98,171,0.36)]"
+          style={{ transform: 'rotate(-90deg)' }}
+          draggable={false}
+        />
+      </div>
 
       {shouldShowPreview && (
         <div
