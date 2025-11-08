@@ -54,6 +54,54 @@ const HomePage: React.FC = () => {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isReportPanelVisible, setIsReportPanelVisible] = useState(false);
   const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
+  const [agentMessages, setAgentMessages] = useState<
+    { id: string; role: 'system' | 'user'; content: string; timestamp: Date }[]
+  >([
+    {
+      id: 'sys-seed',
+      role: 'system',
+      content: 'Agent online. Ask a question to begin.',
+      timestamp: new Date()
+    }
+  ]);
+  const [agentInput, setAgentInput] = useState('');
+  const historyEntries = useMemo(
+    () =>
+      [
+        { id: 'txn-3', timestamp: '2025-11-08T06:42:00Z' },
+        { id: 'txn-2', timestamp: '2025-11-08T06:15:00Z' },
+        { id: 'txn-1', timestamp: '2025-11-08T05:52:30Z' }
+      ].sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      ),
+    []
+  );
+  const handleAgentSubmit = useCallback(() => {
+    const trimmed = agentInput.trim();
+    if (!trimmed) return;
+
+    const now = new Date();
+    const userMessage = {
+      id: `user-${now.getTime()}`,
+      role: 'user' as const,
+      content: trimmed,
+      timestamp: now
+    };
+
+    setAgentMessages((prev) => [...prev, userMessage]);
+    setAgentInput('');
+
+    window.setTimeout(() => {
+      const response = {
+        id: `agent-${Date.now()}`,
+        role: 'system' as const,
+        content: 'Acknowledged. Compiling response...',
+        timestamp: new Date()
+      };
+      setAgentMessages((prev) => [...prev, response]);
+    }, 600);
+  }, [agentInput]);
+
 
   // Agent panel state
   const [agentPoint, setAgentPoint] = useState<AgentPoint | null>(null);
@@ -268,6 +316,10 @@ const HomePage: React.FC = () => {
     }, 240);
 
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    return undefined;
   }, []);
 
   // Re-cluster whenever vesselData changes
@@ -673,16 +725,16 @@ const HomePage: React.FC = () => {
               top: 0,
               bottom: 0,
               right: 0,
-              width: 'min(18vw, 220px)',
+              width: 'min(32vw, 420px)',
               maxWidth: '100%',
               padding: '28px 24px 36px',
               background: 'rgba(16, 23, 34, 0.92)',
               borderLeft: '1px solid rgba(198, 218, 236, 0.18)',
               boxShadow: '-12px 0 28px rgba(10, 14, 28, 0.35)',
               color: '#e0f2fd',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '18px',
+              display: 'grid',
+              gridTemplateRows: 'auto 1fr',
+              gap: '20px',
               backdropFilter: 'blur(16px)',
               transform: `translateX(${isHistoryPanelVisible ? '0' : '110%'})`,
               transition: 'transform 620ms cubic-bezier(0.23, 1, 0.32, 1)',
@@ -690,38 +742,171 @@ const HomePage: React.FC = () => {
               pointerEvents: isHistoryPanelVisible ? 'auto' : 'none'
             }}
           >
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 600, letterSpacing: '0.04em' }}>
-                History
-              </h2>
-              <p style={{ marginTop: '6px', color: '#94aacd', fontSize: '0.9rem' }}>
-                Recent operational events.
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ margin: 0, color: '#94aacd', fontSize: '0.9rem' }}>
+                Transaction History
               </p>
+
+              <div
+                style={{
+                  borderRadius: '18px',
+                  border: '1px solid rgba(198, 218, 236, 0.16)',
+                  padding: '16px',
+                  backgroundColor: 'rgba(22, 30, 46, 0.75)',
+                  display: 'grid',
+                  gap: '12px',
+                  maxHeight: '220px',
+                  overflowY: 'auto'
+                }}
+              >
+                {historyEntries.map((entry, idx) => (
+                  <div
+                    key={entry.id}
+                    style={{
+                      borderRadius: '14px',
+                      padding: '12px 14px',
+                      backgroundColor: 'rgba(27, 36, 58, 0.85)',
+                      border: '1px solid rgba(198, 218, 236, 0.18)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e8f3ff' }}>
+                      {`Transaction #${idx + 1}`}
+                    </span>
+                    <span style={{ fontSize: '0.82rem', color: '#b7c9e4', lineHeight: 1.35 }}>
+                      {new Date(entry.timestamp).toLocaleString(undefined, {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {[
-                { title: 'Log #1', body: 'Intercepted AIS anomaly from vessel 78211 at 06:42Z.' },
-                { title: 'Log #2', body: 'Weather front moved east; re-tasked patrol drone Alpha-3.' },
-                { title: 'Log #3', body: 'Flagged unregistered contact for further inspection.' }
-              ].map((log, idx) => (
-                <div
-                  key={log.title + idx}
-                  style={{
-                    borderRadius: '14px',
-                    padding: '12px 14px',
-                    backgroundColor: 'rgba(22, 30, 46, 0.85)',
-                    border: '1px solid rgba(198, 218, 236, 0.18)',
-                    boxShadow: '0 14px 20px rgba(12, 18, 32, 0.32)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '6px'
+            <div
+              style={{
+                borderRadius: '20px',
+                border: '1px solid rgba(198, 218, 236, 0.18)',
+                backgroundColor: 'rgba(18, 24, 38, 0.9)',
+                padding: '18px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}
+            >
+              <div style={{ color: '#94aacd', fontSize: '0.9rem', fontWeight: 500 }}>Agent Chat</div>
+
+              <div
+                style={{
+                  flex: 1,
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  paddingRight: '4px'
+                }}
+              >
+                {agentMessages.length === 0 ? (
+                  <div
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      backgroundColor: 'rgba(27, 36, 58, 0.75)',
+                      color: '#a4b8d6',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Start a conversation with the agent to receive guidance.
+                  </div>
+                ) : (
+                  agentMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      style={{
+                        alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                        maxWidth: '80%',
+                        padding: '10px 14px',
+                        borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                        background: msg.role === 'user' ? 'rgba(70, 98, 171, 0.45)' : 'rgba(27, 36, 58, 0.8)',
+                        border: '1px solid rgba(198, 218, 236, 0.15)',
+                        color: '#eaf3ff',
+                        fontSize: '0.9rem',
+                        lineHeight: 1.4
+                      }}
+                    >
+                      <div>{msg.content}</div>
+                      <div
+                        style={{
+                          fontSize: '0.65rem',
+                          marginTop: '6px',
+                          color: '#a8bbdc',
+                          textAlign: msg.role === 'user' ? 'right' : 'left'
+                        }}
+                      >
+                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAgentSubmit();
+                }}
+                style={{ display: 'flex', gap: '10px' }}
+              >
+                <input
+                  type="text"
+                  value={agentInput}
+                  onChange={(e) => setAgentInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAgentSubmit();
+                    }
                   }}
+                  placeholder="Type a message..."
+                  style={{
+                    flex: 1,
+                    borderRadius: '999px',
+                    border: '1px solid rgba(198, 218, 236, 0.25)',
+                    background: 'rgba(18, 24, 38, 0.95)',
+                    padding: '12px 18px',
+                    color: '#e0f2fd',
+                    fontSize: '0.95rem',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    borderRadius: '999px',
+                    padding: '0 22px',
+                    border: 'none',
+                    background: agentInput.trim()
+                      ? 'linear-gradient(135deg, #4662ab, #5f7bda)'
+                      : 'rgba(70, 98, 171, 0.4)',
+                    color: '#f4f8ff',
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    cursor: agentInput.trim() ? 'pointer' : 'not-allowed'
+                  }}
+                  disabled={!agentInput.trim()}
                 >
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e8f3ff' }}>{log.title}</span>
-                  <span style={{ fontSize: '0.82rem', color: '#b7c9e4', lineHeight: 1.35 }}>{log.body}</span>
-                </div>
-              ))}
+                  Send
+                </button>
+              </form>
             </div>
           </div>
 

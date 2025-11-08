@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 
 interface User {
   sub: string;
@@ -27,21 +28,49 @@ export function useAuth(): UseAuthReturn {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const supabase = getSupabaseBrowserClient();
+
+    const populateFromSession = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        const response = await fetch('/api/auth/me');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+
+        const { data, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          throw sessionError;
         }
-        
-        const data = await response.json();
-        setUser(data.user);
+
+        const sessionUser = data.session?.user;
+
+        if (sessionUser) {
+          const mappedUser: User = {
+            sub: sessionUser.id,
+            name:
+              sessionUser.user_metadata?.full_name ||
+              sessionUser.user_metadata?.name ||
+              sessionUser.email ||
+              'User',
+            email: sessionUser.email ?? '',
+            picture:
+              sessionUser.user_metadata?.avatar_url ||
+              sessionUser.user_metadata?.picture,
+            roles:
+              sessionUser.app_metadata?.roles ||
+              (sessionUser.user_metadata?.roles as string[]) ||
+              [],
+            permissions:
+              (sessionUser.app_metadata?.permissions as string[]) ||
+              (sessionUser.user_metadata?.permissions as string[]) ||
+              [],
+          };
+
+          setUser(mappedUser);
+        } else {
+          setUser(null);
+        }
       } catch (err) {
-        console.error('Error fetching user:', err);
+        console.error('Error loading Supabase session:', err);
         setError(err instanceof Error ? err : new Error('Unknown error'));
         setUser(null);
       } finally {
@@ -49,7 +78,41 @@ export function useAuth(): UseAuthReturn {
       }
     };
 
-    fetchUser();
+    populateFromSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const sessionUser = session.user;
+        setUser({
+          sub: sessionUser.id,
+          name:
+            sessionUser.user_metadata?.full_name ||
+            sessionUser.user_metadata?.name ||
+            sessionUser.email ||
+            'User',
+          email: sessionUser.email ?? '',
+          picture:
+            sessionUser.user_metadata?.avatar_url ||
+            sessionUser.user_metadata?.picture,
+          roles:
+            sessionUser.app_metadata?.roles ||
+            (sessionUser.user_metadata?.roles as string[]) ||
+            [],
+          permissions:
+            (sessionUser.app_metadata?.permissions as string[]) ||
+            (sessionUser.user_metadata?.permissions as string[]) ||
+            [],
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Helper functions for role and permission checking
