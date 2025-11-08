@@ -22,15 +22,6 @@ interface NavItem {
 
 const MAX_SIDEBAR_WIDTH = 280;
 
-interface Particle {
-  id: number;
-  offset: number;
-  spread: number;
-  delay: number;
-  duration: number;
-  size: number;
-}
-
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
@@ -51,13 +42,10 @@ const Sidebar = () => {
   const [dragProgress, setDragProgress] = useState(0);
   const [showRipple, setShowRipple] = useState(false);
   const [showContent, setShowContent] = useState(false);
-  const [particles, setParticles] = useState<Particle[]>([]);
 
   const moveListener = useRef<(event: PointerEvent) => void>();
   const upListener = useRef<(event: PointerEvent) => void>();
   const rippleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const splashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const previousOpen = useRef<boolean>(isOpen);
 
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
@@ -91,9 +79,6 @@ const Sidebar = () => {
       if (rippleTimer.current) {
         clearTimeout(rippleTimer.current);
       }
-      if (splashTimer.current) {
-        clearTimeout(splashTimer.current);
-      }
     };
   }, [cleanupListeners]);
 
@@ -115,32 +100,6 @@ const Sidebar = () => {
       setShowContent(false);
     }
   }, [isOpen]);
-
-  const emitSplash = useCallback(() => {
-    const count = 3 + Math.floor(Math.random() * 3);
-    const generated: Particle[] = Array.from({ length: count }, (_, idx) => ({
-      id: Date.now() + idx + Math.random(),
-      offset: Math.round((Math.random() - 0.5) * 80),
-      spread: 36 + Math.random() * 42,
-      delay: Math.round(Math.random() * 90),
-      duration: 700 + Math.random() * 260,
-      size: 6 + Math.random() * 6,
-    }));
-    setParticles(generated);
-    if (splashTimer.current) {
-      clearTimeout(splashTimer.current);
-    }
-    splashTimer.current = setTimeout(() => {
-      setParticles([]);
-    }, 1100);
-  }, []);
-
-  useEffect(() => {
-    if (previousOpen.current && !isOpen) {
-      emitSplash();
-    }
-    previousOpen.current = isOpen;
-  }, [emitSplash, isOpen]);
 
   const finalizeDrag = useCallback(
     (progress: number) => {
@@ -252,27 +211,6 @@ const Sidebar = () => {
         </div>
       )}
 
-      {particles.length > 0 && (
-        <div className="fixed inset-y-0 left-0 z-[1204] pointer-events-none">
-          {particles.map((particle) => (
-            <span
-              key={particle.id}
-              className="sidebar-particle"
-              style={
-                {
-                  top: `calc(50% + ${particle.offset}px)`,
-                  width: `${particle.size}px`,
-                  height: `${particle.size}px`,
-                  animationDuration: `${particle.duration}ms`,
-                  animationDelay: `${particle.delay}ms`,
-                  ['--sx']: `${particle.spread}px`,
-                } as React.CSSProperties
-              }
-            />
-          ))}
-        </div>
-      )}
-
       <aside
         className="fixed inset-y-0 left-0 z-[1190] overflow-hidden transition-[width] duration-[420ms] ease-out"
         style={{
@@ -291,19 +229,9 @@ const Sidebar = () => {
             }`}
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <img
-                    src="/nautilink-logo-white.png"
-                    alt="Nautilink"
-                    className="w-9 h-9 rounded-md border border-[rgba(224,242,253,0.18)]"
-                  />
-                  <span className="absolute -inset-1 rounded-md border border-[rgba(70,98,171,0.35)] opacity-30" />
-                </div>
-                <span className="text-xl font-semibold tracking-[0.35em] uppercase">
-                  Nautilink
-                </span>
-              </div>
+              <span className="text-xl font-semibold tracking-[0.35em] uppercase">
+                Nautilink
+              </span>
               <button
                 aria-label="Close sidebar"
                 onClick={handleClose}
