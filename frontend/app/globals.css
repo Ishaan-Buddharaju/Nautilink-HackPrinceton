@@ -217,50 +217,44 @@ body {
 .landing-loader__progress-track {
   position: absolute;
   inset: 0;
-  display: flex;
-  gap: 8px;
   padding: 2px;
 }
 
-.landing-loader__progress-chunk {
-  flex: 1;
+.landing-loader__progress-bar {
+  display: block;
+  height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(198, 218, 236, 0.2) 0%, rgba(224, 242, 253, 0.65) 60%, rgba(198, 218, 236, 0.2) 100%);
+  background: linear-gradient(90deg, rgba(198, 218, 236, 0.25) 0%, rgba(224, 242, 253, 0.85) 50%, rgba(198, 218, 236, 0.25) 100%);
+  box-shadow: inset 0 0 12px rgba(224, 242, 253, 0.45);
   opacity: 0;
-  transform: scaleX(0.2);
-  transform-origin: left center;
-  animation: landingProgressPulse 3s ease-in-out infinite;
+  width: 0%;
+  animation: landingProgressFill 3s ease-in-out infinite;
 }
 
-.landing-loader__progress-chunk--one { animation-delay: 0.05s; }
-.landing-loader__progress-chunk--two { animation-delay: 0.36s; }
-.landing-loader__progress-chunk--three { animation-delay: 0.82s; }
-.landing-loader__progress-chunk--four { animation-delay: 1.48s; }
-
-@keyframes landingProgressPulse {
+@keyframes landingProgressFill {
   0% {
     opacity: 0;
-    transform: scaleX(0.15);
+    width: 0%;
   }
   18% {
-    opacity: 0.9;
-    transform: scaleX(0.75);
+    opacity: 0.85;
+    width: 40%;
   }
   38% {
     opacity: 1;
-    transform: scaleX(1);
+    width: 70%;
   }
   62% {
-    opacity: 0.8;
-    transform: scaleX(1.12);
+    opacity: 0.9;
+    width: 100%;
   }
-  85% {
-    opacity: 0.4;
-    transform: scaleX(0.9);
+  82% {
+    opacity: 0.6;
+    width: 100%;
   }
   100% {
     opacity: 0;
-    transform: scaleX(0.2);
+    width: 0%;
   }
 }
 
