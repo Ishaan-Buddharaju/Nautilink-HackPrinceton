@@ -279,6 +279,15 @@ const HomePage: React.FC = () => {
   const [timeL, setTimeL] = useState<number>(0);
   const [timeR, setTimeR] = useState<number>(1e15);
 
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    registered: 'all', // 'all', 'registered', 'unregistered'
+    gearType: 'all', // 'all', 'trawler', 'longliner', 'purse_seiner'
+    flag: 'all', // 'all' or specific country
+    minSustainability: 0, // 0-100
+  });
+
   const markerSvg = `<svg viewBox="-4 0 36 36">
     <path fill="currentColor" d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"></path>
     <circle fill="black" cx="14" cy="14" r="7"></circle>
@@ -489,10 +498,39 @@ const HomePage: React.FC = () => {
     return undefined;
   }, []);
 
-  // Re-cluster whenever vesselData changes
+  // Filter vessel data based on filters
+  const filteredVesselData = useMemo(() => {
+    return vesselData.filter(vessel => {
+      // Registration filter
+      if (filters.registered === 'registered' && !vessel.registered) return false;
+      if (filters.registered === 'unregistered' && vessel.registered) return false;
+      
+      // Gear type filter
+      if (filters.gearType !== 'all') {
+        const gearLower = vessel.geartype?.toLowerCase() || '';
+        if (filters.gearType === 'trawler' && !gearLower.includes('trawl')) return false;
+        if (filters.gearType === 'longliner' && !gearLower.includes('longlin')) return false;
+        if (filters.gearType === 'purse_seiner' && !gearLower.includes('purse')) return false;
+      }
+      
+      // Flag filter
+      if (filters.flag !== 'all' && vessel.flag !== filters.flag) return false;
+      
+      return true;
+    });
+  }, [vesselData, filters]);
+
+  // Filter fishing zones based on sustainability
+  const filteredFishingZones = useMemo(() => {
+    return fishingZones.filter(zone => {
+      return zone.sustainability_score.total_score >= filters.minSustainability;
+    });
+  }, [filters.minSustainability]);
+
+  // Re-cluster whenever filtered data changes
   useEffect(() => {
-    clusterMarkers(vesselData);
-  }, [vesselData, clusterMarkers]);
+    clusterMarkers(filteredVesselData);
+  }, [filteredVesselData, clusterMarkers]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -564,7 +602,7 @@ const HomePage: React.FC = () => {
 
           showGraticules={true}
 
-          htmlElementsData={[...fishingZones, ...clusteredData]}
+          htmlElementsData={[...filteredFishingZones, ...clusteredData]}
           htmlElement={(d: any) => {
             const el = document.createElement('div');
             el.style.pointerEvents = 'auto';
@@ -727,6 +765,165 @@ const HomePage: React.FC = () => {
           onZoom={() => { handleZoom(); }}
         />
           </div>
+
+          {/* Filter Toggle Button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              zIndex: 1000,
+              padding: '12px 20px',
+              background: showFilters ? '#4662ab' : 'rgba(23, 23, 23, 0.9)',
+              color: '#e0f2fd',
+              border: '1px solid rgba(198, 218, 236, 0.3)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            🔍 Filters {showFilters ? '▼' : '▶'}
+          </button>
+
+          {/* Filter Panel */}
+          {showFilters && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '70px',
+                right: '20px',
+                zIndex: 1000,
+                width: '320px',
+                maxHeight: '80vh',
+                overflowY: 'auto',
+                background: 'rgba(23, 23, 23, 0.95)',
+                border: '1px solid rgba(198, 218, 236, 0.3)',
+                borderRadius: '12px',
+                padding: '20px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                backdropFilter: 'blur(16px)',
+              }}
+            >
+              <h3 style={{ margin: '0 0 16px 0', color: '#e0f2fd', fontSize: '16px', fontWeight: '600' }}>
+                Filter Vessels & Zones
+              </h3>
+
+              {/* Registration Status */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
+                  REGISTRATION STATUS
+                </label>
+                <select
+                  value={filters.registered}
+                  onChange={(e) => setFilters({ ...filters, registered: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'rgba(70, 98, 171, 0.15)',
+                    border: '1px solid rgba(198, 218, 236, 0.3)',
+                    borderRadius: '6px',
+                    color: '#e0f2fd',
+                    fontSize: '13px',
+                  }}
+                >
+                  <option value="all">All Vessels</option>
+                  <option value="registered">Registered Only</option>
+                  <option value="unregistered">Unregistered Only</option>
+                </select>
+              </div>
+
+              {/* Gear Type */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
+                  GEAR TYPE
+                </label>
+                <select
+                  value={filters.gearType}
+                  onChange={(e) => setFilters({ ...filters, gearType: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'rgba(70, 98, 171, 0.15)',
+                    border: '1px solid rgba(198, 218, 236, 0.3)',
+                    borderRadius: '6px',
+                    color: '#e0f2fd',
+                    fontSize: '13px',
+                  }}
+                >
+                  <option value="all">All Types</option>
+                  <option value="trawler">Trawler</option>
+                  <option value="longliner">Longliner</option>
+                  <option value="purse_seiner">Purse Seiner</option>
+                </select>
+              </div>
+
+              {/* Sustainability Score */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
+                  MIN SUSTAINABILITY SCORE: {filters.minSustainability}
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={filters.minSustainability}
+                  onChange={(e) => setFilters({ ...filters, minSustainability: parseInt(e.target.value) })}
+                  style={{
+                    width: '100%',
+                    accentColor: '#4662ab',
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '11px', color: '#9fb7d8' }}>
+                  <span>0</span>
+                  <span>50</span>
+                  <span>100</span>
+                </div>
+              </div>
+
+              {/* Results Count */}
+              <div style={{
+                padding: '12px',
+                background: 'rgba(70, 98, 171, 0.2)',
+                border: '1px solid rgba(198, 218, 236, 0.3)',
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: '#e0f2fd',
+              }}>
+                <div style={{ marginBottom: '4px' }}>
+                  <strong>Vessels:</strong> {filteredVesselData.length} / {vesselData.length}
+                </div>
+                <div>
+                  <strong>Zones:</strong> {filteredFishingZones.length} / {fishingZones.length}
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                onClick={() => setFilters({ registered: 'all', gearType: 'all', flag: 'all', minSustainability: 0 })}
+                style={{
+                  width: '100%',
+                  marginTop: '16px',
+                  padding: '10px',
+                  background: 'rgba(252, 3, 3, 0.2)',
+                  border: '1px solid rgba(252, 3, 3, 0.5)',
+                  borderRadius: '6px',
+                  color: '#fc0303',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                Reset Filters
+              </button>
+            </div>
+          )}
 
           {/* Vessel information popup */}
       {hoveredVessel && popupPosition && (

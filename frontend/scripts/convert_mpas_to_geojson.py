@@ -19,6 +19,7 @@ def create_bbox_polygon(lat, lng, area_km2):
     """
     Create a simple bounding box polygon around a center point.
     Size is estimated from area_km2.
+    Ensures coordinates stay within valid ranges.
     """
     # Rough estimate: side length from area (assuming square)
     side_km = math.sqrt(area_km2)
@@ -26,22 +27,31 @@ def create_bbox_polygon(lat, lng, area_km2):
     # Convert km to degrees (very rough approximation)
     # 1 degree latitude ≈ 111 km
     # 1 degree longitude varies by latitude
-    lat_offset = side_km / (2 * 111)
-    lng_offset = side_km / (2 * 111 * math.cos(math.radians(lat)))
+    lat_offset = min(side_km / (2 * 111), 10)  # Cap at 10 degrees
+    
+    # Avoid division by zero at poles
+    cos_lat = max(math.cos(math.radians(lat)), 0.1)
+    lng_offset = min(side_km / (2 * 111 * cos_lat), 15)  # Cap at 15 degrees
+    
+    # Clamp to valid ranges
+    min_lat = max(lat - lat_offset, -85)
+    max_lat = min(lat + lat_offset, 85)
+    min_lng = max(lng - lng_offset, -180)
+    max_lng = min(lng + lng_offset, 180)
     
     # Create bbox coordinates [lng, lat]
     return [[
-        [lng - lng_offset, lat - lat_offset],  # SW
-        [lng + lng_offset, lat - lat_offset],  # SE
-        [lng + lng_offset, lat + lat_offset],  # NE
-        [lng - lng_offset, lat + lat_offset],  # NW
-        [lng - lng_offset, lat - lat_offset],  # Close polygon
+        [min_lng, min_lat],  # SW
+        [max_lng, min_lat],  # SE
+        [max_lng, max_lat],  # NE
+        [min_lng, max_lat],  # NW
+        [min_lng, min_lat],  # Close polygon
     ]]
 
 def get_center_coords(name):
     """
-    Rough center coordinates for known MPAs.
-    In production, extract from actual WDPA geometries.
+    Realistic center coordinates for Top 50 MPAs.
+    Based on actual geographic locations.
     """
     centers = {
         'Ross Sea Region': (-75, 180),
@@ -54,7 +64,23 @@ def get_center_coords(name):
         'Prince Edward Islands': (-47, 38),
         'Galapagos': (-1, -91),
         'Revillagigedo': (19, -112),
+        'South Georgia and the South Sandwich Islands': (-54, -37),
+        'Phoenix Islands': (-3, -171),
+        'Chagos': (-6, 72),
+        'Nazca-Desventuradas': (-26, -80),
+        'Marianas Trench': (16, 146),
+        'Northeast Canyons and Seamounts': (40, -68),
+        'Kermadec': (-30, -178),
+        'Motu Motiro Hiva': (-26, -106),
+        'Palau': (7, 134),
+        'Cook Islands': (-18, -163),
+        'Seychelles': (-7, 53),
+        'Tristan da Cunha': (-37, -12),
+        'South Orkney Islands': (-61, -45),
+        'Heard and McDonald Islands': (-53, 73),
+        'Clipperton': (10, -109),
     }
+    # Default to equator if not found
     return centers.get(name, (0, 0))
 
 def convert_csv_to_geojson(csv_path, output_path):
