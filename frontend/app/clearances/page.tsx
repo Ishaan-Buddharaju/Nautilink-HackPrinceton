@@ -30,7 +30,7 @@ export default function Clearances() {
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-white mb-4">You need to be logged in to view clearances.</p>
           <Link 
-            href="/auth/login" 
+                href="/login" 
             className="inline-block px-4 py-2 bg-white hover:bg-gray-300 text-black rounded transition-colors"
           >
             Login
