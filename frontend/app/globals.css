@@ -109,6 +109,42 @@ body {
   }
 }
 
+.sidebar-particle {
+  position: absolute;
+  left: 0;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 30% 30%, #e0f2fd 0%, #4662ab 70%);
+  box-shadow: 0 6px 18px rgba(70, 98, 171, 0.35);
+  opacity: 0;
+  transform: translate(-14px, 0) scale(0.6);
+  animation-name: sidebarSplashLaunch;
+  animation-fill-mode: forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes sidebarSplashLaunch {
+  0% {
+    opacity: 0;
+    transform: translate(-12px, 0) scale(0.55);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(calc(var(--sx, 38px) * 0.3), -12px) scale(0.9);
+  }
+  45% {
+    opacity: 0.95;
+    transform: translate(calc(var(--sx, 38px) * 0.75), -28px) scale(1.05);
+  }
+  70% {
+    opacity: 0.85;
+    transform: translate(calc(var(--sx, 38px)), 20px) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--sx, 38px) + 6px), 180px) scale(0.65);
+  }
+}
+
 /* Keyframes for toast/panel entrance */
 @keyframes fadeInDown {
   0% { opacity: 0; transform: translateY(-6px); }
