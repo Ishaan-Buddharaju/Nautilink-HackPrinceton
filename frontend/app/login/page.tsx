@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 import { FiLogIn } from 'react-icons/fi';
@@ -19,6 +19,21 @@ const providers = [
   { id: 'login-gov', label: 'Login.gov SSO', icon: RiGovernmentFill },
 ] as const;
 
+const accentDots = [
+  { top: '12%', left: '12%', size: 6, outline: false },
+  { top: '6%', left: '26%', size: 4, outline: true },
+  { top: '18%', left: '38%', size: 5, outline: false },
+  { top: '10%', left: '52%', size: 4, outline: true },
+  { top: '4%', left: '64%', size: 3, outline: false },
+  { top: '16%', left: '72%', size: 6, outline: true },
+  { top: '8%', left: '84%', size: 4, outline: false },
+  { top: '20%', left: '90%', size: 3, outline: true },
+  { top: '14%', left: '18%', size: 3, outline: true },
+  { top: '22%', left: '46%', size: 4, outline: false },
+  { top: '26%', left: '68%', size: 5, outline: true },
+  { top: '24%', left: '30%', size: 3, outline: false },
+];
+
 type ProviderId = (typeof providers)[number]['id'];
 
 export default function LoginPage() {
@@ -28,6 +43,10 @@ export default function LoginPage() {
   const [loadingProvider, setLoadingProvider] = useState<ProviderId | null>(null);
   const globeEl = useRef<any>(null);
   const [landData, setLandData] = useState<{ features: any[] }>({ features: [] });
+  const [wavePhase, setWavePhase] = useState<'initial' | 'settled' | 'exit'>('initial');
+  const [transitioning, setTransitioning] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -46,23 +65,84 @@ export default function LoginPage() {
       });
   }, []);
 
-  const handleOAuthLogin = async (provider: ProviderId) => {
-    setError(null);
-    setLoadingProvider(provider);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setWavePhase('settled');
+    }, 80);
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
+    return () => window.clearTimeout(timer);
+  }, []);
 
-    if (error) {
-      setError(error.message);
-      setLoadingProvider(null);
-      return;
-    }
-  };
+  const triggerWaveExit = useCallback(() => {
+    if (transitioning) return false;
+    setTransitioning(true);
+    setWavePhase('exit');
+    return true;
+  }, [transitioning]);
+
+  const resetWaveIfNeeded = useCallback(() => {
+    setTransitioning(false);
+    setWavePhase('settled');
+  }, []);
+
+  const handleOAuthLogin = useCallback(
+    async (provider: ProviderId) => {
+      if (transitioning) return;
+      setError(null);
+      setLoadingProvider(provider);
+
+      const started = triggerWaveExit();
+
+      if (provider !== 'google' && provider !== 'azure') {
+        window.setTimeout(() => {
+          setError('This secure login option requires an approved hardware credential. Contact your administrator to proceed.');
+          setLoadingProvider(null);
+          resetWaveIfNeeded();
+        }, 320);
+        return;
+      }
+
+      const proceed = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: `${window.location.origin}/dashboard`,
+          },
+        });
+
+        if (error) {
+          setError(error.message);
+          setLoadingProvider(null);
+          resetWaveIfNeeded();
+        }
+      };
+
+      if (started) {
+        window.setTimeout(() => {
+          void proceed();
+        }, 480);
+      } else {
+        void proceed();
+      }
+    },
+    [resetWaveIfNeeded, supabase, transitioning, triggerWaveExit]
+  );
+
+  const handleEmailLogin = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (transitioning) return;
+      setError(null);
+      const started = triggerWaveExit();
+      if (!started) return;
+
+      window.setTimeout(() => {
+        setError('Email and password authentication is provisioned through your agency. Please use an approved identity provider above.');
+        resetWaveIfNeeded();
+      }, 520);
+    },
+    [resetWaveIfNeeded, transitioning, triggerWaveExit]
+  );
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#0f1624] text-[#e0f2fd]">
@@ -71,38 +151,39 @@ export default function LoginPage() {
         style={{
           right: '-45%',
           width: '120%',
-          transform: 'translateY(-50%)',
+          height: '120%',
           top: '50%',
-          height: '120%'
+          transform: 'translateY(-50%)'
         }}
       >
-        <Globe
-          ref={globeEl}
-          globeImageUrl={null}
-          bumpImageUrl={null}
-          backgroundImageUrl={null}
-          showGlobe={false}
-          showAtmosphere={false}
-          backgroundColor="rgba(15,22,36,0)"
-          polygonsData={landData.features}
-          polygonCapColor={() => 'rgba(130, 130, 130, 0.45)'}
-          polygonSideColor={() => 'rgba(0,0,0,0)'}
-          polygonAltitude={0}
-          polygonStrokeColor={() => 'rgba(255,255,255,0.35)'}
-          showGraticules
-          htmlElementsData={[]}
-          onGlobeReady={() => {
-            if (globeEl.current) {
-              globeEl.current.pointOfView({ lat: 25, lng: 0, altitude: 0.6 });
-              globeEl.current.controls().autoRotate = true;
-              globeEl.current.controls().autoRotateSpeed = 1;
-            }
-          }}
-          style={{ width: '100%', height: '100%' }}
-        />
+        <div className="h-full w-full">
+          <Globe
+            ref={globeEl}
+            globeImageUrl={null}
+            bumpImageUrl={null}
+            backgroundImageUrl={null}
+            showGlobe={false}
+            showAtmosphere={false}
+            backgroundColor="rgba(15,22,36,0)"
+            polygonsData={landData.features}
+            polygonCapColor={() => 'rgba(130, 130, 130, 0.45)'}
+            polygonSideColor={() => 'rgba(0,0,0,0)'}
+            polygonAltitude={0}
+            polygonStrokeColor={() => 'rgba(255,255,255,0.35)'}
+            showGraticules
+            htmlElementsData={[]}
+            onGlobeReady={() => {
+              if (globeEl.current) {
+                globeEl.current.pointOfView({ lat: 25, lng: 0, altitude: 0.6 });
+                globeEl.current.controls().autoRotate = true;
+                globeEl.current.controls().autoRotateSpeed = 1;
+              }
+            }}
+          />
+        </div>
       </div>
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-12">
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-6 sm:py-10">
         <div className="w-full max-w-lg rounded-3xl border border-[rgba(198,218,236,0.15)] bg-[#141d2d]/95 shadow-[0_30px_60px_rgba(12,20,40,0.45)] p-10 space-y-8 backdrop-blur-md">
         <div className="space-y-3 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[rgba(70,98,171,0.2)]">
@@ -119,7 +200,7 @@ export default function LoginPage() {
             <button
               key={id}
               onClick={() => handleOAuthLogin(id)}
-              disabled={Boolean(loadingProvider)}
+              disabled={Boolean(loadingProvider) || transitioning}
               className={`w-full flex items-center justify-center gap-3 rounded-2xl border border-[rgba(198,218,236,0.2)] px-4 py-3 text-sm font-medium transition-all ${
                 loadingProvider === id
                   ? 'bg-[rgba(70,98,171,0.35)] text-[#c6daec]'
@@ -144,19 +225,24 @@ export default function LoginPage() {
           <span className="flex-1 h-px bg-[rgba(198,218,236,0.15)]" />
         </div>
 
-        <form className="space-y-3">
+        <form className="space-y-3" onSubmit={handleEmailLogin}>
           <input
             type="email"
             placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-2xl border border-[rgba(198,218,236,0.2)] bg-[#10192a] px-4 py-3 text-sm text-[#e0f2fd] placeholder-[#6e82a4] focus:outline-none focus:border-[#4662ab]"
           />
           <input
             type="password"
             placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-2xl border border-[rgba(198,218,236,0.2)] bg-[#10192a] px-4 py-3 text-sm text-[#e0f2fd] placeholder-[#6e82a4] focus:outline-none focus:border-[#4662ab]"
           />
           <button
-            type="button"
+            type="submit"
+            disabled={transitioning}
             className="w-full rounded-2xl bg-gradient-to-r from-[#4662ab] to-[#5f7bda] px-4 py-3 text-sm font-semibold text-[#f4f8ff] shadow-[0_10px_20px_rgba(70,98,171,0.35)] transition hover:brightness-110"
           >
             Log in with Email
@@ -164,6 +250,54 @@ export default function LoginPage() {
         </form>
       </div>
       </div>
+
+      {/* Floating accents */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-20 overflow-hidden transition-transform duration-[900ms] ease-[cubic-bezier(0.19,1,0.22,1)]"
+        style={{
+          transform:
+            wavePhase === 'initial'
+              ? 'translateY(35%)'
+              : wavePhase === 'settled'
+              ? 'translateY(0%)'
+              : 'translateY(-120%)',
+          height: wavePhase === 'exit' ? '120vh' : '16rem'
+        }}
+      >
+        <div className="relative h-full w-full">
+          <div className="absolute inset-x-0 top-0 h-3/5 bg-gradient-to-b from-transparent via-[#0f1a27]/40 to-[#0f1a27]" />
+
+          {accentDots.map(({ top, left, size, outline }, idx) => (
+            <span
+              key={idx}
+              className={`absolute rounded-full ${outline ? 'border border-white/35 bg-transparent' : 'bg-white/60'}`}
+              style={{ top, left, width: size, height: size, opacity: outline ? 0.6 : 0.85 }}
+            />
+          ))}
+
+          <svg viewBox="0 0 1440 200" className="absolute bottom-0 w-full" preserveAspectRatio="none">
+            <path
+              d="M0 130L60 120C120 110 240 90 360 92C480 94 600 118 720 132C840 146 960 148 1080 142C1200 136 1320 124 1380 118L1440 112V200H1380C1320 200 1200 200 1080 200C960 200 840 200 720 200C600 200 480 200 360 200C240 200 120 200 60 200H0Z"
+              fill="#edf3ff"
+            />
+            <path
+              d="M0 150L80 142C160 134 320 118 480 123C640 128 800 154 960 160C1120 166 1280 152 1360 146L1440 140V200H1360C1280 200 1120 200 960 200C800 200 640 200 480 200C320 200 160 200 80 200H0Z"
+              fill="#ffffff"
+              opacity="0.95"
+            />
+            <path
+              d="M0 170L100 164C200 158 400 146 600 148C800 150 1000 166 1200 170C1300 172 1400 170 1440 168V200H0Z"
+              fill="#f7faff"
+              opacity="0.9"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <div
+        className="pointer-events-none absolute inset-0 z-40 bg-white transition-opacity duration-[750ms] ease-out"
+        style={{ opacity: wavePhase === 'exit' ? 1 : 0 }}
+      />
     </div>
   );
 }
