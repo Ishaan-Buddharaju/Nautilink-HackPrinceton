@@ -60,13 +60,8 @@ const HomePage: React.FC = () => {
   // Auth state
   const { user, hasAnyRole } = useAuth();
 
-  // Timestamp slider state
-  const [minTimestamp, setMinTimestamp] = useState<number>(0); // Unix timestamp
-  const [maxTimestamp, setMaxTimestamp] = useState<number>(1e15); // Unix timestamp
   const [timeL, setTimeL] = useState<number>(0);
   const [timeR, setTimeR] = useState<number>(1e15);
-
-  const [showRegistered, setShowRegistered] = useState<Boolean>(true);
 
   const markerSvg = `<svg viewBox="-4 0 36 36">
     <path fill="currentColor" d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"></path>
@@ -97,7 +92,6 @@ const HomePage: React.FC = () => {
 
       const marker = markers[index];
 
-      if(marker.registered && !showRegistered) continue;
       if (!marker.registered && !hasAnyRole(['confidential', 'secret', 'top-secret'])) continue;
 
       const v = new Date(marker.timestamp).getTime();
@@ -195,7 +189,7 @@ const HomePage: React.FC = () => {
     }
 
     setClusteredData(clusters);
-  }, [globeEl, timeL, timeR, showRegistered]);
+  }, [globeEl, timeL, timeR, hasAnyRole]);
 
   const handleZoom = useCallback(() => { // Removed `pov` as it's not used directly from the param
     clusterMarkers(vesselData); // Cluster filtered data
@@ -218,22 +212,11 @@ const HomePage: React.FC = () => {
         // Extract all timestamps and set min/max for the slider
         const timestamps = data.map(v => new Date(v.timestamp).getTime()).sort();
         if (timestamps.length > 0) {
-          setMinTimestamp(timestamps[0]);
-          setMaxTimestamp(timestamps[timestamps.length - 1]);
-          
           setTimeL(timestamps[0]);
           setTimeR(timestamps[timestamps.length - 1]);
-          const mn : any = document.getElementById("min-timestamp");
-          const mx : any = document.getElementById("max-timestamp");
-          mn.value = timestamps[0];
-          mx.value = timestamps[timestamps.length - 1];
-
-          setShowRegistered(true);
-          const toggler : any = document.getElementById("toggle-registered");
-          toggler.checked = true;
         }
 
-        clusterMarkers(vesselData);
+        clusterMarkers(data);
         setIsDataLoaded(true);
         setIsFirstLoad(false);
       }
@@ -293,21 +276,6 @@ const HomePage: React.FC = () => {
       window.removeEventListener('focus', handleFocus);
     };
   }, [fetchData]);
-
-  // Helper to format timestamp for display
-  const formatTimestamp = (timestamp: number) => {
-    return new Date(timestamp).toISOString().split('T')[0];
-  };
-
-  const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>, type: 'min' | 'max') => {
-    const value = parseInt(event.target.value);
-
-    if (type === 'min') {
-      setTimeL(value);
-    } else {
-      setTimeR(value);
-    }
-  };
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -586,97 +554,6 @@ const HomePage: React.FC = () => {
           </button>
         </div>
       )}
-
-      {/* Rounded window for timestamp slider */}
-    
-      <div
-        style={{
-          position: 'fixed',
-          right: '20px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          backgroundColor: 'rgba(23, 23, 23, 0.85)',
-          color: '#e0f2fd',
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 4px 20px rgba(70, 98, 171, 0.22)',
-          zIndex: 1000,
-          maxWidth: '250px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '15px',
-          backdropFilter: 'blur(5px)',
-          border: '1px solid rgba(198, 218, 236, 0.3)'
-        }}
-      >
-        <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1em', textAlign: 'center' }}>Filters</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <label htmlFor="min-timestamp" style={{ fontSize: '0.9em' }}>Start: {formatTimestamp(timeL)}</label>
-          <input
-            type="range"
-            id="min-timestamp"
-            min={minTimestamp}
-            max={maxTimestamp}
-            onChange={(e) => handleSliderChange(e, 'min')}
-            style={{ width: '100%' }}
-          />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <label htmlFor="max-timestamp" style={{ fontSize: '0.9em' }}>End: {formatTimestamp(timeR)}</label>
-          <input
-            type="range"
-            id="max-timestamp"
-            min={minTimestamp}
-            max={maxTimestamp}
-            onChange={(e) => handleSliderChange(e, 'max')}
-            style={{ width: '100%' }}
-          />
-        </div>
-
-        {/* New toggle button for registered markers */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-          <label htmlFor="toggle-registered" style={{ fontSize: '0.9em' }}>Show Registered</label>
-          <label className="switch">
-            <input
-              type="checkbox"
-              id="toggle-registered"
-              onChange={() => setShowRegistered(!showRegistered)}
-            />
-            <span className="slider round"></span>
-          </label>
-        </div>
-        {/* End new toggle button */}
-
-        <button
-          onClick={() => {
-            // Reset to full range if needed, or trigger re-cluster explicitly
-            setTimeL(minTimestamp);
-            setTimeR(maxTimestamp);
-            const mn : any = document.getElementById("min-timestamp");
-            const mx : any = document.getElementById("max-timestamp");
-            mn.value = minTimestamp;
-            mx.value = maxTimestamp;
-
-            setShowRegistered(true);
-            const toggler : any = document.getElementById("toggle-registered");
-            toggler.checked = true;
-          }}
-          style={{
-            padding: '8px 12px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            color: 'white',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '0.9em',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'; }}
-        >
-          Reset Filters
-        </button>
-      </div>
 
           {/* Agent Panel */}
           <AgentPanel open={isAgentPanelOpen} point={agentPoint} onClose={() => setIsAgentPanelOpen(false)} />
