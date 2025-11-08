@@ -1077,6 +1077,18 @@ const HomePage: React.FC = () => {
                   paddingRight: '4px'
                 }}
               >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#7f93b8', fontSize: '0.85rem' }}>
+                  <span
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: '#2eb700',
+                      boxShadow: '0 0 6px rgba(46, 183, 0, 0.6)'
+                    }}
+                  />
+                  <span>Agent online</span>
+                </div>
                 {agentMessages.length === 0 ? (
                   <div
                     style={{
