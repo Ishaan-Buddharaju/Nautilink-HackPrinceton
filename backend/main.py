@@ -4,6 +4,7 @@ from supabase import create_client, Client
 from config import settings
 from auth.router import router as auth_router
 from api.router import router as api_router
+from posts.router import router as posts_router
 
 app = FastAPI(title="Nautilink API", version="1.0.0")
 
@@ -22,6 +23,7 @@ supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_K
 # Include routers
 app.include_router(auth_router)
 app.include_router(api_router)
+app.include_router(posts_router)
 
 
 @app.get("/")
