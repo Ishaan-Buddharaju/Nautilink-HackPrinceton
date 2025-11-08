@@ -11,7 +11,6 @@ import {
   FiFileText,
   FiUser,
   FiShield,
-  FiX,
 } from 'react-icons/fi';
 
 interface NavItem {
@@ -42,10 +41,12 @@ const Sidebar = () => {
   const [dragProgress, setDragProgress] = useState(0);
   const [showRipple, setShowRipple] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [anchorRotated, setAnchorRotated] = useState(false);
 
   const moveListener = useRef<(event: PointerEvent) => void>();
   const upListener = useRef<(event: PointerEvent) => void>();
   const rippleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const anchorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
@@ -79,6 +80,9 @@ const Sidebar = () => {
       if (rippleTimer.current) {
         clearTimeout(rippleTimer.current);
       }
+      if (anchorTimer.current) {
+        clearTimeout(anchorTimer.current);
+      }
     };
   }, [cleanupListeners]);
 
@@ -98,7 +102,28 @@ const Sidebar = () => {
     if (!isOpen) {
       setShowRipple(false);
       setShowContent(false);
+      if (anchorTimer.current) {
+        clearTimeout(anchorTimer.current);
+      }
+      setAnchorRotated(false);
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setAnchorRotated(false);
+      if (anchorTimer.current) {
+        clearTimeout(anchorTimer.current);
+      }
+      anchorTimer.current = setTimeout(() => {
+        setAnchorRotated(true);
+      }, 80);
+    }
+    return () => {
+      if (anchorTimer.current) {
+        clearTimeout(anchorTimer.current);
+      }
+    };
   }, [isOpen]);
 
   const finalizeDrag = useCallback(
@@ -235,9 +260,18 @@ const Sidebar = () => {
               <button
                 aria-label="Close sidebar"
                 onClick={handleClose}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(198,218,236,0.25)] text-[#c6daec] transition-colors hover:bg-[#4662ab1a] hover:text-[#e0f2fd]"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(198,218,236,0.25)] transition-colors hover:bg-[#4662ab1a]"
               >
-                <FiX className="h-4 w-4" />
+                <img
+                  src="/anchor-arrow.png"
+                  alt="Close sidebar"
+                  className="h-4 w-4 object-contain"
+                  style={{
+                    transform: anchorRotated ? 'rotate(90deg)' : 'rotate(-90deg)',
+                    transition: anchorRotated ? 'transform 1.5s ease' : 'none',
+                  }}
+                  draggable={false}
+                />
               </button>
             </div>
 
