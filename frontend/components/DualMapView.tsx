@@ -13,6 +13,7 @@ export interface DualMapViewProps {
   onLocationSelect?: (location: MapLocation | null) => void;
   initialView?: { lat: number; lng: number; altitude?: number };
   showSplitView?: boolean;
+  showMPAs?: boolean;
 }
 
 /**
@@ -33,10 +34,12 @@ const DualMapView: React.FC<DualMapViewProps> = ({
   onLocationSelect,
   initialView = { lat: 20, lng: 0, altitude: 2.5 },
   showSplitView = true,
+  showMPAs = false,
 }) => {
   const globeEl = React.useRef<any>(null);
   const [selectedLocation, setSelectedLocation] = useState<MapLocation | null>(null);
   const [activeView, setActiveView] = useState<'globe' | 'map' | 'both'>('both');
+  const [mpaVisible, setMpaVisible] = useState(showMPAs);
 
   const handleLocationClick = (location: MapLocation) => {
     setSelectedLocation(location);
@@ -109,66 +112,94 @@ const DualMapView: React.FC<DualMapViewProps> = ({
       flexDirection: showSplitView ? 'row' : 'column',
       position: 'relative',
     }}>
-      {/* View Toggle Controls */}
+      {/* View Toggle Buttons */}
       <div style={{
         position: 'absolute',
-        top: '16px',
-        right: '16px',
+        top: '20px',
+        right: '20px',
         zIndex: 1000,
         display: 'flex',
         gap: '8px',
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        background: 'rgba(23, 23, 23, 0.9)',
         padding: '8px',
         borderRadius: '8px',
-        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(198, 218, 236, 0.2)',
       }}>
         <button
           onClick={() => setActiveView('globe')}
           style={{
-            padding: '6px 12px',
-            fontSize: '12px',
-            fontWeight: activeView === 'globe' ? 'bold' : 'normal',
-            backgroundColor: activeView === 'globe' ? '#4662ab' : 'transparent',
-            color: '#e0f2fd',
-            border: '1px solid rgba(198,218,236,0.3)',
-            borderRadius: '4px',
+            padding: '8px 16px',
+            background: activeView === 'globe' ? '#4662ab' : 'transparent',
+            color: activeView === 'globe' ? '#e0f2fd' : '#c0d9ef',
+            border: '1px solid rgba(198, 218, 236, 0.3)',
+            borderRadius: '6px',
             cursor: 'pointer',
-            transition: 'all 0.2s',
+            fontSize: '13px',
+            fontWeight: '500',
           }}
         >
-          3D Globe
+          🌍 Globe
         </button>
         <button
           onClick={() => setActiveView('map')}
           style={{
-            padding: '6px 12px',
-            fontSize: '12px',
-            fontWeight: activeView === 'map' ? 'bold' : 'normal',
-            backgroundColor: activeView === 'map' ? '#4662ab' : 'transparent',
-            color: '#e0f2fd',
-            border: '1px solid rgba(198,218,236,0.3)',
-            borderRadius: '4px',
+            padding: '8px 16px',
+            background: activeView === 'map' ? '#4662ab' : 'transparent',
+            color: activeView === 'map' ? '#e0f2fd' : '#c0d9ef',
+            border: '1px solid rgba(198, 218, 236, 0.3)',
+            borderRadius: '6px',
             cursor: 'pointer',
-            transition: 'all 0.2s',
+            fontSize: '13px',
+            fontWeight: '500',
           }}
         >
-          2D Map
+          🗺️ Map
         </button>
         <button
           onClick={() => setActiveView('both')}
           style={{
-            padding: '6px 12px',
-            fontSize: '12px',
-            fontWeight: activeView === 'both' ? 'bold' : 'normal',
-            backgroundColor: activeView === 'both' ? '#4662ab' : 'transparent',
-            color: '#e0f2fd',
-            border: '1px solid rgba(198,218,236,0.3)',
-            borderRadius: '4px',
+            padding: '8px 16px',
+            background: activeView === 'both' ? '#4662ab' : 'transparent',
+            color: activeView === 'both' ? '#e0f2fd' : '#c0d9ef',
+            border: '1px solid rgba(198, 218, 236, 0.3)',
+            borderRadius: '6px',
             cursor: 'pointer',
-            transition: 'all 0.2s',
+            fontSize: '13px',
+            fontWeight: '500',
           }}
         >
-          Split View
+          ⚡ Both
+        </button>
+      </div>
+
+      {/* MPA Toggle Button */}
+      <div style={{
+        position: 'absolute',
+        top: '80px',
+        right: '20px',
+        zIndex: 1000,
+        background: 'rgba(23, 23, 23, 0.9)',
+        padding: '8px',
+        borderRadius: '8px',
+        border: '1px solid rgba(198, 218, 236, 0.2)',
+      }}>
+        <button
+          onClick={() => setMpaVisible(!mpaVisible)}
+          style={{
+            padding: '8px 16px',
+            background: mpaVisible ? '#00d4ff' : 'transparent',
+            color: mpaVisible ? '#171717' : '#c0d9ef',
+            border: '1px solid rgba(0, 212, 255, 0.5)',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          🛡️ MPAs {mpaVisible ? 'ON' : 'OFF'}
         </button>
       </div>
 
@@ -275,6 +306,7 @@ const DualMapView: React.FC<DualMapViewProps> = ({
             width="100%"
             height="100%"
             showControls={true}
+            showMPAs={mpaVisible}
           />
         </div>
       )}

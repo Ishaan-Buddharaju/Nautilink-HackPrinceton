@@ -105,8 +105,8 @@ const GeoAdjacentMap: React.FC<GeoAdjacentMapProps> = ({
         type: 'fill',
         source: 'mpas',
         paint: {
-          'fill-color': '#4662ab',
-          'fill-opacity': 0.25,
+          'fill-color': '#00d4ff', // Bright cyan/blue
+          'fill-opacity': 0.35,
         },
       });
 
@@ -116,8 +116,8 @@ const GeoAdjacentMap: React.FC<GeoAdjacentMapProps> = ({
         type: 'line',
         source: 'mpas',
         paint: {
-          'line-color': '#c6daec',
-          'line-width': 1.5,
+          'line-color': '#00d4ff', // Bright cyan/blue
+          'line-width': 2,
         },
       });
 
