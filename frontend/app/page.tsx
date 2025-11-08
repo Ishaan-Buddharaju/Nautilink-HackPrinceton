@@ -33,8 +33,8 @@ const LandingPage: React.FC = () => {
   const router = useRouter(); // Initialize useRouter
   const globeEl = useRef<any>(null);
   const [landData, setLandData] = useState<{ features: any[] }>({ features: [] });
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(false);
 
   // Minimal data for landing page globe background
   const [clusteredData, setClusteredData] = useState<ClusterData[]>([]);
