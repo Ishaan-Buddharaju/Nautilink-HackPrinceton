@@ -216,8 +216,8 @@ const HomePage: React.FC = () => {
   const [fishingZonePopupPosition, setFishingZonePopupPosition] = useState<{ x: number; y: number } | null>(null);
 
   const [hotspotData, setHotspotData] = useState<HotspotData[]>([]);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(false);
   const [isReportPanelVisible, setIsReportPanelVisible] = useState(false);
   const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
   const [agentMessages, setAgentMessages] = useState<
@@ -455,6 +455,7 @@ const HomePage: React.FC = () => {
     } catch (error) {
       console.log('Error fetching hotspot data:', error);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
