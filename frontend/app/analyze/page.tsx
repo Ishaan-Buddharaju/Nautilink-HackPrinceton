@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
 
 interface ChatMessage {
   id: string;
@@ -13,27 +14,147 @@ export default function AnalyzePage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
 
-  const handleTestAnalysis = () => {
-    setIsLoading(true);
-    
-    // Simulate analysis generation
-    setTimeout(() => {
-      const analysisContent = `High Priority Alert\nRisk Score: 87/100\n\nVessel: MMSI: 123456789\nActivity: Suspected IUU Fishing\nLocation: Bodega Bay, California\n\nKey Indicators:\n• Vessel showing fishing-like behavior patterns\n• Speed profile indicates trawling activity\n• Located within Marine Protected Area\n• AIS transmission gaps detected\n• Satellite imagery shows vessel activity during dark period\n\nAnalysis complete! I've detected suspicious vessel activity in Bodega Bay. Would you like me to explain any specific aspect of this analysis?`;
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
 
-      const analysisMessage: ChatMessage = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: analysisContent,
-        timestamp: new Date(),
-      };
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string | undefined;
+    if (!token) {
+      console.warn('Missing NEXT_PUBLIC_MAPBOX_TOKEN');
+      return;
+    }
+    mapboxgl.accessToken = token;
 
-      setMessages((prev) => [...prev, analysisMessage]);
-      setIsLoading(false);
-    }, 2000);
-  };
+    mapRef.current = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: 'mapbox://styles/tcytseven/cmfscq4hy003901qpcl7m8jlb',
+      center: [-79.5, 31.5],
+      zoom: 5.25,
+      bearing: 0,
+      pitch: 0
+    });
 
-  const handleSendMessage = () => {
+    mapRef.current.on('load', () => {
+      // Fit to Southeast US coastal area similar to screenshot (FL to NC)
+      try {
+        mapRef.current!.fitBounds([
+          [-84.5, 24.5], // SW (Gulf side south FL)
+          [-74.0, 36.8]  // NE (offshore NC)
+        ], { padding: 40, animate: false });
+      } catch {}
+      // Attach popups to symbol/circle layers from the style (cover both 'yummy' and 'dummy')
+      const style = mapRef.current!.getStyle();
+      const targetLayerIds = (style.layers || [])
+        .filter((l: any) => (l.type === 'circle' || l.type === 'symbol') && ['yummy','dummy'].includes(l['source-layer']))
+        .map((l) => l.id);
+
+      targetLayerIds.forEach((layerId) => {
+        // Hide features with disallowed names so icons don't render
+        try {
+          const existing = mapRef.current!.getFilter(layerId) as any;
+          const nameExpr: any = ['downcase', ['coalesce',
+            ['to-string', ['get', 'name']],
+            ['to-string', ['get', 'title']],
+            ['to-string', ['get', 'vesselName']],
+            ['to-string', ['get', 'vessel_name']],
+            ['to-string', ['get', 'shipname']],
+            ''
+          ]];
+          const notBanned: any = ['all',
+            ['!=', nameExpr, 'unknown'],
+            ['!=', nameExpr, 'speed boat'],
+            ['!=', nameExpr, 'speedboat'],
+            ['!=', nameExpr, 'speed-boat'],
+            ['!=', nameExpr, 'speed_boat'],
+            ['!=', nameExpr, 'tourist cruise'],
+            ['!=', nameExpr, 'touristcruise'],
+            ['!=', nameExpr, 'tourist-cruise'],
+            ['!=', nameExpr, 'tourist_cruise'],
+            ['!=', nameExpr, '']
+          ];
+          const combined = existing ? ['all', existing as any, notBanned] : notBanned;
+          mapRef.current!.setFilter(layerId, combined as any);
+        } catch {}
+
+        mapRef.current!.on('click', layerId, (e: any) => {
+          const f = e.features?.[0];
+          if (!f) return;
+          const props: any = f.properties || {};
+          const rawNameValue = props.name ?? props.title ?? props.vesselName ?? props.vessel_name ?? props.shipname ?? '';
+          const rawName = String(rawNameValue);
+          const normalized = rawName
+            .normalize('NFKC')
+            .replace(/[\u200B-\u200D\uFEFF]/g, '')
+            .replace(/[_-]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
+          if (normalized === 'unknown' || normalized === 'speed boat' || normalized === 'speedboat' || normalized === 'tourist cruise') {
+            return; // Do not display these
+          }
+          const title = (rawName && rawName.trim()) || 'Vessel';
+          const classification = props.classification || props.category || 'not fishing';
+          const rawConfidence = typeof props.confidence === 'number' ? props.confidence : (props.confidence ? Number(props.confidence) : 0.85);
+          const confidencePct = isFinite(rawConfidence) ? (rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence) : 85;
+          const vesselLengthMeters = props.vesselLengthMeters ?? props.length ?? 50;
+          const timestamp = props.timestamp || new Date().toISOString();
+
+          // Use actual clicked coordinates for accurate alignment
+          const lngLat = [e.lngLat.lng, e.lngLat.lat] as [number, number];
+
+              // Format fields for better readability
+              const dt = new Date(timestamp);
+              const formatted = isNaN(dt.getTime())
+                ? timestamp
+                : dt.toLocaleString(undefined, {
+                    year: 'numeric', month: 'short', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'
+                  });
+              const roundedLng = lngLat[0].toFixed(2);
+              const roundedLat = lngLat[1].toFixed(2);
+
+              const html = `
+                <div class="popup-card">
+                  <div class="popup-title">${title}</div>
+                  <div class="popup-dl">
+                    <div class="row"><dt>Timestamp</dt><dd>${formatted}</dd></div>
+                    <div class="row"><dt>Location</dt><dd>${roundedLng}, ${roundedLat}</dd></div>
+                    <div class="row"><dt>Classification</dt><dd>${classification}</dd></div>
+                    <div class="row"><dt>Confidence</dt><dd>${confidencePct.toFixed(0)}%</dd></div>
+                    <div class="row"><dt>Vessel Length</dt><dd>${vesselLengthMeters} m</dd></div>
+                  </div>
+                </div>`;
+          new mapboxgl.Popup({ className: 'expansi-popup', maxWidth: '220px' })
+            .setLngLat(lngLat)
+            .setHTML(html)
+            .addTo(mapRef.current!);
+
+          setSelectedTarget(title);
+          setMessages((prev) => [
+            ...prev,
+            { id: Date.now().toString(), type: 'assistant', content: `Selected vessel: ${title}`, timestamp: new Date() }
+          ]);
+        });
+
+        // Cursor feedback
+        mapRef.current!.on('mouseenter', layerId, () => {
+          mapRef.current!.getCanvas().style.cursor = 'pointer';
+        });
+        mapRef.current!.on('mouseleave', layerId, () => {
+          mapRef.current!.getCanvas().style.cursor = '';
+        });
+      });
+    });
+
+    return () => {
+      try { mapRef.current?.remove(); } catch {}
+    };
+  }, []);
+
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
     const userMessage: ChatMessage = {
@@ -47,26 +168,55 @@ export default function AnalyzePage() {
     setInputValue('');
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "Based on the vessel's speed profile and heading changes, this appears to be typical trawling behavior. The vessel is moving at 2-4 knots with frequent course corrections, which matches fishing patterns.",
-        "The satellite imagery shows the vessel was active during a period when its AIS was offline, indicating potential 'dark activity' - a common sign of illegal fishing operations.",
-        "The vessel is currently positioned within the Bodega Bay Marine Protected Area where commercial fishing is prohibited. This constitutes a clear violation of maritime law.",
-        "The risk score of 87/100 is based on multiple factors: location violation (40 points), dark activity (25 points), fishing behavior patterns (15 points), and historical data (7 points).",
-        "I recommend immediate dispatch of patrol units to intercept this vessel. The evidence suggests ongoing illegal fishing activity that poses a threat to marine conservation efforts."
-      ];
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/ai/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: inputValue, user_id: 'test-user' }), // Replace with actual user ID
+      });
 
+      if (!res.ok) {
+        throw new Error('Backend error');
+      }
+
+      const data = await res.json();
+      
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: responses[Math.floor(Math.random() * responses.length)],
+        content: data.content,
         timestamp: new Date()
       };
-
+      
       setMessages(prev => [...prev, assistantMessage]);
+
+      if (data.type === 'location' && data.data) {
+        const { lat, lng, name } = data.data;
+        if (mapRef.current) {
+          mapRef.current.flyTo({
+            center: [lng, lat],
+            zoom: 12,
+            speed: 1.5
+          });
+
+          new mapboxgl.Popup({ closeOnClick: false })
+            .setLngLat([lng, lat])
+            .setHTML(`<h4>${name}</h4>`)
+            .addTo(mapRef.current);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching from analyze API:', error);
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: "Sorry, I encountered an error. Please try again.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -77,25 +227,16 @@ export default function AnalyzePage() {
   };
 
   return (
-    <div className="flex h-screen bg-black text-white font-sans">
+    <div className="flex h-screen bg-black text-white font-sans relative">
       {/* Left Panel - Analysis Chat */}
-      <div className="w-1/2 flex flex-col border-r border-gray-800 h-screen">
+      <div className={`w-1/2 flex flex-col h-screen`}> 
         {/* Header */}
         <div className="p-4 border-b border-gray-800">
-          <h1 className="text-2xl font-semibold">Expansi Analysis Center</h1>
+          <h1 className="text-2xl font-semibold">OverSea Analysis Center</h1>
           <p className="text-sm text-gray-400">AI-powered maritime surveillance analysis</p>
         </div>
 
-        {/* Test Button */}
-        <div className="p-4 border-b border-gray-800">
-          <button
-            onClick={handleTestAnalysis}
-            disabled={isLoading}
-            className="w-full bg-black hover:bg-white disabled:bg-black border border-gray-700 hover:text-black text-white font-medium py-3 px-4 rounded-lg transition-colors"
-          >
-            {isLoading ? 'Running Analysis...' : 'Run Test Analysis'}
-          </button>
-        </div>
+        {/* Test Button has been removed and integrated into the chat */}
 
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -154,37 +295,16 @@ export default function AnalyzePage() {
         </div>
       </div>
 
-      {/* Right Panel - Mapbox Placeholder */}
-      <div className="w-1/2 bg-black/50 relative">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center p-8 bg-black/50 rounded-lg border border-gray-800">
-            <div className="w-16 h-16 bg-gray-900 rounded-lg mx-auto mb-4 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">Mapbox Integration</h3>
-            <p className="text-sm text-gray-500 mb-4">Interactive maritime surveillance map</p>
-            <div className="bg-black rounded-lg p-4 max-w-sm mx-auto border border-gray-800">
-              <p className="text-xs text-gray-400 mb-2">Features to be implemented:</p>
-              <ul className="text-xs text-gray-400 space-y-1 text-left">
-                <li>• Real-time vessel tracking</li>
-                <li>• AIS data visualization</li>
-                <li>• Satellite detection overlay</li>
-                <li>• Marine Protected Areas</li>
-                <li>• Alert markers and zones</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        
-        {/* Mapbox attribution placeholder */}
-        <div className="absolute bottom-4 right-4 text-xs text-gray-500">
-          <div className="bg-black/50 px-2 py-1 rounded">
-            <span className="font-bold">mapbox</span>
-          </div>
-        </div>
+      {/* Vertical Separator */}
+      <div className="w-px bg-gradient-to-b from-white/10 via-white/20 to-white/10" />
+
+      {/* Right Panel - Mapbox */}
+      <div className={`w-1/2 bg-black relative h-screen`}>
+        <div ref={mapContainerRef} className="absolute inset-0" style={{ height: '100%' }} />
       </div>
+
+      {/* Center fade between chat and map (very subtle, non-interactive) */}
+      <div className="pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-black/40 to-transparent" />
     </div>
   );
 }
