@@ -37,6 +37,9 @@ body {
 /* Mapbox GL CSS */
 @import 'mapbox-gl/dist/mapbox-gl.css';
 
+/* MapLibre GL CSS */
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
 /* Mapbox popup styling */
 .mapboxgl-popup.expansi-popup .mapboxgl-popup-content {
 	background: #171717;

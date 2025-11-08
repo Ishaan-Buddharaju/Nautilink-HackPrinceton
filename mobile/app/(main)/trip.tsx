@@ -40,9 +40,6 @@ export default function TripScreen() {
   const [tripInProgress, setTripInProgress] = useState(false);
   
   const scrollViewRef = useRef<ScrollView>(null);
-  const isUserScrolling = useRef(false);
-  const scrollTimeout = useRef<NodeJS.Timeout>();
-  const scrollPosition = useRef(0);
 
   const [trips] = useState<Trip[]>([
     {
@@ -82,49 +79,6 @@ export default function TripScreen() {
   const totalTrips = trips.length;
   const totalKg = trips.reduce((sum, trip) => sum + trip.weight, 0);
 
-  // Auto-scroll effect
-  useEffect(() => {
-    const scrollInterval = setInterval(() => {
-      if (scrollViewRef.current && !isUserScrolling.current) {
-        scrollPosition.current += 1;
-        
-        // Calculate max scroll (item height * number of items - visible height)
-        const maxScroll = trips.length * 80; // Approximate item height
-        
-        // Loop back to start when reaching end
-        if (scrollPosition.current >= maxScroll) {
-          scrollPosition.current = 0;
-        }
-        
-        scrollViewRef.current.scrollTo({
-          y: scrollPosition.current,
-          animated: true,
-        });
-      }
-    }, 50); // Scroll every 50ms for smooth animation
-
-    return () => clearInterval(scrollInterval);
-  }, [trips.length]);
-
-  const handleScrollBegin = () => {
-    isUserScrolling.current = true;
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current);
-    }
-  };
-
-  const handleScrollEnd = () => {
-    // Resume auto-scroll after 2 seconds of no user interaction
-    scrollTimeout.current = setTimeout(() => {
-      isUserScrolling.current = false;
-    }, 2000);
-  };
-
-  const handleScroll = (event: any) => {
-    if (isUserScrolling.current) {
-      scrollPosition.current = event.nativeEvent.contentOffset.y;
-    }
-  };
 
   const openCamera = async () => {
     if (!permission?.granted) {
@@ -238,10 +192,6 @@ export default function TripScreen() {
           <ScrollView
             ref={scrollViewRef}
             style={styles.tripsList}
-            onScrollBeginDrag={handleScrollBegin}
-            onScrollEndDrag={handleScrollEnd}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
           >
             {trips.concat(trips).map((trip, index) => (

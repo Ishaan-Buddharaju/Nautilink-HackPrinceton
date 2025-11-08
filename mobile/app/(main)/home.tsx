@@ -1,243 +1,173 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  Modal,
   Animated,
+  Dimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import LandingLoader from '../../components/LandingLoader';
 
-interface Transaction {
-  id: string;
-  number: number;
-  timestamp: Date;
-  hash: string;
-  blockNumber: string;
-  status: string;
-  gasUsed: string;
-}
+const { width, height } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [slideAnim] = useState(new Animated.Value(500));
+  const [showContent, setShowContent] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
   
-  const [transactions] = useState<Transaction[]>([
-    { 
-      id: '1', 
-      number: 1, 
-      timestamp: new Date(),
-      hash: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb3',
-      blockNumber: '15467892',
-      status: 'Confirmed',
-      gasUsed: '0.0021 ETH'
-    },
-    { 
-      id: '2', 
-      number: 2, 
-      timestamp: new Date(Date.now() - 3600000),
-      hash: '0x9B8fA1E3D7890c5432fA19B2c3e4d58F6a7D8901',
-      blockNumber: '15467845',
-      status: 'Confirmed',
-      gasUsed: '0.0019 ETH'
-    },
-    { 
-      id: '3', 
-      number: 3, 
-      timestamp: new Date(Date.now() - 7200000),
-      hash: '0x3D4E8f9a1b2C567890dE12F3456A789012bC3dEf',
-      blockNumber: '15467801',
-      status: 'Confirmed',
-      gasUsed: '0.0023 ETH'
-    },
-  ]);
+  // Animation values for network nodes
+  const nodeAnimations = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
 
-  const handleQRPress = () => {
-    // TODO: Implement QR scanner
-    console.log('QR Scanner');
-  };
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  const handleFisherPress = () => {
-    router.push('/(main)/trip');
-  };
+  useEffect(() => {
+    // Fade in content after loader completes
+    setTimeout(() => setShowContent(true), 3100);
 
-  const handleTransactionPress = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    Animated.spring(slideAnim, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 50,
-      friction: 8,
-    }).start();
-  };
-
-  const closeDetails = () => {
-    Animated.timing(slideAnim, {
-      toValue: 500,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => {
-      setSelectedTransaction(null);
+    // Animate network nodes
+    const animations = nodeAnimations.map((anim, index) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 2000 + index * 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 2000 + index * 300,
+            useNativeDriver: true,
+          }),
+        ])
+      );
     });
+
+    animations.forEach(anim => anim.start());
+
+    // Pulse animation for central node
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const handleEnterApp = () => {
+    router.push('/(main)/dashboard');
   };
 
   return (
     <View style={styles.container}>
-      {/* Header with QR and Fisher buttons */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerButton} onPress={handleQRPress}>
-          <Text style={styles.headerButtonText}>QR</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.headerButton, styles.fisherButton]}
-          onPress={handleFisherPress}
+      {/* Landing Loader */}
+      {showLoader && (
+        <LandingLoader onComplete={() => setShowLoader(false)} />
+      )}
+      {/* Animated Network Nodes Background */}
+      <View style={styles.nodesBackground}>
+        {/* Central Pulsing Node */}
+        <Animated.View
+          style={[
+            styles.nodeLarge,
+            styles.centralNodeLarge,
+            { transform: [{ scale: pulseAnim }] },
+          ]}
         >
-          <Text style={styles.headerButtonText}>Fisher</Text>
-        </TouchableOpacity>
+          <View style={styles.nodeCoreLarge} />
+        </Animated.View>
+
+        {/* Orbiting Nodes */}
+        {nodeAnimations.map((anim, index) => {
+          const angle = (index * 72 * Math.PI) / 180;
+          const radius = 150;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+
+          return (
+            <Animated.View
+              key={index}
+              style={[
+                styles.nodeSmall,
+                {
+                  left: width / 2 + x - 15,
+                  top: height / 2 + y - 15,
+                  opacity: anim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.3, 1],
+                  }),
+                },
+              ]}
+            >
+              <View style={styles.nodeCoreSmall} />
+            </Animated.View>
+          );
+        })}
+
+        {/* Connection Lines to Central Node */}
+        {[0, 1, 2, 3, 4].map((index) => {
+          const angle = (index * 72 * Math.PI) / 180;
+          const length = 150;
+          const rotation = `${(index * 72)}deg`;
+
+          return (
+            <View
+              key={`line-${index}`}
+              style={[
+                styles.connectionLineLarge,
+                {
+                  transform: [{ rotate: rotation }],
+                },
+              ]}
+            />
+          );
+        })}
       </View>
 
-      <View style={styles.content}>
-        {/* Network Nodes Visualization */}
-        <View style={styles.logoSection}>
-          <View style={styles.nodesContainer}>
-            {/* Central Node */}
-            <View style={[styles.node, styles.centralNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            
-            {/* Connected Nodes */}
-            <View style={[styles.node, styles.topLeftNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            <View style={[styles.node, styles.topRightNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            <View style={[styles.node, styles.bottomLeftNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            <View style={[styles.node, styles.bottomRightNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            
-            {/* Connection Lines */}
-            <View style={[styles.connectionLine, styles.lineTopLeft]} />
-            <View style={[styles.connectionLine, styles.lineTopRight]} />
-            <View style={[styles.connectionLine, styles.lineBottomLeft]} />
-            <View style={[styles.connectionLine, styles.lineBottomRight]} />
-          </View>
+      {/* Content Overlay */}
+      <View style={styles.contentOverlay}>
+        {/* Branding Section */}
+        <View style={styles.brandingSection}>
+          <Text style={styles.logo}>Nautilink</Text>
+          <Text style={styles.subtitle}>Advanced Maritime Intelligence{"\n"}& Surveillance Platform</Text>
         </View>
 
-        {/* Transaction Log Section */}
-        <View style={styles.transactionSection}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          
-          <ScrollView style={styles.transactionList} showsVerticalScrollIndicator={false}>
-            {transactions.map((transaction) => (
-              <TouchableOpacity
-                key={transaction.id}
-                style={styles.transactionItem}
-                activeOpacity={0.7}
-                onPress={() => handleTransactionPress(transaction)}
-              >
-                <View style={styles.transactionIcon}>
-                  <Ionicons name="document-text-outline" size={24} color={Colors.accentPrimary} />
-                </View>
-                <View style={styles.transactionContent}>
-                  <Text style={styles.transactionTitle}>
-                    Log Transaction #{transaction.number}
-                  </Text>
-                  <Text style={styles.transactionTime}>
-                    {transaction.timestamp.toLocaleTimeString()}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-
-      {/* Transaction Details Slide-over */}
-      <Modal
-        visible={selectedTransaction !== null}
-        transparent
-        animationType="none"
-        onRequestClose={closeDetails}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={closeDetails}
-        >
-          <Animated.View 
-            style={[
-              styles.slideOver,
-              { transform: [{ translateX: slideAnim }] }
-            ]}
+        {/* Enter Button */}
+        <View style={styles.actionSection}>
+          <TouchableOpacity
+            style={styles.enterButton}
+            onPress={handleEnterApp}
+            activeOpacity={0.8}
           >
-            <TouchableOpacity activeOpacity={1}>
-              <View style={styles.slideOverHeader}>
-                <Text style={styles.slideOverTitle}>Transaction Details</Text>
-                <TouchableOpacity onPress={closeDetails} style={styles.closeButton}>
-                  <Ionicons name="close" size={24} color={Colors.foreground} />
-                </TouchableOpacity>
-              </View>
+            <Text style={styles.enterButtonText}>Consumer Dashboard</Text>
+            <Ionicons name="arrow-forward" size={24} color="#e0f2fd" />
+          </TouchableOpacity>
 
-              <ScrollView style={styles.slideOverContent}>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Transaction #</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedTransaction?.number}
-                  </Text>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Hash</Text>
-                  <Text style={styles.detailValueMono}>
-                    {selectedTransaction?.hash}
-                  </Text>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Block Number</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedTransaction?.blockNumber}
-                  </Text>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Status</Text>
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusText}>
-                      {selectedTransaction?.status}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Gas Used</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedTransaction?.gasUsed}
-                  </Text>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Timestamp</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedTransaction?.timestamp.toLocaleString()}
-                  </Text>
-                </View>
-              </ScrollView>
+          <Link href="/(main)/trip" asChild>
+            <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
+              <Ionicons name="fish" size={20} color={Colors.accentPrimary} />
+              <Text style={styles.secondaryButtonText}>Fisher Dashboard</Text>
             </TouchableOpacity>
-          </Animated.View>
-        </TouchableOpacity>
-      </Modal>
+          </Link>
+        </View>
+      </View>
     </View>
   );
 }
@@ -245,252 +175,137 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#171717',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  headerButton: {
-    backgroundColor: Colors.surfaceGlass,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  fisherButton: {
-    backgroundColor: Colors.accentPrimary,
-    borderColor: Colors.accentPrimary,
-  },
-  headerButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.foreground,
-    letterSpacing: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  logoSection: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    marginBottom: 20,
-  },
-  nodesContainer: {
-    width: 200,
-    height: 200,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  node: {
+  nodesBackground: {
     position: 'absolute',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.surfaceGlass,
-    borderWidth: 2,
-    borderColor: Colors.accentPrimary,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.accentPrimary,
+  },
+  nodeLarge: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(70, 98, 171, 0.2)',
+    borderWidth: 3,
+    borderColor: '#4662ab',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#4662ab',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 20,
+    elevation: 8,
   },
-  centralNode: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 3,
+  centralNodeLarge: {
+    left: width / 2 - 40,
+    top: height / 2 - 40,
   },
-  nodeCore: {
+  nodeCoreLarge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#4662ab',
+  },
+  nodeSmall: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(70, 98, 171, 0.3)',
+    borderWidth: 2,
+    borderColor: '#4662ab',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nodeCoreSmall: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: Colors.accentPrimary,
+    backgroundColor: '#4662ab',
   },
-  topLeftNode: {
-    top: 20,
-    left: 40,
-  },
-  topRightNode: {
-    top: 20,
-    right: 40,
-  },
-  bottomLeftNode: {
-    bottom: 20,
-    left: 40,
-  },
-  bottomRightNode: {
-    bottom: 20,
-    right: 40,
-  },
-  connectionLine: {
+  connectionLineLarge: {
     position: 'absolute',
-    backgroundColor: Colors.accentPrimary,
-    opacity: 0.4,
-  },
-  lineTopLeft: {
-    width: 80,
+    width: 150,
     height: 2,
-    top: 90,
-    left: 50,
-    transform: [{ rotate: '-45deg' }],
+    backgroundColor: '#4662ab',
+    opacity: 0.3,
+    left: width / 2,
+    top: height / 2,
+    transformOrigin: 'left center',
   },
-  lineTopRight: {
-    width: 80,
-    height: 2,
-    top: 90,
-    right: 50,
-    transform: [{ rotate: '45deg' }],
-  },
-  lineBottomLeft: {
-    width: 80,
-    height: 2,
-    bottom: 90,
-    left: 50,
-    transform: [{ rotate: '45deg' }],
-  },
-  lineBottomRight: {
-    width: 80,
-    height: 2,
-    bottom: 90,
-    right: 50,
-    transform: [{ rotate: '-45deg' }],
-  },
-  transactionSection: {
+  contentOverlay: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    zIndex: 10,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.foreground,
-    marginBottom: 16,
+  brandingSection: {
+    alignItems: 'center',
+    marginBottom: 60,
+  },
+  logo: {
+    fontSize: 48,
+    fontWeight: '800',
+    color: '#e0f2fd',
+    letterSpacing: 4,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '300',
+    color: '#d2deea',
+    textAlign: 'center',
+    lineHeight: 24,
     letterSpacing: 0.5,
   },
-  transactionList: {
-    backgroundColor: Colors.surfacePrimary,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    overflow: 'hidden',
+  actionSection: {
+    width: '100%',
+    gap: 16,
   },
-  transactionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  transactionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.surfaceGlass,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  transactionContent: {
-    flex: 1,
-  },
-  transactionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.foreground,
-    marginBottom: 4,
-  },
-  transactionTime: {
-    fontSize: 13,
-    color: Colors.textMuted,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  slideOver: {
-    width: '85%',
-    height: '100%',
-    backgroundColor: Colors.background,
-    borderLeftWidth: 1,
-    borderLeftColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  slideOverHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  slideOverTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.foreground,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surfaceGlass,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  slideOverContent: {
-    padding: 20,
-  },
-  detailItem: {
-    marginBottom: 24,
-  },
-  detailLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  detailValue: {
-    fontSize: 16,
-    color: Colors.foreground,
-    fontWeight: '500',
-  },
-  detailValueMono: {
-    fontSize: 13,
-    color: Colors.foreground,
-    fontFamily: 'Courier',
-    fontWeight: '500',
-  },
-  statusBadge: {
-    backgroundColor: Colors.success + '20',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  enterButton: {
+    backgroundColor: '#4662ab',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
     borderRadius: 12,
-    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#4662ab',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  statusText: {
-    fontSize: 14,
+  enterButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#e0f2fd',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  secondaryButton: {
+    backgroundColor: 'rgba(70, 98, 171, 0.2)',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#4662ab',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  secondaryButtonText: {
+    fontSize: 16,
     fontWeight: '600',
-    color: Colors.success,
+    color: '#4662ab',
+    letterSpacing: 0.5,
   },
 });

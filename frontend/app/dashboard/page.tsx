@@ -41,6 +41,170 @@ const HomePage: React.FC = () => {
   const RED = "#fc0303";
   const DARK_RED = "#bf0202";
 
+  // Major commercial fishing zones worldwide with detailed vessel and sustainability data
+  const fishingZones = [
+    {
+      id: 'fishing-zone-1',
+      lat: 20,
+      lng: -30,
+      name: 'North Atlantic Central',
+      vessel: { name: 'FV Ocean Star', imo_number: '9234567', model: 'Purse Seiner 85m', flag_state: 'Norway', year_built: 2012 },
+      sustainability_score: { total_score: 78, grade: 'B', categories: { vessel_efficiency: { score: 70 }, fishing_method: { score: 65 }, environmental_practices: { score: 82 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 75 } } }
+    },
+    {
+      id: 'fishing-zone-2',
+      lat: 47,
+      lng: -52,
+      name: 'Grand Banks (Canada)',
+      vessel: { name: 'FV Atlantic Pride', imo_number: '9245678', model: 'Trawler 72m', flag_state: 'Canada', year_built: 2015 },
+      sustainability_score: { total_score: 85, grade: 'A', categories: { vessel_efficiency: { score: 88 }, fishing_method: { score: 82 }, environmental_practices: { score: 90 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 80 } } }
+    },
+    {
+      id: 'fishing-zone-3',
+      lat: 56,
+      lng: 3,
+      name: 'North Sea',
+      vessel: { name: 'FV Nordic Harvest', imo_number: '9256789', model: 'Factory Trawler 95m', flag_state: 'Netherlands', year_built: 2018 },
+      sustainability_score: { total_score: 82, grade: 'A-', categories: { vessel_efficiency: { score: 85 }, fishing_method: { score: 78 }, environmental_practices: { score: 88 }, compliance_and_transparency: { score: 95 }, social_responsibility: { score: 78 } } }
+    },
+    {
+      id: 'fishing-zone-4',
+      lat: 57,
+      lng: -178,
+      name: 'Bering Sea',
+      vessel: { name: 'FV Alaska Gold', imo_number: '9267890', model: 'Longliner 68m', flag_state: 'USA', year_built: 2010 },
+      sustainability_score: { total_score: 73, grade: 'B-', categories: { vessel_efficiency: { score: 68 }, fishing_method: { score: 70 }, environmental_practices: { score: 75 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 72 } } }
+    },
+    {
+      id: 'fishing-zone-5',
+      lat: 38,
+      lng: 141,
+      name: 'Sanriku (Japan)',
+      vessel: { name: 'FV Pacific Dawn', imo_number: '9278901', model: 'Purse Seiner 78m', flag_state: 'Japan', year_built: 2016 },
+      sustainability_score: { total_score: 80, grade: 'B+', categories: { vessel_efficiency: { score: 82 }, fishing_method: { score: 75 }, environmental_practices: { score: 85 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 76 } } }
+    },
+    {
+      id: 'fishing-zone-6',
+      lat: -42,
+      lng: 148,
+      name: 'Tasmania Coast',
+      vessel: { name: 'FV Southern Cross', imo_number: '9289012', model: 'Trawler 65m', flag_state: 'Australia', year_built: 2019 },
+      sustainability_score: { total_score: 87, grade: 'A', categories: { vessel_efficiency: { score: 90 }, fishing_method: { score: 85 }, environmental_practices: { score: 92 }, compliance_and_transparency: { score: 93 }, social_responsibility: { score: 82 } } }
+    },
+    {
+      id: 'fishing-zone-7',
+      lat: -14,
+      lng: -77,
+      name: 'Peru Current',
+      vessel: { name: 'FV Humboldt Star', imo_number: '9290123', model: 'Purse Seiner 82m', flag_state: 'Peru', year_built: 2014 },
+      sustainability_score: { total_score: 68, grade: 'C+', categories: { vessel_efficiency: { score: 65 }, fishing_method: { score: 62 }, environmental_practices: { score: 70 }, compliance_and_transparency: { score: 85 }, social_responsibility: { score: 68 } } }
+    },
+    {
+      id: 'fishing-zone-8',
+      lat: -33,
+      lng: -72,
+      name: 'Chile Coast',
+      vessel: { name: 'FV Andean Wave', imo_number: '9301234', model: 'Trawler 70m', flag_state: 'Chile', year_built: 2017 },
+      sustainability_score: { total_score: 76, grade: 'B', categories: { vessel_efficiency: { score: 78 }, fishing_method: { score: 72 }, environmental_practices: { score: 80 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 74 } } }
+    },
+    {
+      id: 'fishing-zone-9',
+      lat: 12,
+      lng: 115,
+      name: 'South China Sea',
+      vessel: { name: 'FV Dragon Pearl', imo_number: '9312345', model: 'Purse Seiner 75m', flag_state: 'China', year_built: 2013 },
+      sustainability_score: { total_score: 62, grade: 'C', categories: { vessel_efficiency: { score: 60 }, fishing_method: { score: 58 }, environmental_practices: { score: 65 }, compliance_and_transparency: { score: 75 }, social_responsibility: { score: 65 } } }
+    },
+    {
+      id: 'fishing-zone-10',
+      lat: -5,
+      lng: 105,
+      name: 'Java Sea',
+      vessel: { name: 'FV Nusantara', imo_number: '9323456', model: 'Trawler 62m', flag_state: 'Indonesia', year_built: 2011 },
+      sustainability_score: { total_score: 65, grade: 'C+', categories: { vessel_efficiency: { score: 63 }, fishing_method: { score: 60 }, environmental_practices: { score: 68 }, compliance_and_transparency: { score: 78 }, social_responsibility: { score: 70 } } }
+    },
+    {
+      id: 'fishing-zone-11',
+      lat: 36,
+      lng: 124,
+      name: 'Yellow Sea',
+      vessel: { name: 'FV East Wind', imo_number: '9334567', model: 'Factory Trawler 88m', flag_state: 'South Korea', year_built: 2015 },
+      sustainability_score: { total_score: 74, grade: 'B-', categories: { vessel_efficiency: { score: 76 }, fishing_method: { score: 70 }, environmental_practices: { score: 78 }, compliance_and_transparency: { score: 82 }, social_responsibility: { score: 72 } } }
+    },
+    {
+      id: 'fishing-zone-12',
+      lat: 15,
+      lng: 73,
+      name: 'Arabian Sea (India)',
+      vessel: { name: 'FV Mumbai Express', imo_number: '9345678', model: 'Longliner 66m', flag_state: 'India', year_built: 2012 },
+      sustainability_score: { total_score: 70, grade: 'B-', categories: { vessel_efficiency: { score: 68 }, fishing_method: { score: 67 }, environmental_practices: { score: 72 }, compliance_and_transparency: { score: 80 }, social_responsibility: { score: 75 } } }
+    },
+    {
+      id: 'fishing-zone-13',
+      lat: -23,
+      lng: 35,
+      name: 'Mozambique Channel',
+      vessel: { name: 'FV African Queen', imo_number: '9356789', model: 'Trawler 64m', flag_state: 'South Africa', year_built: 2018 },
+      sustainability_score: { total_score: 79, grade: 'B+', categories: { vessel_efficiency: { score: 80 }, fishing_method: { score: 75 }, environmental_practices: { score: 82 }, compliance_and_transparency: { score: 85 }, social_responsibility: { score: 78 } } }
+    },
+    {
+      id: 'fishing-zone-14',
+      lat: 14,
+      lng: -17,
+      name: 'West Africa (Senegal)',
+      vessel: { name: 'FV Dakar Spirit', imo_number: '9367890', model: 'Purse Seiner 71m', flag_state: 'Senegal', year_built: 2014 },
+      sustainability_score: { total_score: 66, grade: 'C+', categories: { vessel_efficiency: { score: 64 }, fishing_method: { score: 62 }, environmental_practices: { score: 68 }, compliance_and_transparency: { score: 78 }, social_responsibility: { score: 72 } } }
+    },
+    {
+      id: 'fishing-zone-15',
+      lat: -28,
+      lng: 16,
+      name: 'Benguela Current',
+      vessel: { name: 'FV Namibian Pride', imo_number: '9378901', model: 'Factory Trawler 92m', flag_state: 'Namibia', year_built: 2016 },
+      sustainability_score: { total_score: 81, grade: 'A-', categories: { vessel_efficiency: { score: 83 }, fishing_method: { score: 78 }, environmental_practices: { score: 85 }, compliance_and_transparency: { score: 88 }, social_responsibility: { score: 80 } } }
+    },
+    {
+      id: 'fishing-zone-16',
+      lat: 40,
+      lng: 15,
+      name: 'Mediterranean Sea',
+      vessel: { name: 'FV Mare Nostrum', imo_number: '9389012', model: 'Purse Seiner 69m', flag_state: 'Italy', year_built: 2013 },
+      sustainability_score: { total_score: 77, grade: 'B', categories: { vessel_efficiency: { score: 75 }, fishing_method: { score: 73 }, environmental_practices: { score: 80 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 76 } } }
+    },
+    {
+      id: 'fishing-zone-17',
+      lat: 52,
+      lng: -5,
+      name: 'Irish Sea',
+      vessel: { name: 'FV Celtic Tide', imo_number: '9390123', model: 'Trawler 67m', flag_state: 'Ireland', year_built: 2017 },
+      sustainability_score: { total_score: 84, grade: 'A', categories: { vessel_efficiency: { score: 86 }, fishing_method: { score: 82 }, environmental_practices: { score: 88 }, compliance_and_transparency: { score: 92 }, social_responsibility: { score: 79 } } }
+    },
+    {
+      id: 'fishing-zone-18',
+      lat: 8,
+      lng: -80,
+      name: 'Eastern Pacific (Panama)',
+      vessel: { name: 'FV Panama Blue', imo_number: '9401234', model: 'Longliner 74m', flag_state: 'Panama', year_built: 2015 },
+      sustainability_score: { total_score: 72, grade: 'B-', categories: { vessel_efficiency: { score: 70 }, fishing_method: { score: 68 }, environmental_practices: { score: 75 }, compliance_and_transparency: { score: 82 }, social_responsibility: { score: 73 } } }
+    },
+    {
+      id: 'fishing-zone-19',
+      lat: -40,
+      lng: -58,
+      name: 'Argentina Coast',
+      vessel: { name: 'FV Patagonian Wind', imo_number: '9412345', model: 'Trawler 76m', flag_state: 'Argentina', year_built: 2019 },
+      sustainability_score: { total_score: 83, grade: 'A-', categories: { vessel_efficiency: { score: 85 }, fishing_method: { score: 80 }, environmental_practices: { score: 87 }, compliance_and_transparency: { score: 90 }, social_responsibility: { score: 81 } } }
+    },
+    {
+      id: 'fishing-zone-20',
+      lat: 65,
+      lng: 12,
+      name: 'Norwegian Sea',
+      vessel: { name: 'FV Viking Explorer', imo_number: '9423456', model: 'Factory Trawler 98m', flag_state: 'Norway', year_built: 2020 },
+      sustainability_score: { total_score: 89, grade: 'A+', categories: { vessel_efficiency: { score: 92 }, fishing_method: { score: 88 }, environmental_practices: { score: 94 }, compliance_and_transparency: { score: 95 }, social_responsibility: { score: 85 } } }
+    },
+  ];
+
   const globeEl = useRef<any>(null);
   const [landData, setLandData] = useState<{ features: any[] }>({ features: [] });
   const [vesselData, setVesselData] = useState<VesselData[]>([]);
@@ -48,6 +212,8 @@ const HomePage: React.FC = () => {
   const [clusteredData, setClusteredData] = useState<ClusterData[]>([]);
   const [hoveredVessel, setHoveredVessel] = useState<VesselData | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hoveredFishingZone, setHoveredFishingZone] = useState<any | null>(null);
+  const [fishingZonePopupPosition, setFishingZonePopupPosition] = useState<{ x: number; y: number } | null>(null);
 
   const [hotspotData, setHotspotData] = useState<HotspotData[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -397,31 +563,66 @@ const HomePage: React.FC = () => {
 
           showGraticules={true}
 
-          htmlElementsData={[{ id: 'atlantic-pin', lat: 20, lng: -30 }, ...clusteredData]}
+          htmlElementsData={[...fishingZones, ...clusteredData]}
           htmlElement={(d: any) => {
             const el = document.createElement('div');
             el.style.pointerEvents = 'auto';
             el.style.cursor = 'pointer';
 
-            if (d.id === 'atlantic-pin') {
+            // Render white pins for fishing zones
+            if (d.id && typeof d.id === 'string' && d.id.startsWith('fishing-zone-')) {
               const svgNS = 'http://www.w3.org/2000/svg';
               const svg = document.createElementNS(svgNS, 'svg');
               svg.setAttribute('viewBox', '0 0 24 36');
-              svg.setAttribute('width', '24px');
-              svg.setAttribute('height', '34px');
+              svg.setAttribute('width', '20px');
+              svg.setAttribute('height', '30px');
 
               const path = document.createElementNS(svgNS, 'path');
               path.setAttribute('d', 'M12 0C7 0 3 4 3 9c0 7.5 9 17 9 17s9-9.5 9-17C21 4 17 0 12 0z');
               path.setAttribute('fill', '#ffffff');
+              path.setAttribute('opacity', '0.85');
+              
               const circle = document.createElementNS(svgNS, 'circle');
               circle.setAttribute('cx', '12');
               circle.setAttribute('cy', '9');
               circle.setAttribute('r', '4.5');
               circle.setAttribute('fill', '#0f1624');
+              
               svg.appendChild(path);
               svg.appendChild(circle);
               el.appendChild(svg);
-              el.style.pointerEvents = 'none';
+              
+              // Add click handler to show detailed info
+              el.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                setHoveredFishingZone(d);
+                
+                const popupHeight = 420;
+                const popupWidth = 360;
+                const screenHeight = window.innerHeight;
+                const screenWidth = window.innerWidth;
+
+                let x = e.clientX + 15;
+                let y = e.clientY - 10;
+
+                if (x + popupWidth > screenWidth) {
+                  x = e.clientX - popupWidth - 15;
+                }
+
+                if (e.clientY > screenHeight / 2) {
+                  y = e.clientY - popupHeight - 10;
+                } else {
+                  y = e.clientY - 10;
+                }
+
+                y = Math.max(10, Math.min(y, screenHeight - popupHeight - 10));
+                x = Math.max(10, Math.min(x, screenWidth - popupWidth - 10));
+
+                setFishingZonePopupPosition({ x, y });
+              });
+              
               return el;
             }
 
@@ -657,6 +858,176 @@ const HomePage: React.FC = () => {
           </button>
         </div>
       )}
+
+          {/* Fishing Zone Detailed Popup */}
+          {hoveredFishingZone && fishingZonePopupPosition && (
+            <div
+              data-popup="fishing-zone-info"
+              style={{
+                position: 'fixed',
+                left: fishingZonePopupPosition.x,
+                top: fishingZonePopupPosition.y,
+                backgroundColor: 'rgba(23, 23, 23, 0.95)',
+                color: '#e0f2fd',
+                padding: '20px',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontFamily: 'Arial, sans-serif',
+                zIndex: 1000,
+                boxShadow: '0 8px 32px rgba(70, 98, 171, 0.35)',
+                border: '1px solid rgba(198, 218, 236, 0.4)',
+                maxWidth: '360px',
+                minWidth: '340px',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              {/* Header with vessel name */}
+              <div style={{ 
+                fontWeight: 'bold', 
+                marginBottom: '14px', 
+                color: '#ffffff',
+                fontSize: '16px',
+                borderBottom: '2px solid rgba(70, 98, 171, 0.5)',
+                paddingBottom: '10px'
+              }}>
+                {hoveredFishingZone.vessel.name}
+                <div style={{ fontSize: '11px', color: '#c0d9ef', fontWeight: 'normal', marginTop: '4px' }}>
+                  IMO: {hoveredFishingZone.vessel.imo_number}
+                </div>
+              </div>
+
+              {/* Coordinates */}
+              <div style={{ marginBottom: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div>
+                  <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px' }}>LATITUDE</div>
+                  <div style={{ fontWeight: '600' }}>{hoveredFishingZone.lat.toFixed(4)}°</div>
+                </div>
+                <div>
+                  <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px' }}>LONGITUDE</div>
+                  <div style={{ fontWeight: '600' }}>{hoveredFishingZone.lng.toFixed(4)}°</div>
+                </div>
+              </div>
+
+              {/* Location */}
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px' }}>LOCATION</div>
+                <div style={{ fontWeight: '600' }}>{hoveredFishingZone.name}</div>
+              </div>
+
+              {/* Vessel Model */}
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px' }}>VESSEL MODEL</div>
+                <div style={{ fontWeight: '600' }}>{hoveredFishingZone.vessel.model}</div>
+                <div style={{ fontSize: '11px', color: '#c0d9ef', marginTop: '2px' }}>
+                  {hoveredFishingZone.vessel.flag_state} • Built {hoveredFishingZone.vessel.year_built}
+                </div>
+              </div>
+
+              {/* Sustainability Score */}
+              <div style={{ 
+                marginBottom: '14px',
+                padding: '12px',
+                backgroundColor: 'rgba(70, 98, 171, 0.15)',
+                borderRadius: '8px',
+                border: '1px solid rgba(70, 98, 171, 0.3)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div style={{ color: '#9fb7d8', fontSize: '11px', fontWeight: '600' }}>SUSTAINABILITY SCORE</div>
+                  <div style={{ 
+                    fontSize: '24px', 
+                    fontWeight: 'bold',
+                    color: hoveredFishingZone.sustainability_score.total_score >= 80 ? '#2eb700' : 
+                           hoveredFishingZone.sustainability_score.total_score >= 70 ? '#f59e0b' : 
+                           hoveredFishingZone.sustainability_score.total_score >= 60 ? '#fb923c' : '#fc0303'
+                  }}>
+                    {hoveredFishingZone.sustainability_score.total_score}
+                    <span style={{ fontSize: '14px', marginLeft: '4px' }}>/ 100</span>
+                  </div>
+                </div>
+                <div style={{ 
+                  display: 'inline-block',
+                  padding: '4px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: hoveredFishingZone.sustainability_score.total_score >= 80 ? 'rgba(46, 183, 0, 0.2)' : 
+                                   hoveredFishingZone.sustainability_score.total_score >= 70 ? 'rgba(245, 158, 11, 0.2)' : 
+                                   hoveredFishingZone.sustainability_score.total_score >= 60 ? 'rgba(251, 146, 60, 0.2)' : 'rgba(252, 3, 3, 0.2)',
+                  color: hoveredFishingZone.sustainability_score.total_score >= 80 ? '#2eb700' : 
+                         hoveredFishingZone.sustainability_score.total_score >= 70 ? '#f59e0b' : 
+                         hoveredFishingZone.sustainability_score.total_score >= 60 ? '#fb923c' : '#fc0303',
+                  fontSize: '12px',
+                  fontWeight: '700'
+                }}>
+                  Grade: {hoveredFishingZone.sustainability_score.grade}
+                </div>
+              </div>
+
+              {/* Category Breakdown */}
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '8px', fontWeight: '600' }}>CATEGORY SCORES</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {Object.entries(hoveredFishingZone.sustainability_score.categories).map(([key, value]: [string, any]) => (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ 
+                        fontSize: '10px', 
+                        flex: '1',
+                        textTransform: 'capitalize',
+                        color: '#d2deea'
+                      }}>
+                        {key.replace(/_/g, ' ')}
+                      </div>
+                      <div style={{
+                        width: '100px',
+                        height: '6px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: '3px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${value.score}%`,
+                          height: '100%',
+                          backgroundColor: value.score >= 80 ? '#2eb700' : 
+                                         value.score >= 70 ? '#f59e0b' : 
+                                         value.score >= 60 ? '#fb923c' : '#fc0303',
+                          transition: 'width 0.3s ease'
+                        }} />
+                      </div>
+                      <div style={{ fontSize: '11px', fontWeight: '600', minWidth: '30px', textAlign: 'right' }}>
+                        {value.score}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Close button */}
+              <button
+                onClick={() => {
+                  setHoveredFishingZone(null);
+                  setFishingZonePopupPosition(null);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                }}
+              >
+                Close
+              </button>
+            </div>
+          )}
 
           <div
             style={{
