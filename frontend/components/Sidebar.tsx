@@ -68,8 +68,8 @@ const Sidebar = () => {
 
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
-      { href: '/', label: 'Dashboard', icon: FiHome },
-      { href: '/analyze', label: 'Intelligence Console', icon: FiBarChart },
+      { href: '/', label: 'Landing', icon: FiHome },
+      { href: '/dashboard', label: 'Dashboard', icon: FiBarChart },
       { href: '/reports', label: 'Reports', icon: FiFileText },
       { href: '/profile', label: 'Profile', icon: FiUser },
     ];
