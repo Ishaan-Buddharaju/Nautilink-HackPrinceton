@@ -194,7 +194,7 @@ export default function AgentPanel({ open, point, onClose }: AgentPanelProps) {
         width: 560,
         transform: open ? 'translateX(0)' : 'translateX(-105%)',
         transition: 'transform 260ms ease',
-        marginLeft:"12px"
+        marginLeft:"104px"
       }}
     >
       <div className="h-full bg-black border-r border-gray-900 text-white shadow-2xl flex flex-col">
@@ -230,7 +230,7 @@ export default function AgentPanel({ open, point, onClose }: AgentPanelProps) {
                 </li>
                 <li>
                   <span className="text-gray-500">Timestamp:</span>{' '}
-                  {new Date(point.timestamp).toLocaleString()}
+                  {point.timestamp}
                 </li>
               </ul>
             </div>
