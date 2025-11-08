@@ -3,16 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
-import { FiGithub, FiLogIn } from 'react-icons/fi';
+import { FiLogIn } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
-import { SiFacebook } from 'react-icons/si';
-import { FaMicrosoft } from 'react-icons/fa';
+import { FaMicrosoft, FaIdCard } from 'react-icons/fa';
+import { RiGovernmentFill } from 'react-icons/ri';
 
 const providers = [
   { id: 'google', label: 'Continue with Google', icon: FcGoogle },
-  { id: 'facebook', label: 'Continue with Facebook', icon: SiFacebook },
   { id: 'azure', label: 'Continue with Microsoft', icon: FaMicrosoft },
-  { id: 'github', label: 'Continue with GitHub', icon: FiGithub },
+  { id: 'cac-piv', label: 'CAC / PIV Smart Card Authentication', icon: FaIdCard },
+  { id: 'login-gov', label: 'Login.gov SSO', icon: RiGovernmentFill },
 ] as const;
 
 type ProviderId = (typeof providers)[number]['id'];
@@ -80,26 +80,36 @@ export default function LoginPage() {
           ))}
         </div>
 
-        <div className="rounded-2xl border border-[rgba(198,218,236,0.1)] bg-[#10192a] p-5 text-sm text-[#8da5c7]">
-          <p className="font-medium text-[#c6daec]">Need an account?</p>
-          <p className="mt-2">
-            Use one of the providers above to create or link your Nautilink profile automatically.
-          </p>
-          <p className="mt-3">
-            After signing in, you will land on the dashboard where you can manage fleet intelligence and
-            maritime operations.
-          </p>
-        </div>
-
         {error && (
           <div className="rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {error}
           </div>
         )}
 
-        <p className="text-center text-xs text-[#6e82a4]">
-          By signing in you agree to Nautilink’s acceptable use and data processing policies.
-        </p>
+        <div className="flex items-center gap-4 text-[#6e82a4] text-sm">
+          <span className="flex-1 h-px bg-[rgba(198,218,236,0.15)]" />
+          <span>or</span>
+          <span className="flex-1 h-px bg-[rgba(198,218,236,0.15)]" />
+        </div>
+
+        <form className="space-y-3">
+          <input
+            type="email"
+            placeholder="Email address"
+            className="w-full rounded-2xl border border-[rgba(198,218,236,0.2)] bg-[#10192a] px-4 py-3 text-sm text-[#e0f2fd] placeholder-[#6e82a4] focus:outline-none focus:border-[#4662ab]"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full rounded-2xl border border-[rgba(198,218,236,0.2)] bg-[#10192a] px-4 py-3 text-sm text-[#e0f2fd] placeholder-[#6e82a4] focus:outline-none focus:border-[#4662ab]"
+          />
+          <button
+            type="button"
+            className="w-full rounded-2xl bg-gradient-to-r from-[#4662ab] to-[#5f7bda] px-4 py-3 text-sm font-semibold text-[#f4f8ff] shadow-[0_10px_20px_rgba(70,98,171,0.35)] transition hover:brightness-110"
+          >
+            Log in with Email
+          </button>
+        </form>
       </div>
     </div>
   );
