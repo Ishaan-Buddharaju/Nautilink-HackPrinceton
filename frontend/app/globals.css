@@ -109,6 +109,31 @@ body {
   }
 }
 
+.sidebar-fish-flight {
+  animation: sidebarFishGlide 1.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes sidebarFishGlide {
+  0% {
+    transform: translate(-45%, 48%) scale(0.8) rotate(-10deg);
+    opacity: 0.0;
+    filter: drop-shadow(0 8px 22px rgba(70, 98, 171, 0.18));
+  }
+  18% {
+    opacity: 0.35;
+    transform: translate(-28%, 32%) scale(0.88) rotate(-6deg);
+  }
+  46% {
+    opacity: 0.65;
+    transform: translate(-6%, 8%) scale(0.97) rotate(-1deg);
+  }
+  100% {
+    opacity: 0.62;
+    transform: translate(12%, -10%) scale(1.04) rotate(3deg);
+    filter: drop-shadow(0 14px 28px rgba(70, 98, 171, 0.22));
+  }
+}
+
 /* Keyframes for toast/panel entrance */
 @keyframes fadeInDown {
   0% { opacity: 0; transform: translateY(-6px); }

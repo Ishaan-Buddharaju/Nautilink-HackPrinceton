@@ -42,6 +42,7 @@ const Sidebar = () => {
   const [showRipple, setShowRipple] = useState(false);
   const [showContent, setShowContent] = useState(false);
   const [anchorRotated, setAnchorRotated] = useState(false);
+  const [fishAnimationKey, setFishAnimationKey] = useState(0);
 
   const moveListener = useRef<(event: PointerEvent) => void>();
   const upListener = useRef<(event: PointerEvent) => void>();
@@ -118,6 +119,9 @@ const Sidebar = () => {
       anchorTimer.current = setTimeout(() => {
         setAnchorRotated(true);
       }, 80);
+    }
+    if (isOpen) {
+      setFishAnimationKey((prev) => prev + 1);
     }
     return () => {
       if (anchorTimer.current) {
@@ -254,9 +258,22 @@ const Sidebar = () => {
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xl font-semibold tracking-[0.35em] uppercase">
-                Nautilink
-              </span>
+              <div className="relative flex items-center justify-center">
+                <span className="absolute inset-0 flex items-center justify-center opacity-50">
+                  <img
+                    src="/fish-sidebar.png"
+                    alt=""
+                    draggable={false}
+                    key={fishAnimationKey}
+                    className={`pointer-events-none max-h-12 w-auto object-contain ${
+                      isOpen ? 'sidebar-fish-flight' : ''
+                    }`}
+                  />
+                </span>
+                <span className="relative text-xl font-semibold tracking-[0.35em] uppercase">
+                  Nautilink
+                </span>
+              </div>
               <button
                 aria-label="Close sidebar"
                 onClick={handleClose}
