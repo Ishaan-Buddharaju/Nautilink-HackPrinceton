@@ -27,7 +27,7 @@ interface ReportData {
   agentPerformance: AgentStats;
 }
 
-const COLORS = ['#FFFFFF', '#A0AEC0', '#4A5568'];
+const COLORS = ['#e0f2fd', '#c6daec', '#4662ab'];
 
 const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> }) => {
   const resolvedParams = use(params);
@@ -44,11 +44,11 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
     const styles = `
       <style>
         @page { size: A4; margin: 16mm; }
-        html, body { background: #ffffff; color: #111827; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
-        h1,h2,h3 { color: #111827; margin: 0 0 8px 0; }
+        html, body { background: #ffffff; color: #171717; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+        h1,h2,h3 { color: #171717; margin: 0 0 8px 0; }
         p { margin: 8px 0; line-height: 1.5; }
         section { margin-bottom: 20px; }
-        .border { border-color: #e5e7eb; }
+        .border { border-color: #d2deea; }
         svg { max-width: 100% !important; height: auto !important; }
       </style>
     `;
@@ -92,34 +92,34 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
   // Render generated JSON reports with charts
   if (generatedJson) {
     return (
-      <div className="flex-1 p-8 text-white">
+      <div className="flex-1 p-8 text-[#e0f2fd]">
         <div className="max-w-4xl">
-          <Link href="/reports" className="flex items-center space-x-2 text-gray-400 hover:text-white mb-6">
+          <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             <span>All Reports</span>
           </Link>
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-3xl font-bold mb-2 text-[#e0f2fd]">
             {customTitle ? (
               <span>{customTitle}</span>
             ) : (
-              <>Report: <span className="text-gray-400 capitalize">{resolvedParams.reportId.replaceAll('-', ' ')}</span></>
+              <>Report: <span className="text-[#c0d9ef] capitalize">{resolvedParams.reportId.replaceAll('-', ' ')}</span></>
             )}
           </h1>
-          <p className="text-gray-500 mb-8">Generated on: {new Date().toLocaleDateString()}</p>
+          <p className="text-[#c0d9ef] mb-8">Generated on: {new Date().toLocaleDateString()}</p>
           <div className="mb-4 flex justify-end">
             <button
               onClick={() => exportElementToPDF('report-content', customTitle ? customTitle : `Report ${resolvedParams.reportId}`)}
-              className="px-4 py-2 bg-white text-black rounded-md font-semibold hover:bg-gray-300"
+              className="px-4 py-2 bg-[#4662ab] text-[#e0f2fd] rounded-md font-semibold hover:bg-[#c6daec] hover:text-[#171717]"
             >
               Export PDF
             </button>
           </div>
-          <div id="report-content" className="bg-black border border-gray-800 rounded-lg p-8 space-y-10">
+          <div id="report-content" className="bg-[#171717] border border-[rgba(198,218,236,0.18)] rounded-lg p-8 space-y-10">
             {/* Executive Summary */}
             {Array.isArray(generatedJson.executiveSummary) && (
               <section>
-                <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">Executive Summary</h2>
-                <div className="space-y-4 text-gray-300">
+                <h2 className="text-xl font-semibold mb-4 border-b border-[rgba(198,218,236,0.2)] pb-3">Executive Summary</h2>
+                <div className="space-y-4 text-[#d2deea]">
                   {generatedJson.executiveSummary.map((p: string, idx: number) => (
                     <p key={idx}>{p}</p>
                   ))}
@@ -130,14 +130,14 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
             {/* Sections */}
             {Array.isArray(generatedJson.sections) && generatedJson.sections.map((s: any, idx: number) => (
               <section key={idx}>
-                <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">{s?.heading || 'Section'}</h2>
-                <div className="space-y-4 text-gray-300">
+                <h2 className="text-xl font-semibold mb-4 border-b border-[rgba(198,218,236,0.2)] pb-3">{s?.heading || 'Section'}</h2>
+                <div className="space-y-4 text-[#d2deea]">
                   {(Array.isArray(s?.content) ? s.content : []).map((p: string, i: number) => (
                     <p key={i}>{p}</p>
                   ))}
                 </div>
                 {s?.chart?.callout && (
-                  <p className="text-gray-400 text-sm mt-3"><em>Chart callout:</em> {s.chart.callout}</p>
+                  <p className="text-[#c0d9ef] text-sm mt-3"><em>Chart callout:</em> {s.chart.callout}</p>
                 )}
 
                 {/* Chart selection */}
@@ -156,9 +156,9 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
                         ];
                         return (
                           <BarChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
-                            <XAxis dataKey="label" stroke="#A0AEC0" fontSize={12} />
-                            <YAxis stroke="#A0AEC0" fontSize={12} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#4662ab" />
+                            <XAxis dataKey="label" stroke="#c6daec" fontSize={12} />
+                            <YAxis stroke="#c6daec" fontSize={12} />
                             <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.85)', borderColor: '#4A5568', color: '#E2E8F0' }} />
                             <Bar dataKey="incidents" fill="#E2E8F0" radius={[4,4,0,0]} />
                           </BarChart>
@@ -181,14 +181,14 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
                           { name: 'Patrol Efficiency', value: 30 },
                           { name: 'Market Stability', value: 25 },
                         ];
-                        const COLORS = ['#FFFFFF', '#A0AEC0', '#4A5568'];
+                        const COLORS = ['#e0f2fd', '#c6daec', '#4662ab'];
                         return (
                           <PieChart>
                             <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                               {pieData.map((entry, i) => (<Cell key={i} fill={COLORS[i % COLORS.length]} />))}
                             </Pie>
                             <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.85)', borderColor: '#4A5568', color: '#E2E8F0' }} />
-                            <Legend iconSize={10} wrapperStyle={{ fontSize: '12px', color: '#A0AEC0' }} />
+                            <Legend iconSize={10} wrapperStyle={{ fontSize: '12px', color: '#c6daec' }} />
                           </PieChart>
                         );
                       }
@@ -207,9 +207,9 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
                               <stop offset="95%" stopColor="#FFFFFF" stopOpacity={0.1}/>
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
-                          <XAxis dataKey="t" stroke="#A0AEC0" fontSize={12} />
-                          <YAxis stroke="#A0AEC0" fontSize={12} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#4662ab" />
+                          <XAxis dataKey="t" stroke="#c6daec" fontSize={12} />
+                          <YAxis stroke="#c6daec" fontSize={12} />
                           <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.85)', borderColor: '#4A5568', color: '#E2E8F0' }} />
                           <Area type="monotone" dataKey="co2" stroke="#FFFFFF" fill="url(#co2)" />
                         </AreaChart>
@@ -222,16 +222,16 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
 
             {/* Estimated Sustainability Impact */}
             <section>
-              <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">Estimated Sustainability Impact</h2>
-              <p className="text-gray-300 mb-4">Based on observed compliance improvements and deterrence effects in the selected period, we estimate the following positive environmental outcomes. These estimates are illustrative and directionally conservative.</p>
+              <h2 className="text-xl font-semibold mb-4 border-b border-[rgba(198,218,236,0.2)] pb-3">Estimated Sustainability Impact</h2>
+              <p className="text-[#d2deea] mb-4">Based on observed compliance improvements and deterrence effects in the selected period, we estimate the following positive environmental outcomes. These estimates are illustrative and directionally conservative.</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Endangered fish saved (bar) */}
                 <div className="h-64">
                   <ResponsiveContainer>
                     <BarChart data={[{species:'Bluefin Tuna', saved: 140},{species:'Hammerhead Shark', saved: 90},{species:'Sea Turtles', saved: 60}] } margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
-                      <XAxis dataKey="species" stroke="#A0AEC0" fontSize={12} />
-                      <YAxis stroke="#A0AEC0" fontSize={12} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#4662ab" />
+                      <XAxis dataKey="species" stroke="#c6daec" fontSize={12} />
+                      <YAxis stroke="#c6daec" fontSize={12} />
                       <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.85)', borderColor: '#4A5568', color: '#E2E8F0' }} />
                       <Bar dataKey="saved" fill="#E2E8F0" radius={[4,4,0,0]} />
                     </BarChart>
@@ -247,9 +247,9 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
                           <stop offset="95%" stopColor="#FFFFFF" stopOpacity={0.1}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
-                      <XAxis dataKey="t" stroke="#A0AEC0" fontSize={12} />
-                      <YAxis stroke="#A0AEC0" fontSize={12} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#4662ab" />
+                      <XAxis dataKey="t" stroke="#c6daec" fontSize={12} />
+                      <YAxis stroke="#c6daec" fontSize={12} />
                       <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.85)', borderColor: '#4A5568', color: '#E2E8F0' }} />
                       <Area type="monotone" dataKey="tons" stroke="#FFFFFF" fill="url(#tons)" />
                     </AreaChart>
@@ -260,10 +260,10 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
                   <ResponsiveContainer>
                     <PieChart>
                       <Pie data={[{name:'Oil discharge prevented', value: 40},{name:'Illegal dumping deterred', value: 35},{name:'Bycatch reduction', value: 25}]} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                        {['#FFFFFF','#A0AEC0','#4A5568'].map((c, i) => (<Cell key={i} fill={c} />))}
+                        {['#e0f2fd','#c6daec','#4662ab'].map((c, i) => (<Cell key={i} fill={c} />))}
                       </Pie>
                       <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.85)', borderColor: '#4A5568', color: '#E2E8F0' }} />
-                      <Legend iconSize={10} wrapperStyle={{ fontSize: '12px', color: '#A0AEC0' }} />
+                      <Legend iconSize={10} wrapperStyle={{ fontSize: '12px', color: '#c6daec' }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -277,44 +277,44 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
   
   // If neither generatedJson nor reportData is ready yet, show a lightweight loading state
   if (!reportData) {
-    return <div className="flex-1 p-8 text-white text-center">Loading report data...</div>;
+    return <div className="flex-1 p-8 text-[#e0f2fd] text-center">Loading report data...</div>;
   }
   
   const successRateData = [{ name: 'Success Rate', value: reportData.agentPerformance.success_rate }];
 
   return (
-    <div className="flex-1 p-8 text-white">
+    <div className="flex-1 p-8 text-[#e0f2fd]">
       <div className="max-w-4xl">
-        <Link href="/reports" className="flex items-center space-x-2 text-gray-400 hover:text-white mb-6">
+        <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
           <span>All Reports</span>
         </Link>
-        <h1 className="text-3xl font-bold mb-2">
-          Report: <span className="text-gray-400 capitalize">{resolvedParams.reportId.replaceAll('-', ' ')}</span>
+        <h1 className="text-3xl font-bold mb-2 text-[#e0f2fd]">
+          Report: <span className="text-[#c0d9ef] capitalize">{resolvedParams.reportId.replaceAll('-', ' ')}</span>
         </h1>
-        <p className="text-gray-500 mb-8">Generated on: {new Date().toLocaleDateString()}</p>
+        <p className="text-[#c0d9ef] mb-8">Generated on: {new Date().toLocaleDateString()}</p>
         <div className="mb-4 flex justify-end">
           <button
             onClick={() => exportElementToPDF('report-content', `Report ${resolvedParams.reportId}`)}
-            className="px-4 py-2 bg-white text-black rounded-md font-semibold hover:bg-gray-300"
+            className="px-4 py-2 bg-[#4662ab] text-[#e0f2fd] rounded-md font-semibold hover:bg-[#c6daec] hover:text-[#171717]"
           >
             Export PDF
           </button>
         </div>
-        <div id="report-content" className="bg-black border border-gray-800 rounded-lg p-8 space-y-12">
+        <div id="report-content" className="bg-[#171717] border border-[rgba(198,218,236,0.18)] rounded-lg p-8 space-y-12">
           <section>
-            <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">
+            <h2 className="text-xl font-semibold mb-4 border-b border-[rgba(198,218,236,0.2)] pb-3">
               Weekly IUU Activity Analysis
             </h2>
-            <p className="text-gray-400 text-sm mb-6">
+            <p className="text-[#c0d9ef] text-sm mb-6">
               This section provides a week-over-week summary of detected vessels engaged in suspected Illegal, Unreported, and Unregulated (IUU) fishing activities. The data is aggregated from AIS, satellite imagery, and environmental sensor fusion.
             </p>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
                 <BarChart data={reportData.weeklyIUU} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
-                  <XAxis dataKey="week" stroke="#A0AEC0" fontSize={12} />
-                  <YAxis stroke="#A0AEC0" fontSize={12} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#4662ab" />
+                  <XAxis dataKey="week" stroke="#c6daec" fontSize={12} />
+                  <YAxis stroke="#c6daec" fontSize={12} />
                   <Tooltip
                     cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
                     contentStyle={{
@@ -327,19 +327,19 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-gray-400 text-xs mt-4 text-center">
+            <p className="text-[#c0d9ef] text-xs mt-4 text-center">
               Figure 1: Count of vessels flagged for IUU-like behavior over the past four weeks.
             </p>
-            <p className="text-gray-300 text-sm mt-6">
+            <p className="text-[#d2deea] text-sm mt-6">
               <strong>Analysis:</strong> A notable increase in flagged activity was observed in Week 37, coinciding with seasonal migration patterns of target species. Further investigation into the satellite reconnaissance data from this period is recommended.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">
+            <h2 className="text-xl font-semibold mb-4 border-b border-[rgba(198,218,236,0.2)] pb-3">
               AI Voice Agent Performance
             </h2>
-            <p className="text-gray-400 text-sm mb-6">
+            <p className="text-[#c0d9ef] text-sm mb-6">
               The following metrics evaluate the performance of the automated AI Voice Agent. The success rate is defined as the percentage of calls resulting in a confirmed receipt of information without requiring human operator intervention.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
@@ -406,17 +406,17 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
                                     color: '#E2E8F0',
                                 }}
                             />
-                            <Legend iconSize={10} wrapperStyle={{ fontSize: "12px", color: '#A0AEC0' }} />
+                            <Legend iconSize={10} wrapperStyle={{ fontSize: "12px", color: '#c6daec' }} />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
                  {/* Stats */}
                 <div className="space-y-4">
-                  <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-800">
+                  <div className="bg-[#4662ab1a] p-4 rounded-lg border border-[rgba(198,218,236,0.25)]">
                       <p className="text-sm text-gray-400">Avg. Call Duration</p>
                       <p className="text-2xl font-semibold">{reportData.agentPerformance.avg_call_duration_min} min</p>
                   </div>
-                  <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-800">
+                  <div className="bg-[#4662ab1a] p-4 rounded-lg border border-[rgba(198,218,236,0.25)]">
                       <p className="text-sm text-gray-400">Total Calls (Q3)</p>
                       <p className="text-2xl font-semibold">{reportData.agentPerformance.total_calls_q3}</p>
                   </div>

@@ -122,8 +122,8 @@ const LandingPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#000',
-          color: 'white',
+          backgroundColor: '#171717',
+          color: '#FFFFFF',
           fontSize: '18px',
           fontFamily: 'Arial, sans-serif'
         }}>
@@ -131,8 +131,8 @@ const LandingPage: React.FC = () => {
             <div style={{ 
               width: '40px', 
               height: '40px', 
-              border: '3px solid #333', 
-              borderTop: '3px solid #fff', 
+              border: '3px solid #4662ab', 
+              borderTop: '3px solid #e0f2fd', 
               borderRadius: '50%', 
               animation: 'spin 1s linear infinite',
               margin: '0 auto 20px'
@@ -147,8 +147,8 @@ const LandingPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#000',
-          color: 'white',
+          backgroundColor: '#171717',
+          color: '#FFFFFF',
           fontFamily: 'Arial, sans-serif',
           overflow: 'hidden'
         }}>
@@ -168,7 +168,7 @@ const LandingPage: React.FC = () => {
               backgroundImageUrl={null}
               showGlobe={false}
               showAtmosphere={false}
-              backgroundColor={'rgba(0,0,0,0)'}
+              backgroundColor={'rgba(23,23,23,0)'}
               polygonsData={landData.features}
               polygonCapColor={() => 'rgba(130, 130, 130, 0.5)'}
               polygonSideColor={() => 'rgba(0,0,0,0)'}
@@ -222,8 +222,8 @@ const LandingPage: React.FC = () => {
               marginBottom: '20px'
             }}>
               <img 
-                src="/OverSEAlogo.png" 
-                alt="OverSea" 
+                src="/nautilink-logo-white.png" 
+                alt="Nautilink" 
                 style={{ 
                   width: '60px', 
                   height: '60px', 
@@ -235,10 +235,10 @@ const LandingPage: React.FC = () => {
                 fontSize: '4rem',
                 fontWeight: 'bold',
                 margin: 0,
-                color: '#ffffff',
+                color: '#e0f2fd',
                 letterSpacing: '0.1em'
               }}>
-                OverSea
+                Nautilink
               </h1>
             </div>
 
@@ -247,7 +247,7 @@ const LandingPage: React.FC = () => {
               fontSize: '1.5rem',
               fontWeight: '300',
               margin: '0 0 40px 0',
-              color: '#ccc',
+              color: '#d2deea',
               lineHeight: '1.4'
             }}>
               Advanced Maritime Intelligence & Surveillance Platform
@@ -260,25 +260,27 @@ const LandingPage: React.FC = () => {
                 padding: '15px 40px',
                 fontSize: '1.2rem',
                 fontWeight: '600',
-                backgroundColor: '#2eb700',
-                color: 'white',
+                backgroundColor: '#4662ab',
+                color: '#e0f2fd',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                boxShadow: '0 4px 20px rgba(46, 183, 0, 0.3)',
+                boxShadow: '0 4px 20px rgba(70, 98, 171, 0.35)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#51cf66';
+                e.currentTarget.style.backgroundColor = '#c6daec';
+                e.currentTarget.style.color = '#171717';
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 25px rgba(46, 183, 0, 0.4)';
+                e.currentTarget.style.boxShadow = '0 6px 25px rgba(70, 98, 171, 0.45)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#2eb700';
+                e.currentTarget.style.backgroundColor = '#4662ab';
+                e.currentTarget.style.color = '#e0f2fd';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(46, 183, 0, 0.3)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(70, 98, 171, 0.35)';
               }}
             >
               Enter Dashboard

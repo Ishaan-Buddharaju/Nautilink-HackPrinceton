@@ -143,11 +143,11 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="flex-1 p-8 text-white flex" style={{marginLeft:"104px"}}>
+    <div className="flex-1 p-8 text-[#e0f2fd] flex" style={{marginLeft:"104px"}}>
       {/* Left side: Reports List */}
-      <div className="w-1/2 pr-8 border-r border-gray-800">
-        <h1 className="text-3xl font-bold mb-4">Reports</h1>
-        <p className="text-gray-400 mb-8">
+      <div className="w-1/2 pr-8 border-r border-[rgba(198,218,236,0.18)]">
+        <h1 className="text-3xl font-bold mb-4 text-[#e0f2fd]">Reports</h1>
+        <p className="text-[#c0d9ef] mb-8">
           Review and share weekly summaries, performance analyses, and incident reports.
         </p>
 
@@ -155,23 +155,23 @@ const ReportsPage = () => {
           {reports.map((report) => (
             <div
               key={report.id}
-              className="flex items-center justify-between p-4 bg-black border border-gray-800 rounded-lg"
+              className="flex items-center justify-between p-4 bg-[#171717] border border-[rgba(198,218,236,0.18)] rounded-lg"
             >
               <Link href={`/reports/${report.id}`} className="flex-1 hover:underline">
                 <div className="font-sans">
                   <h3 className="font-medium">{report.title}</h3>
-                  <p className="text-sm text-gray-500">{report.date}</p>
+                  <p className="text-sm text-[#c0d9ef]">{report.date}</p>
                 </div>
               </Link>
               <div className="flex items-center space-x-4">
                 <span
-                  className="px-3 py-1 text-xs font-semibold rounded-full border border-gray-700 bg-black text-gray-300 font-sans"
+                  className="px-3 py-1 text-xs font-semibold rounded-full border border-[rgba(198,218,236,0.25)] bg-[#171717] text-[#c6daec] font-sans"
                 >
                   {report.clearance}
                 </span>
                 <button
                   onClick={() => handleShareClick(report)}
-                  className="w-10 h-10 flex items-center justify-center border border-gray-700 rounded-md hover:bg-gray-900 transition-colors"
+                  className="w-10 h-10 flex items-center justify-center border border-[rgba(198,218,236,0.25)] rounded-md hover:bg-[#4662ab33] transition-colors"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -197,49 +197,49 @@ const ReportsPage = () => {
 
       {/* Right side: Generate Report */}
       <div className="w-1/2 pl-8 flex flex-col font-sans">
-          <h2 className="text-xl font-bold mb-4">Generate New Report</h2>
-          <p className="text-gray-400 mb-6">Customize and create a new report based on the latest data.</p>
+          <h2 className="text-xl font-bold mb-4 text-[#e0f2fd]">Generate New Report</h2>
+          <p className="text-[#c0d9ef] mb-6">Customize and create a new report based on the latest data.</p>
           
           <div className="space-y-6 flex-1">
             {/* Report Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Report Title</label>
+              <label className="block text-sm font-medium text-[#c0d9ef] mb-2">Report Title</label>
               <input
                 value={titleInput}
                 onChange={(e) => setTitleInput(e.target.value)}
                 type="text"
                 placeholder="e.g., Southeast Patrol IUU Summary"
-                className="w-full bg-black border border-gray-700 rounded-md p-2 text-white font-sans"
+                className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans placeholder-[#c0d9ef]"
               />
             </div>
             {/* Date Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Date Range</label>
+              <label className="block text-sm font-medium text-[#c0d9ef] mb-2">Date Range</label>
               <div className="flex space-x-4">
-                <input value={dateStart} onChange={(e) => setDateStart(e.target.value)} type="date" className="w-full bg-black border border-gray-700 rounded-md p-2 text-white font-sans" />
-                <input value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} type="date" className="w-full bg-black border border-gray-700 rounded-md p-2 text-white font-sans" />
+                <input value={dateStart} onChange={(e) => setDateStart(e.target.value)} type="date" className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans [color-scheme:dark]" />
+                <input value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} type="date" className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans [color-scheme:dark]" />
               </div>
             </div>
 
             {/* Time Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Time Range (EST)</label>
+              <label className="block text-sm font-medium text-[#c0d9ef] mb-2">Time Range (EST)</label>
               <div className="flex space-x-4">
                 <div className="relative w-full">
-                  <select value={timeStart} onChange={(e) => setTimeStart(e.target.value)} className="w-full bg-black border border-gray-700 rounded-md p-2 text-white font-sans appearance-none pr-8">
+                  <select value={timeStart} onChange={(e) => setTimeStart(e.target.value)} className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans appearance-none pr-8">
                     <option value="">Select start</option>
                     {timeOptions.map(time => <option key={time} value={time}>{time}</option>)}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#c0d9ef]">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                   </div>
                 </div>
                 <div className="relative w-full">
-                  <select value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} className="w-full bg-black border border-gray-700 rounded-md p-2 text-white font-sans appearance-none pr-8">
+                  <select value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans appearance-none pr-8">
                     <option value="">Select end</option>
                     {timeOptions.map(time => <option key={time} value={time}>{time}</option>)}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#c0d9ef]">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                   </div>
                 </div>
@@ -248,33 +248,33 @@ const ReportsPage = () => {
 
             {/* Sections to Include */}
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Sections to Include</label>
+              <label className="block text-sm font-medium text-[#c0d9ef] mb-2">Sections to Include</label>
               <div className="flex flex-col space-y-4">
                 <label className="flex items-center space-x-3 font-sans cursor-pointer">
                   <input checked={sections.iuu_activity} onChange={() => handleSectionToggle('iuu_activity')} type="checkbox" className="peer hidden" />
-                  <span className="w-5 h-5 border-2 border-gray-700 rounded-sm flex items-center justify-center transition-colors peer-checked:bg-white peer-checked:border-gray-400 peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-white ring-offset-black">
-                    <svg className="w-3 h-3 text-black hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span className="w-5 h-5 border-2 border-[rgba(198,218,236,0.4)] rounded-sm flex items-center justify-center transition-colors peer-checked:bg-[#c6daec] peer-checked:border-[#4662ab] peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-[#4662ab] ring-offset-[#171717]">
+                    <svg className="w-3 h-3 text-[#171717] hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </span>
                   <span>IUU Activity Summary</span>
                 </label>
                 <label className="flex items-center space-x-3 font-sans cursor-pointer">
                   <input checked={sections.ai_voice_agent} onChange={() => handleSectionToggle('ai_voice_agent')} type="checkbox" className="peer hidden" />
-                  <span className="w-5 h-5 border-2 border-gray-700 rounded-sm flex items-center justify-center transition-colors peer-checked:bg-white peer-checked:border-gray-400 peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-white ring-offset-black">
-                    <svg className="w-3 h-3 text-black hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span className="w-5 h-5 border-2 border-[rgba(198,218,236,0.4)] rounded-sm flex items-center justify-center transition-colors peer-checked:bg-[#c6daec] peer-checked:border-[#4662ab] peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-[#4662ab] ring-offset-[#171717]">
+                    <svg className="w-3 h-3 text-[#171717] hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </span>
                   <span>AI Agent Performance</span>
                 </label>
                 <label className="flex items-center space-x-3 font-sans cursor-pointer">
                   <input checked={sections.vessel_tracks} onChange={() => handleSectionToggle('vessel_tracks')} type="checkbox" className="peer hidden" />
-                  <span className="w-5 h-5 border-2 border-gray-700 rounded-sm flex items-center justify-center transition-colors peer-checked:bg-white peer-checked:border-gray-400 peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-white ring-offset-black">
-                    <svg className="w-3 h-3 text-black hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span className="w-5 h-5 border-2 border-[rgba(198,218,236,0.4)] rounded-sm flex items-center justify-center transition-colors peer-checked:bg-[#c6daec] peer-checked:border-[#4662ab] peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-[#4662ab] ring-offset-[#171717]">
+                    <svg className="w-3 h-3 text-[#171717] hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </span>
                   <span>Vessel Track Details</span>
                 </label>
                 <label className="flex items-center space-x-3 font-sans cursor-pointer">
                   <input checked={sections.economic_impact} onChange={() => handleSectionToggle('economic_impact')} type="checkbox" className="peer hidden" />
-                  <span className="w-5 h-5 border-2 border-gray-700 rounded-sm flex items-center justify-center transition-colors peer-checked:bg-white peer-checked:border-gray-400 peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-white ring-offset-black">
-                    <svg className="w-3 h-3 text-black hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span className="w-5 h-5 border-2 border-[rgba(198,218,236,0.4)] rounded-sm flex items-center justify-center transition-colors peer-checked:bg-[#c6daec] peer-checked:border-[#4662ab] peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-[#4662ab] ring-offset-[#171717]">
+                    <svg className="w-3 h-3 text-[#171717] hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </span>
                   <span>Economic Impact Analysis</span>
                 </label>
@@ -283,9 +283,9 @@ const ReportsPage = () => {
 
             {/* Clearance Level */}
             <div>
-              <label htmlFor="clearance" className="block text-sm font-medium text-gray-400 mb-2">Clearance Level</label>
+              <label htmlFor="clearance" className="block text-sm font-medium text-[#c0d9ef] mb-2">Clearance Level</label>
               <div className="relative w-full">
-                <select id="clearance" value={clearance} onChange={(e) => setClearance(e.target.value)} className="w-full bg-black border border-gray-700 rounded-md p-2 text-white font-sans appearance-none pr-8">
+                <select id="clearance" value={clearance} onChange={(e) => setClearance(e.target.value)} className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans appearance-none pr-8">
                   <option>Public Trust</option>
                   <option>Confidential</option>
                   <option>Top Secret</option>
@@ -298,17 +298,17 @@ const ReportsPage = () => {
           </div>
 
           {/* Generate Button */}
-          <div className="mt-auto pt-6 border-t border-gray-800">
+          <div className="mt-auto pt-6 border-t border-[rgba(198,218,236,0.18)]">
             <button
               disabled={isGenerating}
               onClick={handleGenerate}
-              className="w-full bg-white text-black font-bold py-3 px-4 rounded-lg transition-colors hover:bg-gray-300 disabled:opacity-60"
+              className="w-full bg-[#4662ab] text-[#e0f2fd] font-bold py-3 px-4 rounded-lg transition-colors hover:bg-[#c6daec] hover:text-[#171717] disabled:opacity-60 disabled:bg-[#171717] disabled:text-[#4662ab66]"
             >
               {isGenerating ? 'Generating…' : 'Generate Report'}
             </button>
             <div className="sr-only" aria-live="polite">{isGenerating ? 'Generating report' : 'Idle'}</div>
             {error && (
-              <p className="mt-3 text-sm text-red-400">{error}</p>
+              <p className="mt-3 text-sm text-[#e0f2fd]">{error}</p>
             )}
             {/* No inline preview; user clicks the new report entry to read */}
           </div>
@@ -318,24 +318,24 @@ const ReportsPage = () => {
         {reportToShare && (
           <>
             <h2 className="text-2xl font-bold mb-2">Share Report</h2>
-            <p className="text-gray-400 mb-6 font-sans">
-              You are sharing: <span className="font-semibold text-white">{reportToShare.title}</span>
+            <p className="text-[#c0d9ef] mb-6 font-sans">
+              You are sharing: <span className="font-semibold text-[#e0f2fd]">{reportToShare.title}</span>
             </p>
             
             <div className="font-sans">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-2">Recipient's Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-[#c0d9ef] mb-2">Recipient's Email</label>
               <input
                 type="email"
                 id="email"
                 placeholder="example@domain.com"
-                className="w-full bg-black border border-gray-700 rounded-md p-2 text-white"
+                className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] placeholder-[#c0d9ef]"
               />
             </div>
 
-            <div className="mt-8 pt-6 border-t border-gray-800">
+            <div className="mt-8 pt-6 border-t border-[rgba(198,218,236,0.18)]">
               <button
                 onClick={() => setIsShareModalOpen(false)}
-                className="w-full bg-white text-black font-bold py-3 px-4 rounded-lg transition-colors"
+                className="w-full bg-[#4662ab] text-[#e0f2fd] font-bold py-3 px-4 rounded-lg transition-colors hover:bg-[#c6daec] hover:text-[#171717]"
               >
                 Send Report
               </button>

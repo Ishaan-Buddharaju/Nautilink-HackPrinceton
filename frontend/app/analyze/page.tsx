@@ -249,21 +249,21 @@ export default function AnalyzePage() {
   };
 
   return (
-    <div className="flex h-screen bg-black text-white font-sans relative" style={{marginLeft:"104px"}}>
+    <div className="flex h-screen bg-[#171717] text-[#e0f2fd] font-sans relative" style={{marginLeft:"104px"}}>
       {/* Left Panel - Analysis Chat */}
       <div className={`w-1/2 flex flex-col h-screen`}> 
         {/* Header */}
-        <div className="p-4 border-b border-gray-800">
-          <h1 className="text-2xl font-semibold">OverSea Analysis Center</h1>
-          <p className="text-sm text-gray-400">AI-powered maritime surveillance analysis</p>
+        <div className="p-4 border-b border-[rgba(198,218,236,0.18)]">
+          <h1 className="text-2xl font-semibold text-[#e0f2fd]">Nautilink Analysis Center</h1>
+          <p className="text-sm text-[#c0d9ef]">AI-powered maritime surveillance analysis</p>
         </div>
 
         {/* Test Button */}
-        <div className="p-4 border-b border-gray-800">
+        <div className="p-4 border-b border-[rgba(198,218,236,0.18)]">
           <button
             onClick={handleTestAnalysis}
             disabled={isLoading}
-            className="w-full bg-black hover:bg-white disabled:bg-black border border-gray-700 hover:text-black text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            className="w-full bg-[#4662ab] hover:bg-[#c6daec] disabled:bg-[#171717] border border-[#4662ab] hover:text-[#171717] text-[#e0f2fd] font-medium py-3 px-4 rounded-lg transition-colors disabled:text-[#4662ab66] disabled:border-[#4662ab66]"
           >
             {isLoading ? 'Running Analysis...' : selectedTarget ? `Run Analysis On ${selectedTarget}` : 'Run Analysis'}
           </button>
@@ -279,8 +279,8 @@ export default function AnalyzePage() {
               <div
                 className={`max-w-[80%] p-3 rounded-lg ${
                   message.type === 'user'
-                    ? 'bg-white text-black'
-                    : 'bg-black border border-gray-800 text-white'
+                    ? 'bg-[#e0f2fd] text-[#171717]'
+                    : 'bg-[#171717] border border-[rgba(198,218,236,0.18)] text-[#e0f2fd]'
                 }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -292,11 +292,11 @@ export default function AnalyzePage() {
           ))}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-black p-3 rounded-lg border border-gray-800">
+              <div className="bg-[#171717] p-3 rounded-lg border border-[rgba(198,218,236,0.18)]">
                 <div className="flex space-x-1.5">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-[#c0d9ef] rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-[#c0d9ef] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-[#c0d9ef] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             </div>
@@ -304,7 +304,7 @@ export default function AnalyzePage() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-4 border-t border-[rgba(198,218,236,0.18)]">
           <div className="flex space-x-3">
             <input
               type="text"
@@ -312,13 +312,13 @@ export default function AnalyzePage() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask about the analysis..."
-              className="flex-1 bg-black border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+              className="flex-1 bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-lg px-4 py-2 text-[#e0f2fd] placeholder-[#c0d9ef] focus:outline-none focus:ring-2 focus:ring-[#4662ab] focus:border-transparent"
               disabled={isLoading}
             />
             <button
               onClick={handleSendMessage}
               disabled={isLoading || !inputValue.trim()}
-              className="bg-white hover:bg-gray-300 disabled:bg-gray-800 disabled:text-gray-500 text-black px-5 py-2 rounded-lg transition-colors"
+              className="bg-[#4662ab] hover:bg-[#c6daec] disabled:bg-[#171717] disabled:text-[#4662ab66] text-[#e0f2fd] hover:text-[#171717] px-5 py-2 rounded-lg transition-colors"
             >
               Send
             </button>
@@ -327,15 +327,15 @@ export default function AnalyzePage() {
       </div>
 
       {/* Vertical Separator */}
-      <div className="w-px bg-gradient-to-b from-white/10 via-white/20 to-white/10" />
+      <div className="w-px bg-gradient-to-b from-[#c6daec1a] via-[#4662ab33] to-[#c6daec1a]" />
 
       {/* Right Panel - Mapbox */}
-      <div className={`w-1/2 bg-black relative h-screen`}>
+      <div className={`w-1/2 bg-[#171717] relative h-screen`}>
         <div ref={mapContainerRef} className="absolute inset-0" style={{ height: '100%' }} />
       </div>
 
       {/* Center fade between chat and map (very subtle, non-interactive) */}
-      <div className="pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-black/40 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-[#4662ab66] to-transparent" />
     </div>
   );
 }

@@ -318,8 +318,8 @@ const HomePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#000',
-          color: 'white',
+          backgroundColor: '#171717',
+          color: '#FFFFFF',
           fontSize: '18px',
           fontFamily: 'Arial, sans-serif'
         }}>
@@ -327,8 +327,8 @@ const HomePage: React.FC = () => {
             <div style={{ 
               width: '40px', 
               height: '40px', 
-              border: '3px solid #333', 
-              borderTop: '3px solid #fff', 
+              border: '3px solid #4662ab', 
+              borderTop: '3px solid #e0f2fd', 
               borderRadius: '50%', 
               animation: 'spin 1s linear infinite',
               margin: '0 auto 20px'
@@ -349,11 +349,11 @@ const HomePage: React.FC = () => {
           backgroundImageUrl={"night-sky.png"}
           showGlobe={false}
           showAtmosphere={false}
-          backgroundColor={'rgba(0,0,0,0)'}
+          backgroundColor={'rgba(23,23,23,0)'}
 
           polygonsData={landData.features}
           polygonCapColor={() => 'rgba(130, 130, 130, 0.5)'}
-          polygonSideColor={() => 'rgba(0,0,0,0)'}
+          polygonSideColor={() => 'rgba(23,23,23,0)'}
           polygonAltitude={0}
           polygonStrokeColor={() => 'rgba(255, 255, 255, 1)'}
 
@@ -463,15 +463,15 @@ const HomePage: React.FC = () => {
             position: 'fixed',
             left: popupPosition.x,
             top: popupPosition.y,
-            backgroundColor: 'rgba(0, 0, 0, 0.95)',
-            color: 'white',
+            backgroundColor: 'rgba(23, 23, 23, 0.92)',
+            color: '#e0f2fd',
             padding: '20px',
             borderRadius: '12px',
             fontSize: '14px',
             fontFamily: 'Arial, sans-serif',
             zIndex: 1000,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px rgba(70, 98, 171, 0.25)',
+            border: '1px solid rgba(198, 218, 236, 0.35)',
             maxWidth: '320px',
             minWidth: '280px',
             backdropFilter: 'blur(10px)'
@@ -595,18 +595,18 @@ const HomePage: React.FC = () => {
           right: '20px',
           top: '50%',
           transform: 'translateY(-50%)',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          color: 'white',
+          backgroundColor: 'rgba(23, 23, 23, 0.85)',
+          color: '#e0f2fd',
           padding: '20px',
           borderRadius: '15px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+          boxShadow: '0 4px 20px rgba(70, 98, 171, 0.22)',
           zIndex: 1000,
           maxWidth: '250px',
           display: 'flex',
           flexDirection: 'column',
           gap: '15px',
           backdropFilter: 'blur(5px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
+          border: '1px solid rgba(198, 218, 236, 0.3)'
         }}
       >
         <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1em', textAlign: 'center' }}>Filters</h3>
