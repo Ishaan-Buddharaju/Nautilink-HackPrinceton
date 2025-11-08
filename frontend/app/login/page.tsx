@@ -183,7 +183,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-6 sm:py-10">
+      <div className="relative z-30 flex min-h-screen items-center justify-center px-6 py-6 sm:py-10">
         <div className="w-full max-w-lg rounded-3xl border border-[rgba(198,218,236,0.15)] bg-[#141d2d]/95 shadow-[0_30px_60px_rgba(12,20,40,0.45)] p-10 space-y-8 backdrop-blur-md">
         <div className="space-y-3 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[rgba(70,98,171,0.2)]">
@@ -257,15 +257,15 @@ export default function LoginPage() {
         style={{
           transform:
             wavePhase === 'initial'
-              ? 'translateY(35%)'
+              ? 'translateY(10%)'
               : wavePhase === 'settled'
               ? 'translateY(0%)'
-              : 'translateY(-120%)',
-          height: wavePhase === 'exit' ? '120vh' : '16rem'
+              : 'translateY(-135%)',
+          height: wavePhase === 'exit' ? '140vh' : '32rem'
         }}
       >
-        <div className="relative h-full w-full">
-          <div className="absolute inset-x-0 top-0 h-3/5 bg-gradient-to-b from-transparent via-[#0f1a27]/40 to-[#0f1a27]" />
+        <div className="relative flex h-full w-full flex-col justify-end">
+          <div className="absolute inset-x-0 top-0 h-3/5" />
 
           {accentDots.map(({ top, left, size, outline }, idx) => (
             <span
@@ -275,22 +275,24 @@ export default function LoginPage() {
             />
           ))}
 
-          <svg viewBox="0 0 1440 200" className="absolute bottom-0 w-full" preserveAspectRatio="none">
-            <path
-              d="M0 130L60 120C120 110 240 90 360 92C480 94 600 118 720 132C840 146 960 148 1080 142C1200 136 1320 124 1380 118L1440 112V200H1380C1320 200 1200 200 1080 200C960 200 840 200 720 200C600 200 480 200 360 200C240 200 120 200 60 200H0Z"
-              fill="#edf3ff"
-            />
-            <path
-              d="M0 150L80 142C160 134 320 118 480 123C640 128 800 154 960 160C1120 166 1280 152 1360 146L1440 140V200H1360C1280 200 1120 200 960 200C800 200 640 200 480 200C320 200 160 200 80 200H0Z"
-              fill="#ffffff"
-              opacity="0.95"
-            />
-            <path
-              d="M0 170L100 164C200 158 400 146 600 148C800 150 1000 166 1200 170C1300 172 1400 170 1440 168V200H0Z"
-              fill="#f7faff"
-              opacity="0.9"
-            />
-          </svg>
+          <div className="relative h-full w-full">
+            <svg viewBox="0 0 1440 600" className="absolute inset-x-0 bottom-0 w-full h-[55%]" preserveAspectRatio="none">
+              <path
+                d="M0 260L90 240C180 220 360 180 540 190C720 200 900 260 1080 280C1260 300 1440 280 1440 280V600H0Z"
+                fill="#edf3ff"
+              />
+              <path
+                d="M0 340L120 320C240 300 480 260 720 272C960 284 1200 348 1360 366L1440 376V600H0Z"
+                fill="#ffffff"
+                opacity="0.95"
+              />
+              <path
+                d="M0 410L140 390C280 370 560 330 840 336C1120 342 1400 404 1440 414V600H0Z"
+                fill="#f7faff"
+                opacity="0.9"
+              />
+            </svg>
+          </div>
         </div>
       </div>
 
