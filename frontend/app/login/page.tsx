@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
-import { FiLogIn } from 'react-icons/fi';
+import { FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { FaMicrosoft, FaIdCard } from 'react-icons/fa';
 import { RiGovernmentFill } from 'react-icons/ri';
@@ -47,6 +47,10 @@ export default function LoginPage() {
   const [transitioning, setTransitioning] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSignup, setIsSignup] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [userType, setUserType] = useState<'supplier' | 'regulator' | 'consumer'>('supplier');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -129,19 +133,71 @@ export default function LoginPage() {
   );
 
   const handleEmailLogin = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
+    async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      if (transitioning) return;
+      if (transitioning || isLoading) return;
       setError(null);
-      const started = triggerWaveExit();
-      if (!started) return;
+      setIsLoading(true);
 
-      window.setTimeout(() => {
-        setError('Email and password authentication is provisioned through your agency. Please use an approved identity provider above.');
-        resetWaveIfNeeded();
-      }, 520);
+      try {
+        if (isSignup) {
+          // Handle signup
+          const { data, error: signupError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: fullName,
+                user_type: userType,
+                roles: [userType], // Also store as roles array for compatibility
+              },
+            },
+          });
+
+          if (signupError) {
+            setError(signupError.message);
+            setIsLoading(false);
+            return;
+          }
+
+          if (data.user) {
+            // Successfully signed up
+            setError(null);
+            // Check if email confirmation is required
+            if (data.session) {
+              // Auto-logged in, redirect to dashboard
+              router.push('/dashboard');
+            } else {
+              // Email confirmation required
+              setError('Please check your email to confirm your account before signing in.');
+              setIsSignup(false); // Switch back to login mode
+            }
+          }
+        } else {
+          // Handle login
+          const { data, error: loginError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (loginError) {
+            setError(loginError.message);
+            setIsLoading(false);
+            return;
+          }
+
+          if (data.session) {
+            // Successfully logged in
+            router.push('/dashboard');
+          }
+        }
+      } catch (err: any) {
+        setError(err.message || 'An error occurred. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [resetWaveIfNeeded, transitioning, triggerWaveExit]
+    [email, password, fullName, userType, isSignup, supabase, router, transitioning, isLoading]
   );
 
   return (
@@ -187,11 +243,19 @@ export default function LoginPage() {
         <div className="w-full max-w-lg rounded-3xl border border-[rgba(198,218,236,0.15)] bg-[#141d2d]/95 shadow-[0_30px_60px_rgba(12,20,40,0.45)] p-10 space-y-8 backdrop-blur-md">
         <div className="space-y-3 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[rgba(70,98,171,0.2)]">
-            <FiLogIn className="h-7 w-7 text-[#c6daec]" />
+            {isSignup ? (
+              <FiUserPlus className="h-7 w-7 text-[#c6daec]" />
+            ) : (
+              <FiLogIn className="h-7 w-7 text-[#c6daec]" />
+            )}
           </div>
-          <h1 className="text-3xl font-semibold tracking-wide">Access Nautilink</h1>
+          <h1 className="text-3xl font-semibold tracking-wide">
+            {isSignup ? 'Create Account' : 'Access Nautilink'}
+          </h1>
           <p className="text-sm text-[#94aacd]">
-            Sign in with your trusted identity provider to continue.
+            {isSignup
+              ? 'Create a new account to get started.'
+              : 'Sign in with your trusted identity provider to continue.'}
           </p>
         </div>
 
@@ -226,11 +290,21 @@ export default function LoginPage() {
         </div>
 
         <form className="space-y-3" onSubmit={handleEmailLogin}>
+          {isSignup && (
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full rounded-2xl border border-[rgba(198,218,236,0.2)] bg-[#10192a] px-4 py-3 text-sm text-[#e0f2fd] placeholder-[#6e82a4] focus:outline-none focus:border-[#4662ab]"
+            />
+          )}
           <input
             type="email"
             placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
             className="w-full rounded-2xl border border-[rgba(198,218,236,0.2)] bg-[#10192a] px-4 py-3 text-sm text-[#e0f2fd] placeholder-[#6e82a4] focus:outline-none focus:border-[#4662ab]"
           />
           <input
@@ -238,14 +312,41 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
             className="w-full rounded-2xl border border-[rgba(198,218,236,0.2)] bg-[#10192a] px-4 py-3 text-sm text-[#e0f2fd] placeholder-[#6e82a4] focus:outline-none focus:border-[#4662ab]"
           />
+          {isSignup && (
+            <select
+              value={userType}
+              onChange={(e) => setUserType(e.target.value as 'supplier' | 'regulator' | 'consumer')}
+              required
+              className="w-full rounded-2xl border border-[rgba(198,218,236,0.2)] bg-[#10192a] px-4 py-3 text-sm text-[#e0f2fd] placeholder-[#6e82a4] focus:outline-none focus:border-[#4662ab] [&>option]:bg-[#10192a] [&>option]:text-[#e0f2fd]"
+            >
+              <option value="supplier">Supplier</option>
+              <option value="regulator">Regulator</option>
+              <option value="consumer">Consumer</option>
+            </select>
+          )}
           <button
             type="submit"
-            disabled={transitioning}
-            className="w-full rounded-2xl bg-gradient-to-r from-[#4662ab] to-[#5f7bda] px-4 py-3 text-sm font-semibold text-[#f4f8ff] shadow-[0_10px_20px_rgba(70,98,171,0.35)] transition hover:brightness-110"
+            disabled={transitioning || isLoading}
+            className="w-full rounded-2xl bg-gradient-to-r from-[#4662ab] to-[#5f7bda] px-4 py-3 text-sm font-semibold text-[#f4f8ff] shadow-[0_10px_20px_rgba(70,98,171,0.35)] transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Log in with Email
+            {isLoading
+              ? 'Processing...'
+              : isSignup
+              ? 'Sign Up'
+              : 'Log in with Email'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsSignup(!isSignup);
+              setError(null);
+            }}
+            className="w-full text-sm text-[#94aacd] hover:text-[#c6daec] transition-colors"
+          >
+            {isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
           </button>
         </form>
       </div>

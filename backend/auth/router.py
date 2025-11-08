@@ -70,7 +70,11 @@ async def signup(user_data: UserSignup):
     """
     try:
         # Prepare user metadata
-        user_metadata = {}
+        # Store both user_type and roles for compatibility
+        user_metadata = {
+            "user_type": user_data.user_type,
+            "roles": [user_data.user_type]  # Also store as roles array for frontend compatibility
+        }
         if user_data.full_name:
             user_metadata["full_name"] = user_data.full_name
         if user_data.metadata:
