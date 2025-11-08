@@ -799,7 +799,8 @@ const HomePage: React.FC = () => {
                 padding: '18px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '14px'
+                gap: '14px',
+                height: '100%'
               }}
             >
               <div style={{ color: '#94aacd', fontSize: '0.9rem', fontWeight: 500 }}>Agent Chat</div>
@@ -807,7 +808,7 @@ const HomePage: React.FC = () => {
               <div
                 style={{
                   flex: 1,
-                  maxHeight: '180px',
+                  minHeight: 0,
                   overflowY: 'auto',
                   display: 'flex',
                   flexDirection: 'column',
@@ -864,7 +865,7 @@ const HomePage: React.FC = () => {
                   e.preventDefault();
                   handleAgentSubmit();
                 }}
-                style={{ display: 'flex', gap: '10px' }}
+                style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}
               >
                 <input
                   type="text"

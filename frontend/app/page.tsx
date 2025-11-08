@@ -35,17 +35,6 @@ const LandingPage: React.FC = () => {
   const [landData, setLandData] = useState<{ features: any[] }>({ features: [] });
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
-  const [chatMessages, setChatMessages] = useState<
-    { id: string; role: 'system' | 'user'; content: string; timestamp: Date }[]
-  >([
-    {
-      id: 'landing-welcome',
-      role: 'system',
-      content: 'Welcome aboard. Ask anything about Nautilink to begin.',
-      timestamp: new Date()
-    }
-  ]);
-  const [chatInput, setChatInput] = useState('');
 
   // Minimal data for landing page globe background
   const [clusteredData, setClusteredData] = useState<ClusterData[]>([]);
@@ -124,31 +113,6 @@ const LandingPage: React.FC = () => {
     router.push('/dashboard'); // Navigate to the dashboard page
   };
 
-  const handleLandingChatSubmit = useCallback(() => {
-    const trimmed = chatInput.trim();
-    if (!trimmed) return;
-
-    const now = new Date();
-    const userMsg = {
-      id: `landing-user-${now.getTime()}`,
-      role: 'user' as const,
-      content: trimmed,
-      timestamp: now
-    };
-
-    setChatMessages((prev) => [...prev, userMsg]);
-    setChatInput('');
-
-    window.setTimeout(() => {
-      const response = {
-        id: `landing-agent-${Date.now()}`,
-        role: 'system' as const,
-        content: 'Great question. Sign in to the dashboard to explore deeper insights.',
-        timestamp: new Date()
-      };
-      setChatMessages((prev) => [...prev, response]);
-    }, 600);
-  }, [chatInput]);
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -328,111 +292,6 @@ const LandingPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Landing assistant chat */}
-            <div
-              style={{
-                marginTop: 'auto',
-                borderRadius: '20px',
-                border: '1px solid rgba(198, 218, 236, 0.18)',
-                backgroundColor: 'rgba(18, 24, 38, 0.92)',
-                padding: '20px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-                boxShadow: '0 18px 32px rgba(12, 20, 40, 0.45)'
-              }}
-            >
-              <div style={{ color: '#94aacd', fontSize: '0.95rem', fontWeight: 600 }}>Quick Assist</div>
-
-              <div
-                style={{
-                  maxHeight: '220px',
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  paddingRight: '4px'
-                }}
-              >
-                {chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    style={{
-                      alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                      maxWidth: '80%',
-                      padding: '10px 14px',
-                      borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                      background: msg.role === 'user' ? 'rgba(70, 98, 171, 0.45)' : 'rgba(27, 36, 58, 0.8)',
-                      border: '1px solid rgba(198, 218, 236, 0.15)',
-                      color: '#eaf3ff',
-                      fontSize: '0.9rem',
-                      lineHeight: 1.4
-                    }}
-                  >
-                    <div>{msg.content}</div>
-                    <div
-                      style={{
-                        fontSize: '0.65rem',
-                        marginTop: '6px',
-                        color: '#a8bbdc',
-                        textAlign: msg.role === 'user' ? 'right' : 'left'
-                      }}
-                    >
-                      {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleLandingChatSubmit();
-                }}
-                style={{ display: 'flex', gap: '12px' }}
-              >
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleLandingChatSubmit();
-                    }
-                  }}
-                  placeholder="Type a message..."
-                  style={{
-                    flex: 1,
-                    borderRadius: '999px',
-                    border: '1px solid rgba(198, 218, 236, 0.28)',
-                    background: 'rgba(15, 22, 36, 0.92)',
-                    padding: '12px 18px',
-                    color: '#e0f2fd',
-                    fontSize: '0.95rem',
-                    outline: 'none'
-                  }}
-                />
-                <button
-                  type="submit"
-                  style={{
-                    borderRadius: '999px',
-                    padding: '0 26px',
-                    border: 'none',
-                    background: chatInput.trim()
-                      ? 'linear-gradient(135deg, #4662ab, #5f7bda)'
-                      : 'rgba(70, 98, 171, 0.35)',
-                    color: '#f4f8ff',
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    cursor: chatInput.trim() ? 'pointer' : 'not-allowed'
-                  }}
-                  disabled={!chatInput.trim()}
-                >
-                  Send
-                </button>
-              </form>
-            </div>
           </div>
         </div>
       )}
