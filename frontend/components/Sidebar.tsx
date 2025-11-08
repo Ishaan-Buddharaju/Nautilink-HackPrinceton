@@ -27,15 +27,23 @@ const clamp = (value: number, min: number, max: number) =>
 const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
 
 const buildClipPath = (progress: number, verticalBias: number) => {
-  const eased = Math.pow(progress, 0.6);
-  const crest = clamp(10 + eased * 45, 12, 70);
-  const bulge = clamp(crest + 20 + eased * 16, crest + 12, 94);
-  const tail = clamp(crest + 3, 15, 80);
+  const eased = Math.pow(progress, 0.68);
+  const crest = clamp(8 + eased * 44, 10, 72);
+  const baseBulge = clamp(crest + 16 + eased * 18, crest + 12, 88);
+  const curveGain = clamp(10 + eased * 24, 12, 28);
+  const waveMid = clamp(baseBulge + curveGain, baseBulge + 6, 96);
+  const wavePeak = clamp(waveMid + curveGain * 0.65, waveMid + 4, 100);
+  const tail = clamp(crest + 4, 14, 78);
+
   const clampedVertical = clamp01(verticalBias);
-  const mid = clamp(12 + clampedVertical * 76, 18, 82);
-  const upper = clamp(mid - 22, 8, 62);
-  const lower = clamp(mid + 22, 38, 98);
-  return `polygon(0% 0%, ${crest}% 0%, ${bulge}% ${upper}%, ${bulge - 4}% ${mid}%, ${bulge}% ${lower}%, ${tail}% 100%, 0% 100%)`;
+  const center = clamp(18 + clampedVertical * 72, 22, 86);
+  const spread = clamp(30 + eased * 18, 28, 44);
+  const top = clamp(center - spread, 6, 50);
+  const upperMid = clamp(center - spread * 0.45, top + 2, center - 8);
+  const lowerMid = clamp(center + spread * 0.45, center + 8, center + spread - 2);
+  const bottom = clamp(center + spread, center + 10, 98);
+
+  return `polygon(0% 0%, ${crest}% 0%, ${baseBulge}% ${top}%, ${waveMid}% ${upperMid}%, ${wavePeak}% ${center}%, ${waveMid}% ${lowerMid}%, ${baseBulge}% ${bottom}%, ${tail}% 100%, 0% 100%)`;
 };
 
 const Sidebar = () => {
