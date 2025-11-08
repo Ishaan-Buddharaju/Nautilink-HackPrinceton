@@ -54,6 +54,35 @@ const HomePage: React.FC = () => {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isReportPanelVisible, setIsReportPanelVisible] = useState(false);
   const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
+  const [isAgentDockVisible, setIsAgentDockVisible] = useState(false);
+  const [agentMessages, setAgentMessages] = useState<
+    { id: string; role: 'system' | 'user'; content: string; timestamp: Date }[]
+  >([
+    {
+      id: 'sys-1',
+      role: 'system',
+      content: 'Agent ready. Select a vessel or issue a command.',
+      timestamp: new Date()
+    }
+  ]);
+  const [agentInput, setAgentInput] = useState('');
+  const handleAgentSubmit = useCallback(() => {
+    const trimmed = agentInput.trim();
+    if (!trimmed) return;
+
+    const now = new Date();
+    setAgentMessages((prev) => [
+      ...prev,
+      {
+        id: `user-${now.getTime()}`,
+        role: 'user',
+        content: trimmed,
+        timestamp: now
+      }
+    ]);
+    setAgentInput('');
+  }, [agentInput]);
+
 
   // Agent panel state
   const [agentPoint, setAgentPoint] = useState<AgentPoint | null>(null);
@@ -266,6 +295,14 @@ const HomePage: React.FC = () => {
     const timer = window.setTimeout(() => {
       setIsHistoryPanelVisible(true);
     }, 240);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsAgentDockVisible(true);
+    }, 360);
 
     return () => window.clearTimeout(timer);
   }, []);
@@ -723,6 +760,160 @@ const HomePage: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div
+            style={{
+              position: 'absolute',
+              left: 'min(32vw, 420px)',
+              right: 'min(18vw, 220px)',
+              bottom: 0,
+              height: '40vh',
+              minHeight: '280px',
+              background: 'rgba(13, 18, 30, 0.94)',
+              borderTop: '1px solid rgba(198, 218, 236, 0.18)',
+              boxShadow: '0 -16px 32px rgba(8, 12, 24, 0.35)',
+              color: '#e0f2fd',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              padding: '18px 22px 22px',
+              backdropFilter: 'blur(20px)',
+              transform: `translateY(${isAgentDockVisible ? '0' : '110%'})`,
+              transition: 'transform 640ms cubic-bezier(0.23, 1, 0.32, 1)',
+              zIndex: 770,
+              pointerEvents: isAgentDockVisible ? 'auto' : 'none'
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.32rem', fontWeight: 600, letterSpacing: '0.04em' }}>
+                  Agent
+                </h2>
+                <p style={{ marginTop: '6px', color: '#94aacd', fontSize: '0.88rem' }}>
+                  Issue commands or review responses.
+                </p>
+              </div>
+              <div
+                style={{
+                  width: '64px',
+                  height: '4px',
+                  borderRadius: '999px',
+                  background: 'rgba(148, 170, 205, 0.35)'
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                background: 'rgba(21, 28, 44, 0.82)',
+                border: '1px solid rgba(198, 218, 236, 0.16)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
+              }}
+            >
+              {agentMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  style={{
+                    alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                    maxWidth: '70%',
+                    padding: '10px 14px',
+                    borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                    background: msg.role === 'user' ? 'rgba(70, 98, 171, 0.45)' : 'rgba(27, 36, 58, 0.8)',
+                    border: '1px solid rgba(198, 218, 236, 0.15)',
+                    color: '#eaf3ff',
+                    fontSize: '0.9rem',
+                    lineHeight: 1.4
+                  }}
+                >
+                  <div>{msg.content}</div>
+                  <div style={{ fontSize: '0.65rem', marginTop: '6px', color: '#a8bbdc', textAlign: msg.role === 'user' ? 'right' : 'left' }}>
+                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAgentSubmit();
+              }}
+              style={{
+                display: 'flex',
+                gap: '12px'
+              }}
+            >
+              <input
+                type="text"
+                value={agentInput}
+                onChange={(e) => setAgentInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAgentSubmit();
+                  }
+                }}
+                placeholder="Type a directive..."
+                style={{
+                  flex: 1,
+                  borderRadius: '999px',
+                  border: '1px solid rgba(198, 218, 236, 0.28)',
+                  background: 'rgba(18, 24, 38, 0.85)',
+                  padding: '12px 18px',
+                  color: '#e0f2fd',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  boxShadow: '0 0 0 0 rgba(70, 98, 171, 0)'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(70, 98, 171, 0.45)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.boxShadow = '0 0 0 0 rgba(70, 98, 171, 0)';
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  borderRadius: '999px',
+                  padding: '0 22px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #4662ab, #5f7bda)',
+                  color: '#f4f8ff',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  cursor: agentInput.trim() ? 'pointer' : 'not-allowed',
+                  opacity: agentInput.trim() ? 1 : 0.5,
+                  transition: 'transform 120ms ease, opacity 120ms ease'
+                }}
+                onMouseDown={(e) => {
+                  if (!agentInput.trim()) return;
+                  (e.currentTarget.style.transform = 'scale(0.97)');
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+                disabled={!agentInput.trim()}
+              >
+                Send
+              </button>
+            </form>
           </div>
 
           {/* Agent Panel */}
