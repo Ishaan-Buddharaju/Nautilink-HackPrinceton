@@ -1,0 +1,706 @@
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  Animated,
+  Dimensions,
+  Alert,
+} from 'react-native';
+import { useRouter, Link } from 'expo-router';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../../constants/Colors';
+
+const { height } = Dimensions.get('window');
+
+interface Trip {
+  id: string;
+  ipAddress: string;
+  timestamp: Date;
+  hash: string;
+  status: string;
+  weight: number;
+}
+
+export default function TripScreen() {
+  const router = useRouter();
+  const [showCamera, setShowCamera] = useState(false);
+  const [facing, setFacing] = useState<'front' | 'back'>('back');
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView>(null);
+  
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [slideAnim] = useState(new Animated.Value(500));
+  const [tripInProgress, setTripInProgress] = useState(false);
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+  const isUserScrolling = useRef(false);
+  const scrollTimeout = useRef<NodeJS.Timeout>();
+  const scrollPosition = useRef(0);
+
+  const [trips] = useState<Trip[]>([
+    {
+      id: '1',
+      ipAddress: '192.168.1.101',
+      timestamp: new Date(),
+      hash: '0x8A9f2E3B7D6C5a4F1b0e8d9c7A6B5C4D3E2F1A0B',
+      status: 'Completed',
+      weight: 145.5,
+    },
+    {
+      id: '2',
+      ipAddress: '192.168.1.102',
+      timestamp: new Date(Date.now() - 86400000),
+      hash: '0x3F1E4D5C6B7A8E9D0C1B2A3E4F5D6C7B8A9E0F1',
+      status: 'Completed',
+      weight: 203.2,
+    },
+    {
+      id: '3',
+      ipAddress: '192.168.1.103',
+      timestamp: new Date(Date.now() - 172800000),
+      hash: '0x7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E3F4A5B6',
+      status: 'Completed',
+      weight: 178.9,
+    },
+    {
+      id: '4',
+      ipAddress: '192.168.1.104',
+      timestamp: new Date(Date.now() - 259200000),
+      hash: '0x2C3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1',
+      status: 'Completed',
+      weight: 192.3,
+    },
+  ]);
+
+  const totalTrips = trips.length;
+  const totalKg = trips.reduce((sum, trip) => sum + trip.weight, 0);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    const scrollInterval = setInterval(() => {
+      if (scrollViewRef.current && !isUserScrolling.current) {
+        scrollPosition.current += 1;
+        
+        // Calculate max scroll (item height * number of items - visible height)
+        const maxScroll = trips.length * 80; // Approximate item height
+        
+        // Loop back to start when reaching end
+        if (scrollPosition.current >= maxScroll) {
+          scrollPosition.current = 0;
+        }
+        
+        scrollViewRef.current.scrollTo({
+          y: scrollPosition.current,
+          animated: true,
+        });
+      }
+    }, 50); // Scroll every 50ms for smooth animation
+
+    return () => clearInterval(scrollInterval);
+  }, [trips.length]);
+
+  const handleScrollBegin = () => {
+    isUserScrolling.current = true;
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+  };
+
+  const handleScrollEnd = () => {
+    // Resume auto-scroll after 2 seconds of no user interaction
+    scrollTimeout.current = setTimeout(() => {
+      isUserScrolling.current = false;
+    }, 2000);
+  };
+
+  const handleScroll = (event: any) => {
+    if (isUserScrolling.current) {
+      scrollPosition.current = event.nativeEvent.contentOffset.y;
+    }
+  };
+
+  const openCamera = async () => {
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert('Permission Required', 'Camera permission is needed to take photos.');
+        return;
+      }
+    }
+    setShowCamera(true);
+  };
+
+  const takePicture = async () => {
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.8,
+        });
+        
+        if (photo) {
+          setShowCamera(false);
+          Alert.alert('Success', 'Photo captured successfully!');
+          // TODO: Handle photo upload
+        }
+      } catch (error) {
+        console.error('Error taking picture:', error);
+        Alert.alert('Error', 'Failed to capture photo.');
+      }
+    }
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      Alert.alert('Success', 'Photo selected!');
+      // TODO: Handle photo upload
+    }
+  };
+
+  const toggleCameraFacing = () => {
+    setFacing(current => (current === 'back' ? 'front' : 'back'));
+  };
+
+  const handleTripPress = (trip: Trip) => {
+    setSelectedTrip(trip);
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 8,
+    }).start();
+  };
+
+  const closeDetails = () => {
+    Animated.timing(slideAnim, {
+      toValue: 500,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setSelectedTrip(null);
+    });
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={Colors.foreground} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Trip</Text>
+        <TouchableOpacity onPress={openCamera} style={styles.cameraIconButton}>
+          <Ionicons name="camera" size={24} color={Colors.accentPrimary} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        {/* Start Trip Button */}
+        {!tripInProgress ? (
+          <Link 
+            href="/(main)/trip-form" 
+            asChild
+          >
+            <TouchableOpacity
+              style={styles.startTripButton}
+              onPress={() => setTripInProgress(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.startTripText}>Start Trip</Text>
+              <Ionicons name="arrow-forward" size={20} color={Colors.background} />
+            </TouchableOpacity>
+          </Link>
+        ) : (
+          <View style={[styles.startTripButton, styles.startTripButtonDisabled]}>
+            <Text style={[styles.startTripText, styles.startTripTextDisabled]}>Trip In Progress</Text>
+            <Ionicons name="checkmark-circle" size={20} color={Colors.textMuted} />
+          </View>
+        )}
+
+        {/* Stats Section */}
+        <View style={styles.statsContainer}>
+          <Text style={styles.statsTitle}>STATS</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{totalTrips}</Text>
+              <Text style={styles.statLabel}>Total Trips</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{totalKg.toFixed(1)}</Text>
+              <Text style={styles.statLabel}>Total Kg</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Trips List - Auto-scrolling */}
+        <View style={styles.tripsSection}>
+          <Text style={styles.sectionTitle}>Recent Trips</Text>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.tripsList}
+            onScrollBeginDrag={handleScrollBegin}
+            onScrollEndDrag={handleScrollEnd}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            showsVerticalScrollIndicator={false}
+          >
+            {trips.concat(trips).map((trip, index) => (
+              <TouchableOpacity
+                key={`${trip.id}-${index}`}
+                style={styles.tripItem}
+                onPress={() => handleTripPress(trip)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.tripIcon}>
+                  <Ionicons name="boat" size={20} color={Colors.accentPrimary} />
+                </View>
+                <View style={styles.tripContent}>
+                  <Text style={styles.tripIP}>{trip.ipAddress}</Text>
+                  <Text style={styles.tripTime}>
+                    {trip.timestamp.toLocaleDateString()}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </ScrollView>
+
+      {/* Camera Modal */}
+      <Modal
+        visible={showCamera}
+        animationType="slide"
+        onRequestClose={() => setShowCamera(false)}
+      >
+        <View style={styles.cameraContainer}>
+          <CameraView
+            ref={cameraRef}
+            style={styles.camera}
+            facing={facing}
+          />
+          
+          <View style={styles.cameraOverlay}>
+            <View style={styles.cameraHeader}>
+              <TouchableOpacity
+                style={styles.cameraButton}
+                onPress={() => setShowCamera(false)}
+              >
+                <Ionicons name="close" size={32} color="white" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.cameraButton}
+                onPress={toggleCameraFacing}
+              >
+                <Ionicons name="camera-reverse" size={32} color="white" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.cameraFooter}>
+              <TouchableOpacity
+                style={styles.captureButton}
+                onPress={takePicture}
+              >
+                <View style={styles.captureButtonInner} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Trip Details Slide-over */}
+      <Modal
+        visible={selectedTrip !== null}
+        transparent
+        animationType="none"
+        onRequestClose={closeDetails}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={closeDetails}
+        >
+          <Animated.View 
+            style={[
+              styles.slideOver,
+              { transform: [{ translateX: slideAnim }] }
+            ]}
+          >
+            <TouchableOpacity activeOpacity={1}>
+              <View style={styles.slideOverHeader}>
+                <Text style={styles.slideOverTitle}>Trip Details</Text>
+                <TouchableOpacity onPress={closeDetails} style={styles.closeButton}>
+                  <Ionicons name="close" size={24} color={Colors.foreground} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.slideOverContent}>
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>IP Address</Text>
+                  <Text style={styles.detailValueMono}>
+                    {selectedTrip?.ipAddress}
+                  </Text>
+                </View>
+
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>Hash</Text>
+                  <Text style={styles.detailValueMono}>
+                    {selectedTrip?.hash}
+                  </Text>
+                </View>
+
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>Status</Text>
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusText}>
+                      {selectedTrip?.status}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>Weight</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedTrip?.weight} kg
+                  </Text>
+                </View>
+
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>Date</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedTrip?.timestamp.toLocaleString()}
+                  </Text>
+                </View>
+              </ScrollView>
+            </TouchableOpacity>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: Colors.surfaceGlass,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.accentLight,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  cameraIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: Colors.surfaceGlass,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.accentPrimary,
+  },
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 20,
+  },
+  startTripButton: {
+    backgroundColor: Colors.accentPrimary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 32,
+    shadowColor: Colors.accentPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  startTripButtonDisabled: {
+    backgroundColor: Colors.surfaceGlass,
+    opacity: 0.6,
+    shadowOpacity: 0,
+  },
+  startTripText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.background,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  startTripTextDisabled: {
+    color: Colors.textMuted,
+  },
+  statsContainer: {
+    marginBottom: 32,
+  },
+  statsTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.accentLight,
+    letterSpacing: 2,
+    marginBottom: 16,
+    textTransform: 'uppercase',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: Colors.surfacePrimary,
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statValue: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: Colors.accentPrimary,
+    marginBottom: 8,
+    textShadowColor: Colors.accentPrimary + '40',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: '600',
+  },
+  tripsSection: {
+    flex: 1,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.accentLight,
+    marginBottom: 16,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  },
+  tripsList: {
+    maxHeight: height * 0.4,
+    backgroundColor: Colors.surfacePrimary,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tripItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+    backgroundColor: Colors.surfacePrimary,
+  },
+  tripIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.surfaceGlass,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  tripContent: {
+    flex: 1,
+  },
+  tripIP: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.accentLight,
+    fontFamily: 'Courier',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  tripTime: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    fontWeight: '500',
+  },
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'space-between',
+  },
+  cameraHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 20,
+    paddingTop: 60,
+  },
+  cameraButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraFooter: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  captureButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 5,
+    borderColor: Colors.accentPrimary,
+  },
+  captureButtonInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.accentPrimary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  slideOver: {
+    width: '85%',
+    height: '100%',
+    backgroundColor: Colors.background,
+    borderLeftWidth: 1,
+    borderLeftColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  slideOverHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  slideOverTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.foreground,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceGlass,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  slideOverContent: {
+    padding: 20,
+  },
+  detailItem: {
+    marginBottom: 24,
+  },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  detailValue: {
+    fontSize: 16,
+    color: Colors.foreground,
+    fontWeight: '500',
+  },
+  detailValueMono: {
+    fontSize: 13,
+    color: Colors.foreground,
+    fontFamily: 'Courier',
+    fontWeight: '500',
+  },
+  statusBadge: {
+    backgroundColor: Colors.success + '20',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.success,
+  },
+});
