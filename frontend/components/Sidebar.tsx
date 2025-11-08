@@ -24,12 +24,18 @@ const MAX_SIDEBAR_WIDTH = 280;
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-const buildClipPath = (progress: number) => {
+const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
+
+const buildClipPath = (progress: number, verticalBias: number) => {
   const eased = Math.pow(progress, 0.6);
   const crest = clamp(10 + eased * 45, 12, 70);
   const bulge = clamp(crest + 20 + eased * 16, crest + 12, 94);
   const tail = clamp(crest + 3, 15, 80);
-  return `polygon(0% 0%, ${crest}% 0%, ${bulge}% 30%, ${bulge - 4}% 50%, ${bulge}% 70%, ${tail}% 100%, 0% 100%)`;
+  const clampedVertical = clamp01(verticalBias);
+  const mid = clamp(12 + clampedVertical * 76, 18, 82);
+  const upper = clamp(mid - 22, 8, 62);
+  const lower = clamp(mid + 22, 38, 98);
+  return `polygon(0% 0%, ${crest}% 0%, ${bulge}% ${upper}%, ${bulge - 4}% ${mid}%, ${bulge}% ${lower}%, ${tail}% 100%, 0% 100%)`;
 };
 
 const Sidebar = () => {
@@ -43,9 +49,10 @@ const Sidebar = () => {
   const [showContent, setShowContent] = useState(false);
   const [anchorRotated, setAnchorRotated] = useState(false);
   const [fishAnimationKey, setFishAnimationKey] = useState(0);
+  const [dragPointerProgress, setDragPointerProgress] = useState(0.5);
 
-  const moveListener = useRef<(event: PointerEvent) => void>();
-  const upListener = useRef<(event: PointerEvent) => void>();
+  const moveListener = useRef<((event: PointerEvent) => void) | null>(null);
+  const upListener = useRef<((event: PointerEvent) => void) | null>(null);
   const rippleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const anchorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -67,11 +74,11 @@ const Sidebar = () => {
   const cleanupListeners = useCallback(() => {
     if (moveListener.current) {
       window.removeEventListener('pointermove', moveListener.current);
-      moveListener.current = undefined;
+      moveListener.current = null;
     }
     if (upListener.current) {
       window.removeEventListener('pointerup', upListener.current);
-      upListener.current = undefined;
+      upListener.current = null;
     }
   }, []);
 
@@ -150,6 +157,11 @@ const Sidebar = () => {
       event.preventDefault();
       setIsDragging(true);
       setDragProgress(0.05);
+      setDragPointerProgress(
+        typeof window !== 'undefined' && window.innerHeight
+          ? clamp01(event.clientY / window.innerHeight)
+          : 0.5
+      );
 
       const handleMove = (moveEvent: PointerEvent) => {
         const progress = clamp(
@@ -158,6 +170,13 @@ const Sidebar = () => {
           MAX_SIDEBAR_WIDTH
         ) / MAX_SIDEBAR_WIDTH;
         setDragProgress(progress);
+        if (typeof window !== 'undefined' && window.innerHeight) {
+          const yRatio = clamp01(moveEvent.clientY / window.innerHeight);
+          setDragPointerProgress((prev) => {
+            const blended = prev + (yRatio - prev) * 0.35;
+            return clamp01(blended);
+          });
+        }
       };
 
       const handleUp = (upEvent: PointerEvent) => {
@@ -168,6 +187,7 @@ const Sidebar = () => {
         ) / MAX_SIDEBAR_WIDTH;
         cleanupListeners();
         finalizeDrag(progress);
+        setDragPointerProgress(0.5);
       };
 
       moveListener.current = handleMove;
@@ -191,8 +211,8 @@ const Sidebar = () => {
   }, [dragProgress]);
 
   const previewClipPath = useMemo(
-    () => buildClipPath(Math.max(dragProgress, 0.02)),
-    [dragProgress]
+    () => buildClipPath(Math.max(dragProgress, 0.02), dragPointerProgress),
+    [dragProgress, dragPointerProgress]
   );
 
   const shouldShowPreview = (isDragging || (!isOpen && dragProgress > 0));
@@ -226,8 +246,17 @@ const Sidebar = () => {
             className="relative h-full w-full"
             style={{
               clipPath: previewClipPath,
-              background:
-                'linear-gradient(90deg, rgba(198,218,236,0.68) 0%, rgba(224,242,253,0.55) 48%, rgba(70,98,171,0.62) 100%)',
+              background: `
+                radial-gradient(120% 120% at 12% ${dragPointerProgress * 100}%,
+                  rgba(198,218,236,0.75) 0%,
+                  rgba(224,242,253,0.45) 45%,
+                  transparent 78%),
+                radial-gradient(90% 110% at 64% ${clamp01(dragPointerProgress + 0.12) * 100}%,
+                  rgba(70,98,171,0.5) 0%,
+                  rgba(70,98,171,0.12) 55%,
+                  transparent 82%),
+                linear-gradient(96deg, rgba(198,218,236,0.42) 0%, rgba(192,217,239,0.2) 35%, rgba(70,98,171,0.52) 100%)
+              `,
               filter: 'drop-shadow(12px 0 28px rgba(70,98,171,0.28))',
               transition: isDragging
                 ? 'none'
