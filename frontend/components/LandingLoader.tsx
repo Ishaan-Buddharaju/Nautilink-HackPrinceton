@@ -55,10 +55,7 @@ const LandingLoader = () => {
         ))}
         <div className="landing-loader__progress">
           <div className="landing-loader__progress-track">
-            <span className="landing-loader__progress-chunk landing-loader__progress-chunk--one" />
-            <span className="landing-loader__progress-chunk landing-loader__progress-chunk--two" />
-            <span className="landing-loader__progress-chunk landing-loader__progress-chunk--three" />
-            <span className="landing-loader__progress-chunk landing-loader__progress-chunk--four" />
+            <span className="landing-loader__progress-bar" />
           </div>
         </div>
       </div>
