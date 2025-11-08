@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fishingZones } from '@/lib/fishingZones';
 
 const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
 export async function POST(req: NextRequest) {
   try {
