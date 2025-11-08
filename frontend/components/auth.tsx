@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import Link from 'next/link';
 import { FiUser, FiLogIn } from 'react-icons/fi';
+import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 
 interface AuthNavProps {
   isCollapsed?: boolean;
@@ -73,7 +74,7 @@ function LoginButton({ isCollapsed }: { isCollapsed: boolean }) {
 
   return (
     <Link 
-      href="/auth/login" 
+      href="/login" 
       className={`flex items-center px-3 py-1 bg-white hover:bg-gray-300 text-black text-sm rounded transition-colors ${
         isCollapsed ? 'justify-center' : ''
       }`}
@@ -96,6 +97,7 @@ function HoverLogout({ name, isCollapsed = false }: { name: string; isCollapsed?
   const [isTyping, setIsTyping] = useState(false);
   const hideTimer = useRef<number | null>(null);
   const typingTimer = useRef<number | null>(null);
+  const supabase = getSupabaseBrowserClient();
 
   const onEnter = () => {
     if (hideTimer.current) {
@@ -160,12 +162,16 @@ function HoverLogout({ name, isCollapsed = false }: { name: string; isCollapsed?
         }
       </div>
       <div className={`absolute left-0 bottom-full mb-2 w-28 transition-opacity ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <Link 
-          href="/auth/logout" 
-          className="block px-3 py-2 bg-black border border-white/20 text-white text-sm rounded hover:bg-white hover:text-black"
+        <button
+          type="button"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            window.location.assign('/login');
+          }}
+          className="block w-full px-3 py-2 bg-black border border-white/20 text-white text-sm rounded hover:bg-white hover:text-black"
         >
           Logout
-        </Link>
+        </button>
       </div>
     </div>
   );
