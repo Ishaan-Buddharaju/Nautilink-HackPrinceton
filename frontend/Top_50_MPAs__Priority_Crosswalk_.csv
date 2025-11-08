@@ -1,0 +1,51 @@
+Display_Name,country,sovereign,protection_mpaguide_level,establishment_stage,designation,area_km2,wdpa_id,wdpa_pid,Boundary_Join_Key,id,mpa_zone_id,status
+Ross Sea Region,ABNJ,ABNJ,high,actively managed,Marine Protected Area (CCAMLR),1555859.7082310312,,555624810_A,555624810_A,327,9047.0,published
+Papahānaumokuākea,USA,USA,high,implemented,National Marine Sanctuary,1508744.9860670078,,,,6093,,published
+Papahānaumokuākea,USA,USA,high,actively managed,Marine National Monument,1146660.5887024414,,,,606,68808390.0,published
+Pacific Islands Heritage,USA,USA,high,implemented,Marine National Monument,1062913.020648555,,None,None,6321,6321.0,published
+Pitcairn Islands,PCN,GBR,full,actively managed,Marine Reserve,832696.4337419765,,555624172,555624172,405,9178.0,published
+Tristan da Cunha,SHN,GBR,full,actively managed,Marine Protection Zone,687222.6998691651,,None,None,281,68808197.0,published
+Palau,PLW,PLW,full,implemented,National Marine Sanctuary Protection Zone,477146.7090882656,,555622118,555622118,766,68807606.0,published
+South Georgia and South Sandwich Islands,SGS,GBR,full,actively managed,Marine Protected Area,469821.2955326094,,None,None,762,68808365.0,published
+Cocos (Keeling) Island,AUS,AUS,full,implemented,Marine Park,465845.70664660935,,None,None,3879,68819567.0,published
+Ascension Exclusive Economic Zone,SHN,GBR,full,actively managed,Marine Protected Area,443571.360258334,,None,None,706,68819542.0,published
+Macquarie Island,AUS,AUS,high,implemented,Marine Park,388814.61458759377,,None,None,4284,68821401.0,published
+Papahānaumokuākea,USA,USA,high,actively managed,Marine National Monument,362103.78790761327,,,,604,8338.0,published
+Papahānaumokuākea,USA,USA,high,implemented,Particularly Sensitive Sea Area,362084.1856718828,,None,None,3035,68819697.0,published
+Ross Sea Region,ABNJ,ABNJ,full,actively managed,Marine Protected Area (CCAMLR),328755.67242365965,,555624810_D,555624810_D,289,68808296.0,published
+Nazca-Desventuradas,CHL,CHL,full,implemented,Marine Park,299947.262276,,555624169,555624169,412,9175.0,published
+Christmas Island,AUS,AUS,full,implemented,Marine Park,273186.3138240898,,None,None,3878,68819566.0,published
+Mariana Trench,MNP,USA,full,actively managed,National Wildlife Refuge,204537.5663510547,,,,743,8783.0,published
+Marianas Trench - Trench Unit,MNP,USA,full,actively managed,Marine National Monument,204537.56635105272,,555512147,555512147,680,7497.0,published
+Pacific Remote Islands,UMI,USA,high,implemented,Marine National Monument,202072.6709988828,,None,None,6324,8345.0,published
+Revillagigedo,MEX,MEX,full,actively managed,National Park,148245.7052633023,,555629385_A,555629385_A,72,68813451.0,published
+Heard Island and McDonald Islands - National Park Zone,AUS,AUS,full,implemented,Marine Reserve,138513.0134459531,,,,5976,,published
+Niue Moana Mahu,NIU,NIU,full,implemented,Marine Protected Area,126649.5681979297,,555705568,555705568,1282,68808405.0,published
+Terres Australes Françaises,ATF,FRA,full,actively managed,National Nature Reserve,120325.18389420898,,,,417,68808359.0,published
+Great Barrier Reef,AUS,AUS,high,actively managed,Marine Park,114220.11314066016,,2628_B,2628_B,2362,68808376.0,published
+Natural Park of the Coral Sea,NCL,FRA,full,implemented,Natural Park,106120.91026328906,,None,None,4277,68821399.0,published
+South Orkney Islands Southern Shelf Marine Protected Area,ABNJ,ABNJ,high,implemented,Marine Protected Area (CCAMLR),94716.97754172167,,478191,478191,286,7705283.0,published
+Galápagos,ECU,ECU,high,actively managed,Marine Reserve,93374.27017229884,,None,None,428,68817264.0,published
+Russkaya Arktika,RUS,RUS,full,actively managed,National Park,87562.26660356055,,555714472,555714472,317,68819350.0,published
+Ross Sea Region,ABNJ,ABNJ,high,actively managed,Marine Protected Area (CCAMLR),74766.12734372754,,555624810_B,555624810_B,328,68813307.0,published
+Heard Island and McDonald Islands - Sanctuary Zone,AUS,AUS,full,implemented,Marine Reserve,70603.02974403906,,,,6001,,published
+"Monumento Natural Das Ilhas de Trindade, Martim Vaz e Do Monte Columbia",BRA,BRA,high,implemented,Natural Monument,67702.76118454296,,555635929,555635929,421,68808474.0,published
+Macquarie Island,AUS,AUS,full,actively managed,Marine Park,57137.107905416015,,354086_A,354086_A,424,7705150.0,published
+Freycinet,AUS,AUS,high,actively managed,Marine Park,56792.65515955664,,354083_A,354083_A,425,5147.0,published
+Isla del Coco,CRI,CRI,full,actively managed,National Park,54853.533919519534,,None,None,3291,68808203.0,published
+South-west Corner,AUS,AUS,high,actively managed,Marine Park,54841.08328226074,,555556901_A,555556901_A,307,15013.0,published
+Malpelo,COL,COL,full,actively managed,Santuario de Fauna y Flora,47293.69171982812,,303552,303552,6869,3803.0,published
+Monumento Natural do Arquipelago de Sao Pedro e Sao Paulo,BRA,BRA,high,implemented,Natural Monument,47199.91987030859,,555635928,555635928,426,68808475.0,published
+Cordillera de Coiba,PAN,PAN,full,actively managed,Marine Protected Area,45189.94887918359,,None,None,2558,68819568.0,published
+Galápagos,ECU,ECU,full,actively managed,Marine Reserve,44834.44880105664,,11753,11753,430,901.0,published
+Marianas Trench - Islands Unit,MNP,USA,high,actively managed,Marine National Monument,42448.08303661524,,555512147,555512147,678,8344.0,published
+Norfolk,NFK,AUS,high,actively managed,Marine Park,41660.67348938281,,555556895_A,555556895_A,432,15007.0,published
+Argo-Rowley Terrace,AUS,AUS,high,actively managed,Marine Park,36050.13204307226,,555556868_A,555556868_A,423,14980.0,published
+American Samoa,ASM,USA,full,actively managed,National Marine Sanctuary,34933.54072704883,,None,None,641,68819704.0,published
+Rose Atoll,ASM,USA,high,actively managed,Marine National Monument,34802.81311564649,,400012,400012,663,12323.0,published
+South Georgia and South Sandwich Islands,SGS,GBR,high,actively managed,Marine Protected Area,30918.14688785156,,None,None,764,68819800.0,published
+Natural Park of the Coral Sea,NCL,FRA,full,implemented,Natural Park,30807.23546007422,,None,None,4276,68821398.0,published
+Reserva Marina Hermandad,ECU,ECU,full,implemented,Marine Reserve,30057.82968110937,,None,None,3633,68819736.0,published
+Flinders - Marine National Park Zone,AUS,AUS,high,actively managed,Marine Park,25814.73179144336,,354081_A,354081_A,436,5145.0,published
+Namuncurá - Banco Burdwood I,ARG,ARG,full,actively managed,Marine National Park,24834.090769339844,,555703455,555703455,3045,68820012.0,published
+Prince Edward Islands,ZAF,ZAF,full,implemented,Marine Protected Area,23969.28640270703,,None,None,3327,68819804.0,published

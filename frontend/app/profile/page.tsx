@@ -135,22 +135,21 @@ export default function Profile() {
                 </div>
               </div>
             )}
-            {user.picture && (
-              <div>
-                <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>PROFILE PICTURE</label>
-                <div className="mt-2">
-                  <img 
-                    src={user.picture} 
-                    alt="Profile" 
-                    className="w-16 h-16 rounded-full"
-                    style={{
-                      border: '2px solid rgba(70, 98, 171, 0.5)',
-                      boxShadow: '0 4px 16px rgba(70, 98, 171, 0.2)'
-                    }}
-                  />
-                </div>
+            <div>
+              <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>PROFILE PICTURE</label>
+              <div className="mt-2">
+                <img 
+                  src="/pfp.png" 
+                  alt="Profile" 
+                  className="w-16 h-16 rounded-full"
+                  style={{
+                    border: '2px solid rgba(70, 98, 171, 0.5)',
+                    boxShadow: '0 4px 16px rgba(70, 98, 171, 0.2)',
+                    objectFit: 'cover'
+                  }}
+                />
               </div>
-            )}
+            </div>
           </div>
         </div>
 
