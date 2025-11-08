@@ -245,7 +245,7 @@ const LandingPage: React.FC = () => {
           {/* Globe positioned off-screen to the right */}
           <div style={{
             position: 'absolute',
-            right: '-50%',
+            right: '-55%',
             top: '50%',
             transform: 'translateY(-50%)',
             width: '100%',
@@ -320,7 +320,7 @@ const LandingPage: React.FC = () => {
           {/* Landing page content */}
           <div style={{
             position: 'relative',
-            zIndex: 10,
+            zIndex: 30,
             textAlign: 'left',
             maxWidth: '520px',
             padding: '0 60px',

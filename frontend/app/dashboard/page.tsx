@@ -397,20 +397,53 @@ const HomePage: React.FC = () => {
 
           showGraticules={true}
 
-          htmlElementsData={clusteredData}
+          htmlElementsData={[{ id: 'atlantic-pin', lat: 20, lng: -30 }, ...clusteredData]}
           htmlElement={(d: any) => {
             const el = document.createElement('div');
-            if (d.count > 1) {
-              el.innerHTML = clusterSvg(d.count);
-            } else {
-              el.innerHTML = markerSvg;
+            el.style.pointerEvents = 'auto';
+            el.style.cursor = 'pointer';
+
+            if (d.id === 'atlantic-pin') {
+              const svgNS = 'http://www.w3.org/2000/svg';
+              const svg = document.createElementNS(svgNS, 'svg');
+              svg.setAttribute('viewBox', '0 0 24 36');
+              svg.setAttribute('width', '24px');
+              svg.setAttribute('height', '34px');
+
+              const path = document.createElementNS(svgNS, 'path');
+              path.setAttribute('d', 'M12 0C7 0 3 4 3 9c0 7.5 9 17 9 17s9-9.5 9-17C21 4 17 0 12 0z');
+              path.setAttribute('fill', '#ffffff');
+              const circle = document.createElementNS(svgNS, 'circle');
+              circle.setAttribute('cx', '12');
+              circle.setAttribute('cy', '9');
+              circle.setAttribute('r', '4.5');
+              circle.setAttribute('fill', '#0f1624');
+              svg.appendChild(path);
+              svg.appendChild(circle);
+              el.appendChild(svg);
+              el.style.pointerEvents = 'none';
+              return el;
             }
 
-            el.style.color = d.registered ? GREEN : RED;
-            el.style.width = `${40 + d.count / 200}px`;
-            el.style.height = 'auto';
-            el.style.cursor = 'pointer';
-            el.style.pointerEvents = 'auto';
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('viewBox', '0 0 24 36');
+            svg.setAttribute('width', '22px');
+            svg.setAttribute('height', '32px');
+
+            const path = document.createElementNS(svgNS, 'path');
+            path.setAttribute('d', 'M12 0C7 0 3 4 3 9c0 7.5 9 17 9 17s9-9.5 9-17C21 4 17 0 12 0z');
+            path.setAttribute('fill', '#ffffff');
+
+            const circle = document.createElementNS(svgNS, 'circle');
+            circle.setAttribute('cx', '12');
+            circle.setAttribute('cy', '9');
+            circle.setAttribute('r', '4.5');
+            circle.setAttribute('fill', '#0f1624');
+
+            svg.appendChild(path);
+            svg.appendChild(circle);
+            el.appendChild(svg);
 
             el.addEventListener('click', (e) => {
               e.preventDefault();
