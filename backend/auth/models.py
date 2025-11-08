@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, Literal
 from datetime import datetime
 
 
@@ -8,6 +8,7 @@ class UserSignup(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6, description="Password must be at least 6 characters")
     full_name: Optional[str] = None
+    user_type: Literal["supplier", "regulator", "consumer"] = Field(..., description="User type: supplier, regulator, or consumer")
     metadata: Optional[dict] = None
 
 
