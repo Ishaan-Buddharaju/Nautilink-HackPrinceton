@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AuthNav from './auth';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -58,11 +58,13 @@ const Sidebar = () => {
   const [anchorRotated, setAnchorRotated] = useState(false);
   const [fishAnimationKey, setFishAnimationKey] = useState(0);
   const [dragPointerProgress, setDragPointerProgress] = useState(0.5);
+  const [handleReturning, setHandleReturning] = useState(false);
 
   const moveListener = useRef<((event: PointerEvent) => void) | null>(null);
   const upListener = useRef<((event: PointerEvent) => void) | null>(null);
   const rippleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const anchorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const returnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
@@ -98,6 +100,9 @@ const Sidebar = () => {
       }
       if (anchorTimer.current) {
         clearTimeout(anchorTimer.current);
+      }
+      if (returnTimer.current) {
+        clearTimeout(returnTimer.current);
       }
     };
   }, [cleanupListeners]);
@@ -145,24 +150,42 @@ const Sidebar = () => {
     };
   }, [isOpen]);
 
+  const startHandleReturn = useCallback(() => {
+    if (returnTimer.current) {
+      clearTimeout(returnTimer.current);
+    }
+    setHandleReturning(true);
+    returnTimer.current = setTimeout(() => {
+      setHandleReturning(false);
+      returnTimer.current = null;
+    }, 1500);
+  }, []);
+
   const finalizeDrag = useCallback(
     (progress: number) => {
       setIsDragging(false);
       if (progress > 0.35) {
         setIsOpen(true);
+        setHandleReturning(false);
         triggerRipple();
       } else {
         setIsOpen(false);
+        startHandleReturn();
       }
       setDragProgress(0);
     },
-    [triggerRipple]
+    [startHandleReturn, triggerRipple]
   );
 
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (isOpen) return;
       event.preventDefault();
+      if (returnTimer.current) {
+        clearTimeout(returnTimer.current);
+        returnTimer.current = null;
+      }
+      setHandleReturning(false);
       setIsDragging(true);
       setDragProgress(0.05);
       setDragPointerProgress(
@@ -212,7 +235,8 @@ const Sidebar = () => {
     setShowRipple(false);
     setShowContent(false);
     setDragProgress(0);
-  }, []);
+    startHandleReturn();
+  }, [startHandleReturn]);
 
   const previewWidth = useMemo(() => {
     return 24 + dragProgress * (MAX_SIDEBAR_WIDTH + 80);
@@ -234,7 +258,40 @@ const Sidebar = () => {
       };
     }
     return { x: 16, y: '50%' };
-  }, [dragProgress, isDragging, isOpen]);
+  }, [dragPointerProgress, dragProgress, isDragging, isOpen]);
+
+  const baseHandleTransform = useMemo(
+    () => `translate(${handleOffset.x}px, calc(${handleOffset.y} - 50%))`,
+    [handleOffset.x, handleOffset.y]
+  );
+
+  const handleStyle = useMemo(() => {
+    const style: CSSProperties = {
+      pointerEvents: isOpen || handleReturning ? 'none' : 'auto',
+      touchAction: 'none',
+      opacity: isOpen ? 0 : isDragging ? 0.6 : 1,
+      willChange: 'transform, opacity',
+    };
+
+    (style as any)['--handle-target-x'] = `${handleOffset.x}px`;
+    (style as any)['--handle-offscreen-x'] = '-96px';
+    (style as any)['--handle-y'] = handleOffset.y;
+
+    if (handleReturning) {
+      style.animation = 'anchorHandleReturn 1.5s cubic-bezier(0.23, 1, 0.32, 1) forwards';
+    } else {
+      style.transform = baseHandleTransform;
+    }
+
+    return style;
+  }, [
+    baseHandleTransform,
+    handleOffset.x,
+    handleOffset.y,
+    handleReturning,
+    isDragging,
+    isOpen,
+  ]);
 
   const shouldShowPreview = (isDragging || (!isOpen && dragProgress > 0));
 
@@ -243,13 +300,7 @@ const Sidebar = () => {
       <div
         className="fixed inset-y-0 z-[1210] flex items-center cursor-ew-resize transition-opacity duration-200"
         onPointerDown={handlePointerDown}
-        style={{
-          pointerEvents: isOpen ? 'none' : 'auto',
-          touchAction: 'none',
-          opacity: isOpen ? 0 : isDragging ? 0.6 : 1,
-          transform: `translate(${handleOffset.x}px, calc(${handleOffset.y} - 50%))`,
-          willChange: 'transform, opacity',
-        }}
+        style={handleStyle}
       >
         <img
           src="/anchor-arrow-blue.png"

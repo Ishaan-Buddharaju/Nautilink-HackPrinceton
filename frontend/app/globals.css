@@ -258,6 +258,20 @@ body {
   }
 }
 
+@keyframes anchorHandleReturn {
+  0% {
+    transform: translate(var(--handle-offscreen-x, -96px), calc(var(--handle-y, 50%) - 50%));
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translate(var(--handle-target-x, 16px), calc(var(--handle-y, 50%) - 50%));
+    opacity: 1;
+  }
+}
+
 .sidebar {
   position: fixed;
   top: 0; 
