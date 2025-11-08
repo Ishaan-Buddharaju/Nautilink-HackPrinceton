@@ -19,8 +19,8 @@ const reports: Report[] = [
     clearance: 'Public Trust',
   },
   {
-    id: 'ai-agent-performance-q3-2025',
-    title: 'AI Agent Performance Q3',
+    id: 'voice-agent-performance-q3-2025',
+    title: 'Voice Agent Performance Q3',
     date: '2025-09-18',
     clearance: 'Confidential',
   },
@@ -143,7 +143,7 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="flex-1 p-8 text-white flex">
+    <div className="flex-1 p-8 text-white flex" style={{marginLeft:"104px"}}>
       {/* Left side: Reports List */}
       <div className="w-1/2 pr-8 border-r border-gray-800">
         <h1 className="text-3xl font-bold mb-4">Reports</h1>

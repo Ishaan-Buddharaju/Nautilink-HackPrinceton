@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ChatMessage {
   id: string;
@@ -17,6 +18,7 @@ export default function AnalyzePage() {
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -135,7 +137,7 @@ export default function AnalyzePage() {
           setSelectedTarget(title);
           setMessages((prev) => [
             ...prev,
-            { id: Date.now().toString(), type: 'assistant', content: `Selected vessel: ${title}`, timestamp: new Date() }
+            { id: Date.now().toString(), type: 'assistant', content: title, timestamp: new Date() }
           ]);
         });
 
@@ -154,7 +156,77 @@ export default function AnalyzePage() {
     };
   }, []);
 
-  const handleSendMessage = async () => {
+  const handleApiCall = async (prompt: string) => {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/ai/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          user_id: user?.sub || 'anonymous',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      const assistantMessage: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: data.content,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+      
+      if (data.type === 'location' && data.data) {
+        const { lat, lng } = data.data;
+        if (mapRef.current && typeof lat === 'number' && typeof lng === 'number') {
+            mapRef.current.flyTo({
+                center: [lng, lat],
+                zoom: 12,
+                essential: true
+            });
+        }
+      }
+
+    } catch (error) {
+      console.error("Failed to fetch analysis:", error);
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: "Sorry, I couldn't get a response from the server. Please try again later.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTestAnalysis = () => {
+    const prompt = selectedTarget 
+      ? `Run analysis on ${selectedTarget}` 
+      : 'Generate the weekly IUU report';
+    
+    const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'user',
+        content: prompt,
+        timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    handleApiCall(prompt);
+  };
+
+  const handleSendMessage = () => {
     if (!inputValue.trim()) return;
 
     const userMessage: ChatMessage = {
@@ -166,57 +238,7 @@ export default function AnalyzePage() {
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    setIsLoading(true);
-
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/ai/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: inputValue, user_id: 'test-user' }), // Replace with actual user ID
-      });
-
-      if (!res.ok) {
-        throw new Error('Backend error');
-      }
-
-      const data = await res.json();
-      
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: data.content,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-
-      if (data.type === 'location' && data.data) {
-        const { lat, lng, name } = data.data;
-        if (mapRef.current) {
-          mapRef.current.flyTo({
-            center: [lng, lat],
-            zoom: 12,
-            speed: 1.5
-          });
-
-          new mapboxgl.Popup({ closeOnClick: false })
-            .setLngLat([lng, lat])
-            .setHTML(`<h4>${name}</h4>`)
-            .addTo(mapRef.current);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching from analyze API:', error);
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
+    handleApiCall(userMessage.content);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -227,7 +249,7 @@ export default function AnalyzePage() {
   };
 
   return (
-    <div className="flex h-screen bg-black text-white font-sans relative">
+    <div className="flex h-screen bg-black text-white font-sans relative" style={{marginLeft:"104px"}}>
       {/* Left Panel - Analysis Chat */}
       <div className={`w-1/2 flex flex-col h-screen`}> 
         {/* Header */}
@@ -236,7 +258,16 @@ export default function AnalyzePage() {
           <p className="text-sm text-gray-400">AI-powered maritime surveillance analysis</p>
         </div>
 
-        {/* Test Button has been removed and integrated into the chat */}
+        {/* Test Button */}
+        <div className="p-4 border-b border-gray-800">
+          <button
+            onClick={handleTestAnalysis}
+            disabled={isLoading}
+            className="w-full bg-black hover:bg-white disabled:bg-black border border-gray-700 hover:text-black text-white font-medium py-3 px-4 rounded-lg transition-colors"
+          >
+            {isLoading ? 'Running Analysis...' : selectedTarget ? `Run Analysis On ${selectedTarget}` : 'Run Analysis'}
+          </button>
+        </div>
 
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
