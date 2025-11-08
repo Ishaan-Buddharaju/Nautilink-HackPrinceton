@@ -9,6 +9,7 @@ import {
   Animated,
   Dimensions,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -138,20 +139,10 @@ export default function TripScreen() {
 
   const takePicture = async () => {
     if (cameraRef.current) {
-      try {
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-        });
-        
-        if (photo) {
-          setShowCamera(false);
-          Alert.alert('Success', 'Photo captured successfully!');
-          // TODO: Handle photo upload
-        }
-      } catch (error) {
-        console.error('Error taking picture:', error);
-        Alert.alert('Error', 'Failed to capture photo.');
-      }
+      const photo = await cameraRef.current.takePictureAsync();
+      console.log('Photo taken:', photo.uri);
+      setShowCamera(false);
+      router.push('/(main)/nfc-tap');
     }
   };
 
@@ -200,12 +191,10 @@ export default function TripScreen() {
           <Ionicons name="arrow-back" size={24} color={Colors.foreground} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Trip</Text>
-        <TouchableOpacity onPress={openCamera} style={styles.cameraIconButton}>
-          <Ionicons name="camera" size={24} color={Colors.accentPrimary} />
-        </TouchableOpacity>
+        <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.content}>
         {/* Start Trip Button */}
         {!tripInProgress ? (
           <Link 
@@ -276,7 +265,17 @@ export default function TripScreen() {
             ))}
           </ScrollView>
         </View>
-      </ScrollView>
+
+        {/* Add Trip Button */}
+        <TouchableOpacity
+          style={styles.addTripButton}
+          onPress={() => router.push('/(main)/add-trip')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add-circle" size={28} color={Colors.accentPrimary} />
+          <Text style={styles.addTripText}>Add Trip</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Camera Modal */}
       <Modal
@@ -425,20 +424,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  cameraIconButton: {
+  headerSpacer: {
     width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.surfaceGlass,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.accentPrimary,
   },
   content: {
     flex: 1,
-  },
-  contentContainer: {
     padding: 20,
   },
   startTripButton: {
@@ -575,6 +565,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textMuted,
     fontWeight: '500',
+  },
+  addTripButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Colors.surfaceGlass,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: Colors.accentPrimary,
+  },
+  addTripText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.accentPrimary,
+    letterSpacing: 0.5,
   },
   cameraContainer: {
     flex: 1,

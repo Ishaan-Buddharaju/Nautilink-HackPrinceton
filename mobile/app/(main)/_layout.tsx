@@ -6,6 +6,8 @@ export default function MainLayout() {
       <Stack.Screen name="home" />
       <Stack.Screen name="trip" />
       <Stack.Screen name="trip-form" />
+      <Stack.Screen name="add-trip" />
+      <Stack.Screen name="nfc-tap" />
     </Stack>
   );
 }
