@@ -42,9 +42,6 @@ const HomePage: React.FC = () => {
   const RED = "#fc0303";
   const DARK_RED = "#bf0202";
 
-  // Major commercial fishing zones worldwide with detailed vessel and sustainability data
-  const fishingZoneData = fishingZones;
-
   const globeEl = useRef<any>(null);
   const [landData, setLandData] = useState<{ features: any[] }>({ features: [] });
   const [vesselData, setVesselData] = useState<VesselData[]>([]);
@@ -71,6 +68,43 @@ const HomePage: React.FC = () => {
     }
   ]);
   const [agentInput, setAgentInput] = useState('');
+  const [reportTarget, setReportTarget] = useState<
+    { type: 'zone'; data: FishingZone } | { type: 'vessel'; data: VesselData } | null
+  >(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportVisible, setReportVisible] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const reportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reportErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const weeklyActivityData = useMemo(
+    () => [
+      { label: 'Wk 34', value: 12 },
+      { label: 'Wk 35', value: 18 },
+      { label: 'Wk 36', value: 14 },
+      { label: 'Wk 37', value: 22 },
+    ],
+    []
+  );
+  const maxWeeklyValue = useMemo(
+    () => Math.max(...weeklyActivityData.map((entry) => entry.value)),
+    [weeklyActivityData]
+  );
+  const fishingZoneData = fishingZones;
+  const resolvedReportZone = useMemo(() => {
+    if (!reportTarget) return null;
+    if (reportTarget.type === 'zone') return reportTarget.data;
+    const match =
+      fishingZoneData.find(
+        (zone) =>
+          zone.vessel.imo_number === String(reportTarget.data.imo) ||
+          zone.vessel.name === reportTarget.data.shipName
+      ) || null;
+    return match;
+  }, [reportTarget, fishingZoneData]);
+  const reportTitle =
+    reportTarget?.type === 'vessel'
+      ? reportTarget.data.shipName
+      : resolvedReportZone?.vessel.name ?? 'Maritime Snapshot';
   const [agentThinking, setAgentThinking] = useState(false);
   const historyEntries = useMemo(
     () =>
@@ -146,6 +180,31 @@ const HomePage: React.FC = () => {
       setAgentThinking(false);
     }
   }, [agentInput, agentMessages, agentThinking]);
+
+  const handleGenerateReport = useCallback(() => {
+    if (!reportTarget) {
+      setReportError('Select a vessel or fishing zone first to generate a report.');
+      if (reportErrorTimeoutRef.current) clearTimeout(reportErrorTimeoutRef.current);
+      reportErrorTimeoutRef.current = setTimeout(() => setReportError(null), 3500);
+      return;
+    }
+
+    if (reportErrorTimeoutRef.current) {
+      clearTimeout(reportErrorTimeoutRef.current);
+      reportErrorTimeoutRef.current = null;
+    }
+
+    if (reportTimeoutRef.current) clearTimeout(reportTimeoutRef.current);
+
+    setReportError(null);
+    setReportVisible(false);
+    setReportLoading(true);
+
+    reportTimeoutRef.current = setTimeout(() => {
+      setReportLoading(false);
+      setReportVisible(true);
+    }, 5000);
+  }, [reportTarget]);
 
 
   // Agent panel state
@@ -368,6 +427,13 @@ const HomePage: React.FC = () => {
     return undefined;
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (reportTimeoutRef.current) clearTimeout(reportTimeoutRef.current);
+      if (reportErrorTimeoutRef.current) clearTimeout(reportErrorTimeoutRef.current);
+    };
+  }, []);
+
   // Re-cluster whenever vesselData changes
   useEffect(() => {
     clusterMarkers(vesselData);
@@ -473,11 +539,13 @@ const HomePage: React.FC = () => {
               el.appendChild(svg);
               
               // Add click handler to show detailed info
-              el.addEventListener('click', (e) => {
+             el.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                 setHoveredFishingZone(d as FishingZone);
+                setHoveredFishingZone(d as FishingZone);
+                setReportTarget({ type: 'zone', data: d as FishingZone });
+                setReportVisible(false);
                 
                 const popupHeight = 420;
                 const popupWidth = 360;
@@ -532,6 +600,8 @@ const HomePage: React.FC = () => {
 
               if (d.count === 1) {
                 setHoveredVessel(d.markers[0]);
+                setReportTarget({ type: 'vessel', data: d.markers[0] });
+                setReportVisible(false);
                 const popupHeight = 300;
                 const popupWidth = 320;
                 const screenHeight = window.innerHeight;
@@ -581,6 +651,7 @@ const HomePage: React.FC = () => {
                   }
                   requestAnimationFrame(animateZoom);
                 }
+                setReportTarget(null);
               }
             });
 
@@ -956,6 +1027,7 @@ const HomePage: React.FC = () => {
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
+                  if (reportLoading) return;
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = '0 14px 32px rgba(12, 20, 40, 0.45)';
                 }}
@@ -963,12 +1035,28 @@ const HomePage: React.FC = () => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = '0 10px 25px rgba(12, 20, 40, 0.35)';
                 }}
-                onClick={() => {
-                  console.log('Generate Report clicked');
-                }}
+                onClick={handleGenerateReport}
+                disabled={reportLoading}
               >
-                Generate Report
+                {reportLoading ? (
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid rgba(255,255,255,0.45)',
+                      borderTopColor: '#f4f8ff',
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite'
+                    }}
+                  />
+                ) : (
+                  'Generate Report'
+                )}
               </button>
+              {reportError && (
+                <div style={{ color: '#fda4af', fontSize: '0.8rem', marginTop: '8px' }}>{reportError}</div>
+              )}
             </div>
 
           </div>
@@ -1189,6 +1277,285 @@ const HomePage: React.FC = () => {
 
           {/* Agent Panel */}
           <AgentPanel open={isAgentPanelOpen} point={agentPoint} onClose={() => setIsAgentPanelOpen(false)} />
+
+          {/* Report Overlay */}
+          {reportVisible && reportTarget && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(8, 12, 20, 0.78)',
+                backdropFilter: 'blur(6px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1200
+              }}
+            >
+              <div
+                style={{
+                  width: 'min(860px, 90vw)',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                  background: 'rgba(14, 20, 31, 0.96)',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(198, 218, 236, 0.2)',
+                  boxShadow: '0 24px 48px rgba(8, 15, 28, 0.45)',
+                  color: '#e6f0ff',
+                  padding: '32px 36px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '28px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 600 }}>
+                      Report: {reportTitle}
+                    </div>
+                    <div style={{ marginTop: '6px', color: '#9fb7d8', fontSize: '0.9rem' }}>
+                      Generated on {new Date().toLocaleDateString()}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setReportVisible(false)}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(198, 218, 236, 0.25)',
+                      background: 'rgba(70, 98, 171, 0.8)',
+                      color: '#f4f8ff',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Export PDF
+                  </button>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '18px',
+                    padding: '12px 0',
+                    borderBottom: '1px solid rgba(198, 218, 236, 0.15)'
+                  }}
+                >
+                  <div>
+                    <div style={{ color: '#8fa8d9', fontSize: '0.75rem', letterSpacing: '0.08em', marginBottom: '4px' }}>
+                      LATITUDE
+                    </div>
+                    <div style={{ fontWeight: 600 }}>
+                      {reportTarget.type === 'zone'
+                        ? reportTarget.data.lat.toFixed(4)
+                        : reportTarget.data.lat.toFixed(4)}°
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#8fa8d9', fontSize: '0.75rem', letterSpacing: '0.08em', marginBottom: '4px' }}>
+                      LONGITUDE
+                    </div>
+                    <div style={{ fontWeight: 600 }}>
+                      {reportTarget.type === 'zone'
+                        ? reportTarget.data.lng.toFixed(4)
+                        : reportTarget.data.lng.toFixed(4)}°
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#8fa8d9', fontSize: '0.75rem', letterSpacing: '0.08em', marginBottom: '4px' }}>
+                      LOCATION
+                    </div>
+                    <div style={{ fontWeight: 600 }}>
+                      {resolvedReportZone?.name ?? 'Open Waters'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#8fa8d9', fontSize: '0.75rem', letterSpacing: '0.08em', marginBottom: '4px' }}>
+                      VESSEL MODEL
+                    </div>
+                    <div style={{ fontWeight: 600 }}>
+                      {resolvedReportZone?.vessel.model ?? (reportTarget.type === 'vessel' ? 'Purse Seiner 70m' : 'Multi-role 75m')}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#9fb7d8', marginTop: '2px' }}>
+                      {resolvedReportZone
+                        ? `${resolvedReportZone.vessel.flag_state} • Built ${resolvedReportZone.vessel.year_built}`
+                        : 'Flag state TBD • Built 2016'}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    borderRadius: '16px',
+                    border: '1px solid rgba(198,218,236,0.18)',
+                    background: 'rgba(17,25,38,0.85)',
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}
+                >
+                  <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>Weekly IUU Activity Analysis</div>
+                  <p style={{ color: '#a5bddf', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                    This section provides a week-over-week summary of detected vessels engaged in suspected Illegal,
+                    Unreported, and Unregulated (IUU) fishing activities. The insights are aggregated from AIS telemetry,
+                    satellite imagery, and on-board sensor fusion.
+                  </p>
+                  <div
+                    style={{
+                      height: '200px',
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${weeklyActivityData.length}, 1fr)`,
+                      gap: '16px',
+                      alignItems: 'end',
+                      padding: '0 12px'
+                    }}
+                  >
+                    {weeklyActivityData.map((entry) => (
+                      <div key={entry.label} style={{ textAlign: 'center', color: '#d7e6ff', fontSize: '0.85rem' }}>
+                        <div
+                          style={{
+                            height: `${(entry.value / maxWeeklyValue) * 180}px`,
+                            background: 'linear-gradient(180deg, rgba(90,132,218,0.85), rgba(70,98,171,0.75))',
+                            borderRadius: '10px',
+                            boxShadow: '0 8px 20px rgba(18, 28, 56, 0.4)',
+                            marginBottom: '8px'
+                          }}
+                          title={`${entry.label} – ${entry.value} vessels`}
+                        />
+                        {entry.label}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ color: '#9fb7d8', fontSize: '0.8rem', textAlign: 'center' }}>
+                    Figure 1: Count of vessels flagged for IUU-like behavior across the past four weeks.
+                  </div>
+                  <div style={{ color: '#cfe3ff', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                    <strong>Analysis:</strong> A moderate rise in flagged activity is visible in Week 37. The spike aligns with
+                    seasonal movements of target species transiting the central corridor. Recommend cross-referencing satellite
+                    reconnaissance and patrol intel for corroboration.
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    borderRadius: '16px',
+                    border: '1px solid rgba(198,218,236,0.18)',
+                    background: 'rgba(17,25,38,0.85)',
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '18px'
+                  }}
+                >
+                  <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>Sustainability Snapshot</div>
+                  <p style={{ color: '#a5bddf', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                    Assessment of fleet sustainability metrics for the selected operating zone. Scores reflect current
+                    telemetry, inspection reports, and compliance filings as of this week.
+                  </p>
+                  <div
+                    style={{
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, rgba(25,37,57,0.95), rgba(17,25,38,0.85))',
+                      border: '1px solid rgba(95,123,218,0.35)',
+                      padding: '18px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <div>
+                      <div style={{ color: '#8fa8d9', fontSize: '0.85rem', letterSpacing: '0.05em' }}>SUSTAINABILITY SCORE</div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginTop: '10px' }}>
+                        <span style={{ fontSize: '2.4rem', fontWeight: 700 }}>
+                          {resolvedReportZone?.sustainability_score.total_score ?? 74}
+                        </span>
+                        <span style={{ fontSize: '1.1rem', color: '#9fb7d8' }}>/ 100</span>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 189, 89, 0.2)',
+                        color: '#ffbd59',
+                        fontWeight: 600,
+                        letterSpacing: '0.05em'
+                      }}
+                    >
+                      Grade: {resolvedReportZone?.sustainability_score.grade ?? 'B'}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ color: '#9fb7d8', fontSize: '0.85rem', letterSpacing: '0.05em' }}>CATEGORY SCORES</div>
+                    {Object.entries(
+                      resolvedReportZone?.sustainability_score.categories ?? {
+                        vessel_efficiency: { score: 74 },
+                        fishing_method: { score: 70 },
+                        environmental_practices: { score: 82 },
+                        compliance_and_transparency: { score: 88 },
+                        social_responsibility: { score: 76 }
+                      }
+                    ).map(([key, { score }]) => (
+                      <div
+                        key={key}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '180px 1fr 40px',
+                          gap: '12px',
+                          alignItems: 'center',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        <span style={{ textTransform: 'capitalize', color: '#d7e6ff' }}>
+                          {key.replace(/_/g, ' ')}
+                        </span>
+                        <div
+                          style={{
+                            width: '100%',
+                            height: '8px',
+                            borderRadius: '5px',
+                            background: 'rgba(255,255,255,0.12)',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${Math.min(score, 100)}%`,
+                              height: '100%',
+                              background: score >= 80 ? '#2eb700' : score >= 70 ? '#f59e0b' : '#fb923c',
+                              transition: 'width 0.3s ease'
+                            }}
+                          />
+                        </div>
+                        <span style={{ fontWeight: 600 }}>{score}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => setReportVisible(false)}
+                    style={{
+                      padding: '12px 24px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(198, 218, 236, 0.2)',
+                      background: 'rgba(15,23,36,0.8)',
+                      color: '#f4f8ff',
+                      fontSize: '1rem',
+                      fontWeight: 500,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
