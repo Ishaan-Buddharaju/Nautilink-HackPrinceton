@@ -159,6 +159,111 @@ body {
   100% { transform: rotate(360deg); }
 }
 
+.landing-loader {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #000000;
+}
+
+.landing-loader__row {
+  position: absolute;
+  left: -25%;
+  display: flex;
+  gap: 32px;
+  animation: landingFishSwim 3s linear infinite;
+  opacity: 0.85;
+}
+
+.landing-loader__fish {
+  width: 120px;
+  height: 120px;
+  background-image: url('/fish-landing.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 14px rgba(70, 98, 171, 0.35));
+}
+
+@keyframes landingFishSwim {
+  0% {
+    transform: translateX(0) scale(0.95);
+    opacity: 0.1;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(125%) scale(1.05);
+    opacity: 0.15;
+  }
+}
+
+.landing-loader__progress {
+  position: absolute;
+  bottom: 7%;
+  left: 12%;
+  right: 12%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  box-shadow: 0 0 18px rgba(70, 98, 171, 0.35);
+}
+
+.landing-loader__progress-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 8px;
+  padding: 2px;
+}
+
+.landing-loader__progress-chunk {
+  flex: 1;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(198, 218, 236, 0.2) 0%, rgba(224, 242, 253, 0.65) 60%, rgba(198, 218, 236, 0.2) 100%);
+  opacity: 0;
+  transform: scaleX(0.2);
+  transform-origin: left center;
+  animation: landingProgressPulse 3s ease-in-out infinite;
+}
+
+.landing-loader__progress-chunk--one { animation-delay: 0.05s; }
+.landing-loader__progress-chunk--two { animation-delay: 0.36s; }
+.landing-loader__progress-chunk--three { animation-delay: 0.82s; }
+.landing-loader__progress-chunk--four { animation-delay: 1.48s; }
+
+@keyframes landingProgressPulse {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.15);
+  }
+  18% {
+    opacity: 0.9;
+    transform: scaleX(0.75);
+  }
+  38% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  62% {
+    opacity: 0.8;
+    transform: scaleX(1.12);
+  }
+  85% {
+    opacity: 0.4;
+    transform: scaleX(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0.2);
+  }
+}
+
 .sidebar {
   position: fixed;
   top: 0; 
