@@ -23,7 +23,8 @@ export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
-  login: () => Promise<void>;
+  login: (provider?: 'google' | 'azure') => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;

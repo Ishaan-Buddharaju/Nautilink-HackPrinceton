@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,12 @@ import {
   ScrollView,
   Modal,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import { useAuth } from '../../hooks/useAuth';
 
 interface Transaction {
   id: string;
@@ -24,13 +26,11 @@ interface Transaction {
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { user, isLoading } = useAuth();
+
+  // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY RETURNS
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [slideAnim] = useState(new Animated.Value(500));
-
-  const handleScanQR = () => {
-    router.push('/(main)/qr-scanner');
-  };
-
   const [transactions, setTransactions] = useState<Transaction[]>([
     {
       id: '1',
@@ -106,6 +106,34 @@ export default function DashboardScreen() {
     },
   ]);
 
+  const canScan = user?.roles?.includes('fisher') || user?.roles?.includes('supplier');
+
+  // Redirect to login if not authenticated (exactly like web app)
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace('/(auth)/login');
+    }
+  }, [user, isLoading, router]);
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.accentPrimary} />
+        <Text style={{ color: Colors.foreground, marginTop: 16 }}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // If no user after loading, return null (will redirect)
+  if (!user) {
+    return null;
+  }
+
+  const handleScanQR = () => {
+    router.push('/(main)/qr-scanner');
+  };
+
   const handleTransactionPress = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     Animated.spring(slideAnim, {
@@ -129,14 +157,13 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.foreground} />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={handleScanQR} style={styles.qrButton}>
-          <Ionicons name="qr-code-outline" size={24} color={Colors.foreground} />
-        </TouchableOpacity>
+      <View style={[styles.header, !canScan && styles.headerCentered]}>
+        <Text style={styles.headerTitle}>Dashboard</Text>
+        {canScan && (
+          <TouchableOpacity onPress={handleScanQR} style={styles.qrButton}>
+            <Ionicons name="qr-code-outline" size={24} color={Colors.foreground} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.content}>
@@ -281,11 +308,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+  },
+  headerCentered: {
+    justifyContent: 'center',
   },
   backButton: {
     width: 40,

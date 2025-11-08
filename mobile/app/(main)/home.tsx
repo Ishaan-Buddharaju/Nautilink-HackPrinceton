@@ -6,16 +6,19 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import LandingLoader from '../../components/LandingLoader';
+import { useAuth } from '../../hooks/useAuth';
 
 const { width, height } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [showContent, setShowContent] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
   
@@ -29,6 +32,13 @@ export default function HomeScreen() {
   ]).current;
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/(auth)/login');
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     // Fade in content after loader completes
@@ -70,6 +80,26 @@ export default function HomeScreen() {
       ])
     ).start();
   }, []);
+
+  // Check user roles
+  const isConsumer = user?.roles?.includes('consumer') || user?.roles?.includes('supplier');
+  const isFisher = user?.roles?.includes('fisher') || user?.roles?.includes('supplier');
+  const isRegulator = user?.roles?.includes('regulator');
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.accentPrimary} />
+        <Text style={{ color: Colors.foreground, marginTop: 16 }}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // If no user, return null (will redirect)
+  if (!user) {
+    return null;
+  }
 
   const handleEnterApp = () => {
     router.push('/(main)/dashboard');
@@ -149,23 +179,53 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Advanced Maritime Intelligence{"\n"}& Surveillance Platform</Text>
         </View>
 
-        {/* Enter Button */}
+        {/* Role-Based Action Buttons */}
         <View style={styles.actionSection}>
-          <TouchableOpacity
-            style={styles.enterButton}
-            onPress={handleEnterApp}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.enterButtonText}>Consumer Dashboard</Text>
-            <Ionicons name="arrow-forward" size={24} color="#e0f2fd" />
-          </TouchableOpacity>
-
-          <Link href="/(main)/trip" asChild>
-            <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
-              <Ionicons name="fish" size={20} color={Colors.accentPrimary} />
-              <Text style={styles.secondaryButtonText}>Fisher Dashboard</Text>
+          {/* Consumer Dashboard - show if consumer or supplier */}
+          {isConsumer && (
+            <TouchableOpacity
+              style={styles.enterButton}
+              onPress={handleEnterApp}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.enterButtonText}>Consumer Dashboard</Text>
+              <Ionicons name="arrow-forward" size={24} color="#e0f2fd" />
             </TouchableOpacity>
-          </Link>
+          )}
+
+          {/* Fisher Dashboard - show if fisher or supplier */}
+          {isFisher && (
+            <Link href="/(main)/trip" asChild>
+              <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
+                <Ionicons name="fish" size={20} color={Colors.accentPrimary} />
+                <Text style={styles.secondaryButtonText}>Fisher Dashboard</Text>
+              </TouchableOpacity>
+            </Link>
+          )}
+
+          {/* Regulator Dashboard - show if regulator */}
+          {isRegulator && (
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push('/(main)/dashboard')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="shield-checkmark" size={20} color={Colors.accentPrimary} />
+              <Text style={styles.secondaryButtonText}>Regulator Dashboard</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Catch'em Button - show for consumers */}
+          {isConsumer && (
+            <TouchableOpacity
+              style={styles.catchEmButton}
+              onPress={() => router.push('/(main)/catch-em')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="fish-outline" size={20} color="#00d4ff" />
+              <Text style={styles.catchEmButtonText}>Catch'em</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -306,6 +366,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#4662ab',
+    letterSpacing: 0.5,
+  },
+  catchEmButton: {
+    backgroundColor: 'rgba(0, 212, 255, 0.15)',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#00d4ff',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  catchEmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#00d4ff',
     letterSpacing: 0.5,
   },
 });
