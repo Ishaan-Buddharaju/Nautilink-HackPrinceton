@@ -52,6 +52,8 @@ const HomePage: React.FC = () => {
   const [hotspotData, setHotspotData] = useState<HotspotData[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isReportPanelVisible, setIsReportPanelVisible] = useState(false);
+  const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
 
   // Agent panel state
   const [agentPoint, setAgentPoint] = useState<AgentPoint | null>(null);
@@ -251,6 +253,22 @@ const HomePage: React.FC = () => {
 
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsReportPanelVisible(true);
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsHistoryPanelVisible(true);
+    }, 240);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // Re-cluster whenever vesselData changes
   useEffect(() => {
@@ -554,6 +572,158 @@ const HomePage: React.FC = () => {
           </button>
         </div>
       )}
+
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: 'min(32vw, 420px)',
+              maxWidth: '100%',
+              background: 'rgba(16, 23, 34, 0.94)',
+              borderRight: '1px solid rgba(198, 218, 236, 0.22)',
+              boxShadow: '12px 0 32px rgba(10, 14, 28, 0.45)',
+              padding: '32px 32px 36px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
+              color: '#e0f2fd',
+              backdropFilter: 'blur(18px)',
+              transform: `translateX(${isReportPanelVisible ? '0' : '-110%'})`,
+              transition: 'transform 640ms cubic-bezier(0.23, 1, 0.32, 1)',
+              zIndex: 800,
+              pointerEvents: isReportPanelVisible ? 'auto' : 'none'
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 600, letterSpacing: '0.04em' }}>
+                Report
+              </h2>
+              <p style={{ marginTop: '8px', color: '#9fb7d8', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                Operational summary for the selected maritime theatre.
+              </p>
+            </div>
+
+            <div
+              style={{
+                padding: '18px 20px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(70,98,171,0.22), rgba(17,23,38,0.8))',
+                border: '1px solid rgba(198, 218, 236, 0.25)',
+                boxShadow: '0 18px 26px rgba(12, 22, 46, 0.35)'
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, marginBottom: '10px' }}>
+                Situation Overview
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.45, color: '#d6e6ff' }}>
+                Monitoring active vessel clusters. Select a contact on the globe to populate this briefing
+                with telemetry, compliance, and recommended actions.
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gap: '14px' }}>
+              {[
+                { label: 'Priority Watchlist', value: '5 vessels under observation' },
+                { label: 'Last Update', value: new Date().toLocaleString() },
+                { label: 'Weather Advisory', value: 'Moderate swells, 1.5m - 2m' }
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  style={{
+                    borderRadius: '12px',
+                    padding: '14px 16px',
+                    backgroundColor: 'rgba(23, 32, 51, 0.75)',
+                    border: '1px solid rgba(198, 218, 236, 0.16)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                  }}
+                >
+                  <span style={{ fontSize: '0.78rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7f93b8' }}>
+                    {item.label}
+                  </span>
+                  <span style={{ fontSize: '0.96rem', color: '#e8f3ff', fontWeight: 500 }}>
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 'min(32vw, 420px)',
+              width: '2px',
+              background: 'linear-gradient(to bottom, transparent, rgba(70, 98, 171, 0.45), transparent)',
+              zIndex: 750,
+              pointerEvents: 'none',
+              opacity: isReportPanelVisible ? 1 : 0,
+              transition: 'opacity 420ms ease'
+            }}
+          />
+
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: 'min(18vw, 220px)',
+              maxWidth: '100%',
+              padding: '28px 24px 36px',
+              background: 'rgba(16, 23, 34, 0.92)',
+              borderLeft: '1px solid rgba(198, 218, 236, 0.18)',
+              boxShadow: '-12px 0 28px rgba(10, 14, 28, 0.35)',
+              color: '#e0f2fd',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px',
+              backdropFilter: 'blur(16px)',
+              transform: `translateX(${isHistoryPanelVisible ? '0' : '110%'})`,
+              transition: 'transform 620ms cubic-bezier(0.23, 1, 0.32, 1)',
+              zIndex: 780,
+              pointerEvents: isHistoryPanelVisible ? 'auto' : 'none'
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 600, letterSpacing: '0.04em' }}>
+                History
+              </h2>
+              <p style={{ marginTop: '6px', color: '#94aacd', fontSize: '0.9rem' }}>
+                Recent operational events.
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {[
+                { title: 'Log #1', body: 'Intercepted AIS anomaly from vessel 78211 at 06:42Z.' },
+                { title: 'Log #2', body: 'Weather front moved east; re-tasked patrol drone Alpha-3.' },
+                { title: 'Log #3', body: 'Flagged unregistered contact for further inspection.' }
+              ].map((log, idx) => (
+                <div
+                  key={log.title + idx}
+                  style={{
+                    borderRadius: '14px',
+                    padding: '12px 14px',
+                    backgroundColor: 'rgba(22, 30, 46, 0.85)',
+                    border: '1px solid rgba(198, 218, 236, 0.18)',
+                    boxShadow: '0 14px 20px rgba(12, 18, 32, 0.32)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}
+                >
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e8f3ff' }}>{log.title}</span>
+                  <span style={{ fontSize: '0.82rem', color: '#b7c9e4', lineHeight: 1.35 }}>{log.body}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Agent Panel */}
           <AgentPanel open={isAgentPanelOpen} point={agentPoint} onClose={() => setIsAgentPanelOpen(false)} />
