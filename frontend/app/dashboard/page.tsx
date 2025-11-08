@@ -1136,15 +1136,7 @@ const HomePage: React.FC = () => {
                       {`Transaction #${idx + 1}`}
                     </span>
                     <span style={{ fontSize: '0.82rem', color: '#b7c9e4', lineHeight: 1.35 }}>
-                      {new Date(entry.timestamp).toLocaleString(undefined, {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        hour12: false
-                      })}
+                      {new Date(entry.timestamp).toISOString().replace('T', ', ').replace('Z', '').slice(0, -3)}
                     </span>
                   </div>
                 ))}
