@@ -7,6 +7,16 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 import httpx
 import base64
+import uuid
+import io
+
+# Optional PIL import for image processing
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    Image = None
 
 from config import settings
 from supabase import create_client
@@ -17,6 +27,13 @@ security = HTTPBearer()
 
 # Initialize Supabase client for auth operations
 supabase_auth: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
+
+# Initialize Supabase client for database/storage operations
+# Use service role key if available for admin operations, otherwise use anon key
+supabase_db: Client = create_client(
+    settings.SUPABASE_URL,
+    settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_ANON_KEY
+)
 
 
 # Pydantic models for request/response
@@ -32,6 +49,8 @@ class CreateCrateRequest(BaseModel):
     hash: str = Field(..., description="SHA256 hash of crate data", min_length=1)
     timestamp: Optional[int] = Field(None, description="Unix timestamp (defaults to now)")
     solana_wallet: Optional[str] = Field(None, description="User's Solana wallet public key")
+    image: Optional[str] = Field(None, description="Optional base64 encoded image to store off-chain")
+    supply_chain_stage: Optional[str] = Field(None, description="Supply chain stage (e.g., fisher, fishery, processor, distributor, retailer)")
     
     class Config:
         json_schema_extra = {
@@ -61,6 +80,8 @@ class CreateCrateResponse(BaseModel):
     crate_pubkey: Optional[str] = Field(None, description="Public key of the crate account")
     crate_keypair: Optional[str] = Field(None, description="Base64 encoded keypair for signing")
     accounts: Optional[dict] = Field(None, description="Account addresses for the transaction")
+    image_url: Optional[str] = Field(None, description="URL of uploaded image if provided")
+    offchain_stored: bool = Field(False, description="Whether crate data was stored off-chain")
     
     class Config:
         json_schema_extra = {
@@ -214,6 +235,19 @@ class GetAllCratesResponse(BaseModel):
     graph: SupplyChainGraph
 
 
+class CrateHistoryResponse(BaseModel):
+    """Response model for get crate history endpoint."""
+    success: bool
+    message: str
+    crate_pubkey: str = Field(..., description="Public key of the requested crate")
+    current_crate: CrateNode = Field(..., description="Current crate details")
+    lineage_path: List[str] = Field(..., description="Path from root to current crate (pubkeys)")
+    history: List[CrateNode] = Field(..., description="Complete history from root to current crate with full details")
+    root_crate: CrateNode = Field(..., description="Root crate (original creation)")
+    depth: int = Field(..., description="Depth from root (0 = root crate)")
+    is_root: bool = Field(..., description="Whether this is a root crate")
+
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """
     Dependency to get the current authenticated user from the JWT token.
@@ -276,6 +310,180 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Could not validate credentials: {error_msg}",
         )
+
+
+async def upload_image_to_supabase(image_base64: str, crate_pubkey: str) -> Optional[str]:
+    """
+    Upload a base64 encoded image to Supabase Storage.
+    
+    Args:
+        image_base64: Base64 encoded image string (with or without data URL prefix)
+        crate_pubkey: Crate public key to use in filename
+    
+    Returns:
+        Public URL of the uploaded image, or None if upload fails
+    """
+    try:
+        # Remove data URL prefix if present (e.g., "data:image/jpeg;base64,...")
+        if "," in image_base64:
+            image_base64 = image_base64.split(",")[1]
+        
+        # Decode base64 image
+        image_bytes = base64.b64decode(image_base64)
+        
+        # Validate it's actually an image by trying to open it
+        if not PIL_AVAILABLE:
+            print("Warning: PIL/Pillow not available, skipping image validation")
+            # Still try to upload without validation
+            ext = "jpg"  # Default extension
+        else:
+            try:
+                img = Image.open(io.BytesIO(image_bytes))
+                # Convert to RGB if necessary (handles RGBA, P, etc.)
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+                    if img.mode == 'P':
+                        img = img.convert('RGBA')
+                    rgb_img.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                    img = rgb_img
+                
+                # Determine file extension from image format
+                format_map = {
+                    'JPEG': 'jpg',
+                    'PNG': 'png',
+                    'WEBP': 'webp',
+                    'GIF': 'gif'
+                }
+                ext = format_map.get(img.format, 'jpg')
+            except Exception as img_error:
+                print(f"Invalid image data: {str(img_error)}")
+                return None
+            
+            # Generate unique filename
+            filename = f"{crate_pubkey[:16]}_{uuid.uuid4().hex[:8]}.{ext}"
+            file_path = f"crate-images/{filename}"
+            
+            # Upload to Supabase Storage
+            # Create bucket if it doesn't exist (this might fail if bucket exists, that's ok)
+            try:
+                supabase_db.storage.create_bucket("crate-images", {"public": True})
+            except Exception:
+                pass  # Bucket might already exist
+            
+            # Upload the image
+            # Supabase Python client expects bytes or file-like object
+            response = supabase_db.storage.from_("crate-images").upload(
+                file_path,
+                image_bytes,
+                file_options={"content-type": f"image/{ext}", "upsert": "false"}
+            )
+            
+            # Check if upload was successful
+            if response and hasattr(response, 'path'):
+                # Get public URL - construct it manually or use get_public_url
+                public_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/crate-images/{file_path}"
+                print(f"✓ Image uploaded successfully: {public_url}")
+                return public_url
+            elif response:
+                # Try to get public URL using the client method
+                try:
+                    public_url_response = supabase_db.storage.from_("crate-images").get_public_url(file_path)
+                    if public_url_response:
+                        public_url = public_url_response if isinstance(public_url_response, str) else str(public_url_response)
+                        print(f"✓ Image uploaded successfully: {public_url}")
+                        return public_url
+                except Exception as url_error:
+                    # Fallback to manual URL construction
+                    public_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/crate-images/{file_path}"
+                    print(f"✓ Image uploaded (using fallback URL): {public_url}")
+                    return public_url
+            else:
+                print("Failed to upload image: No response from Supabase")
+                return None
+            
+    except Exception as e:
+        print(f"Error uploading image to Supabase: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+async def store_crate_offchain(
+    crate_pubkey: str,
+    crate_id: str,
+    crate_did: str,
+    owner_did: str,
+    device_did: str,
+    location: str,
+    weight: int,
+    timestamp: int,
+    hash_str: str,
+    ipfs_cid: str,
+    user_id: str,
+    user_email: str,
+    solana_wallet: str,
+    image_url: Optional[str] = None,
+    supply_chain_stage: Optional[str] = None
+) -> bool:
+    """
+    Store crate data in Supabase database for fast queries and correlation.
+    
+    Args:
+        crate_pubkey: Public key of the crate account
+        crate_id: Unique crate identifier
+        crate_did: Crate DID
+        owner_did: Owner DID
+        device_did: Device DID
+        location: Location string
+        weight: Weight in grams
+        timestamp: Unix timestamp
+        hash_str: SHA256 hash
+        ipfs_cid: IPFS content ID
+        user_id: Supabase user ID
+        user_email: User email for correlation
+        solana_wallet: Solana wallet address
+        image_url: Optional image URL
+        supply_chain_stage: Optional supply chain stage (fisher, fishery, processor, etc.)
+    
+    Returns:
+        True if stored successfully, False otherwise
+    """
+    try:
+        crate_data = {
+            "crate_pubkey": crate_pubkey,
+            "crate_id": crate_id,
+            "crate_did": crate_did,
+            "owner_did": owner_did,
+            "device_did": device_did,
+            "location": location,
+            "weight": weight,
+            "timestamp": timestamp,
+            "hash": hash_str,
+            "ipfs_cid": ipfs_cid,
+            "owner_user_id": user_id,
+            "owner_email": user_email,
+            "solana_wallet": solana_wallet,
+            "image_url": image_url,
+            "supply_chain_stage": supply_chain_stage,
+            # created_at and updated_at are handled by database defaults and triggers
+        }
+        
+        # Insert into Supabase 'crates' table
+        # Note: Table must exist in your Supabase database
+        response = supabase_db.table("crates").insert(crate_data).execute()
+        
+        if response.data:
+            print(f"✓ Crate stored off-chain: {crate_id} ({crate_pubkey[:8]}...)")
+            return True
+        else:
+            print(f"Failed to store crate off-chain: {response}")
+            return False
+            
+    except Exception as e:
+        print(f"Error storing crate off-chain: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 async def fetch_all_crate_accounts() -> List[Dict[str, Any]]:
@@ -616,6 +824,105 @@ async def get_all_crates(
             detail=f"Failed to fetch supply chain data: {str(e)}"
         )
 
+
+@router.get("/get-crate-history/{crate_pubkey}", response_model=CrateHistoryResponse, status_code=status.HTTP_200_OK)
+async def get_crate_history(
+    crate_pubkey: str,
+    current_user: dict = Depends(get_current_user)
+) -> CrateHistoryResponse:
+    """
+    Get the complete history of a specific crate, tracing back to its root.
+    
+    This endpoint:
+    1. Fetches all crate accounts from the Solana program
+    2. Builds the supply chain graph
+    3. Traces the lineage path for the specified crate back to its root
+    4. Returns the complete history with full details of each crate in the chain
+    
+    **Response Structure:**
+    - `current_crate`: Full details of the requested crate
+    - `lineage_path`: List of pubkeys from root to current crate
+    - `history`: List of CrateNode objects in chronological order (root → current)
+    - `root_crate`: The original crate this one traces back to
+    - `depth`: How many generations from the root
+    - `is_root`: Whether this crate is itself a root
+    
+    **Use Cases:**
+    - Trace a specific crate back to its origin
+    - View complete provenance/history of a crate
+    - Verify supply chain integrity
+    - Display lineage visualization
+    
+    Args:
+        crate_pubkey: Public key of the crate to trace (path parameter)
+        current_user: Authenticated user from JWT token (auto-injected)
+    
+    Returns:
+        CrateHistoryResponse with complete lineage history
+    
+    Raises:
+        HTTPException 401: Invalid or missing JWT token
+        HTTPException 404: Crate not found
+        HTTPException 500: Failed to fetch or process data
+    """
+    try:
+        # Step 1: Fetch all crate accounts from Solana
+        print(f"Fetching crate history for: {crate_pubkey}")
+        crates = await fetch_all_crate_accounts()
+        
+        if not crates:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No crates found in the supply chain"
+            )
+        
+        # Step 2: Build supply chain graph
+        graph = build_supply_chain_graph(crates)
+        
+        # Step 3: Check if crate exists
+        if crate_pubkey not in graph.crates:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Crate not found: {crate_pubkey}"
+            )
+        
+        current_crate = graph.crates[crate_pubkey]
+        lineage_path = graph.lineages.get(crate_pubkey, [crate_pubkey])
+        
+        # Step 4: Build history list (root to current, in chronological order)
+        # Reverse the lineage path to go from root to current
+        history_path = list(reversed(lineage_path))
+        history = [graph.crates[pubkey] for pubkey in history_path if pubkey in graph.crates]
+        
+        # Get root crate (first in history, or current if it's a root)
+        root_crate = history[0] if history else current_crate
+        
+        print(f"✓ Found history: {len(history)} crates, depth: {current_crate.depth}")
+        
+        return CrateHistoryResponse(
+            success=True,
+            message=f"Successfully retrieved history for crate {current_crate.crate_id}",
+            crate_pubkey=crate_pubkey,
+            current_crate=current_crate,
+            lineage_path=lineage_path,
+            history=history,
+            root_crate=root_crate,
+            depth=current_crate.depth,
+            is_root=current_crate.is_root,
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in get_crate_history: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch crate history: {str(e)}"
+        )
+
+
 @router.post("/create-crate", response_model=CreateCrateResponse, status_code=status.HTTP_200_OK)
 async def create_crate(
     request: CreateCrateRequest,
@@ -674,16 +981,53 @@ async def create_crate(
                 ipfs_cid=request.ipfs_cid,
             )
             
+            crate_pubkey = transaction_data["crate_pubkey"]
+            image_url = None
+            offchain_stored = False
+            
+            # Step 5: Upload image to Supabase Storage (if provided)
+            if request.image:
+                print("Uploading image to Supabase Storage...")
+                image_url = await upload_image_to_supabase(request.image, crate_pubkey)
+                if not image_url:
+                    print("Warning: Image upload failed, but continuing with crate creation")
+            
+            # Step 6: Store crate data off-chain in Supabase database
+            print("Storing crate data off-chain...")
+            offchain_stored = await store_crate_offchain(
+                crate_pubkey=crate_pubkey,
+                crate_id=request.crate_id,
+                crate_did=request.crate_did,
+                owner_did=request.owner_did,
+                device_did=request.device_did,
+                location=request.location,
+                weight=request.weight,
+                timestamp=timestamp,
+                hash_str=request.hash,
+                ipfs_cid=request.ipfs_cid,
+                user_id=user_id,
+                user_email=user_email,
+                solana_wallet=solana_wallet,
+                image_url=image_url,
+                supply_chain_stage=request.supply_chain_stage
+            )
+            
+            if not offchain_stored:
+                print("Warning: Off-chain storage failed, but transaction was built successfully")
+            
             return CreateCrateResponse(
                 success=True,
-                message="Crate creation transaction built successfully. Please sign and submit the transaction.",
+                message="Crate creation transaction built successfully. Please sign and submit the transaction." + 
+                        (" Off-chain data stored." if offchain_stored else ""),
                 crate_id=request.crate_id,
                 user_id=user_id,
                 validated=True,
                 transaction=transaction_data["transaction"],
-                crate_pubkey=transaction_data["crate_pubkey"],
+                crate_pubkey=crate_pubkey,
                 crate_keypair=transaction_data["crate_keypair"],
                 accounts=transaction_data["accounts"],
+                image_url=image_url,
+                offchain_stored=offchain_stored,
             )
         except FileNotFoundError as e:
             raise HTTPException(
