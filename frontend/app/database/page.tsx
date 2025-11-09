@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
 
 interface Report {
@@ -12,7 +12,7 @@ interface Report {
   sustainabilityLabel: string;
 }
 
-const reports: Report[] = [
+const defaultReports: Report[] = [
   {
     id: 'template-summary',
     title: 'Template Summary',
@@ -39,26 +39,61 @@ const reports: Report[] = [
   },
 ];
 
-const timeframeOptions = [
-  { value: 'this-month', label: 'This Month' },
-  { value: 'last-quarter', label: 'Last Quarter' },
-  { value: 'year-to-date', label: 'Year to Date' },
-  { value: 'all-time', label: 'All Time' },
-];
+const NETWORK_METRICS = {
+  nodes: 45,
+  edges: 37,
+  transactions: 8,
+};
 
 const ReportsPage = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [reportToShare, setReportToShare] = useState<Report | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [timeframe, setTimeframe] = useState<string>('this-month');
+  const [customReports, setCustomReports] = useState<Report[]>([]);
 
-  const selectedTimeframeLabel =
-    timeframeOptions.find((option) => option.value === timeframe)?.label ?? 'This Month';
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const indexKey = 'custom_reports_index';
+    const stored = window.localStorage.getItem(indexKey);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setCustomReports(parsed);
+        }
+      } catch (error) {
+        console.warn('[Database] Failed to parse custom reports index', error);
+      }
+    }
+
+    const listener = (event: StorageEvent) => {
+      if (event.key === indexKey && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          if (Array.isArray(parsed)) {
+            setCustomReports(parsed);
+          }
+        } catch (error) {
+          console.warn('[Database] Failed to refresh custom reports index', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', listener);
+    return () => {
+      window.removeEventListener('storage', listener);
+    };
+  }, []);
+
+  const allReports = useMemo(() => {
+    const combined = [...customReports, ...defaultReports];
+    return combined.sort((a, b) => b.date.localeCompare(a.date));
+  }, [customReports]);
 
   const filteredReports = useMemo(() => {
-    if (!searchTerm.trim()) return reports;
+    if (!searchTerm.trim()) return allReports;
     const term = searchTerm.toLowerCase();
-    return reports.filter((report) => {
+    return allReports.filter((report) => {
       return (
         report.title.toLowerCase().includes(term) ||
         report.date.toLowerCase().includes(term) ||
@@ -68,7 +103,7 @@ const ReportsPage = () => {
         report.clearance.toLowerCase().includes(term)
       );
     });
-  }, [searchTerm]);
+  }, [searchTerm, allReports]);
 
   const handleShareClick = (report: Report) => {
     setReportToShare(report);
@@ -108,41 +143,29 @@ const ReportsPage = () => {
           </svg>
         </div>
 
-        <section className="flex flex-wrap gap-6 bg-[#101722] border border-[rgba(198,218,236,0.18)] rounded-3xl px-8 py-6 items-center">
-          <div className="flex items-center gap-4 min-w-[220px]">
-            <div className="w-12 h-12 rounded-full bg-[#4662ab33] border border-[#4662ab66] flex items-center justify-center text-[#c6daec] font-semibold text-lg">
-              N
-            </div>
-            <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-[#88a8c9]">Analyst Overview</p>
-              <p className="text-xl font-semibold text-[#e0f2fd]">{selectedTimeframeLabel}</p>
+        <section className="flex flex-wrap gap-6 bg-[#101722] border border-[rgba(198,218,236,0.18)] rounded-3xl px-8 py-6 items-center justify-between">
+          <div className="flex flex-col gap-3">
+            <p className="text-sm uppercase tracking-[0.25em] text-[#88a8c9]">Network Overview</p>
+            <div className="flex flex-wrap gap-4 text-xs uppercase tracking-[0.25em] text-[#9fb7d8]">
+              <span className="flex items-center gap-1">
+                Nodes <span className="text-[#e0f2fd] font-semibold tracking-normal">{NETWORK_METRICS.nodes}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                Edges <span className="text-[#e0f2fd] font-semibold tracking-normal">{NETWORK_METRICS.edges}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                Transactions <span className="text-[#e0f2fd] font-semibold tracking-normal">{NETWORK_METRICS.transactions}</span>
+              </span>
             </div>
           </div>
 
-          <div className="flex-1 min-w-[220px] flex justify-center">
-            <label className="flex items-center gap-3 bg-[#0d141f] border border-[rgba(198,218,236,0.12)] rounded-full px-5 py-3 text-sm text-[#c0d9ef]">
-              <span className="text-[#88a8c9] uppercase tracking-[0.3em] text-xs">Timeframe</span>
-              <select
-                value={timeframe}
-                onChange={(e) => setTimeframe(e.target.value)}
-                className="bg-transparent border-none text-[#e0f2fd] font-semibold outline-none cursor-pointer"
-              >
-                {timeframeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="flex items-center gap-3 bg-[#0d141f] border border-[rgba(198,218,236,0.12)] rounded-3xl px-6 py-4">
-            <div className="w-12 h-12 rounded-full bg-[#4662ab] text-[#e0f2fd] flex items-center justify-center text-xl font-bold">
-              {filteredReports.length}
-            </div>
-            <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-[#88a8c9]">Total Reports</p>
-              <p className="text-base font-semibold text-[#e0f2fd]">in view</p>
+          <div className="flex items-center gap-5 bg-[#0d141f] border border-[rgba(198,218,236,0.12)] rounded-3xl px-6 py-4 min-w-[240px]">
+            <div className="flex flex-col">
+              <span className="text-xs uppercase tracking-[0.28em] text-[#88a8c9]">Total Reports</span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl font-semibold text-[#e0f2fd] leading-none">{filteredReports.length}</span>
+                <span className="text-sm text-[#9fb7d8]">in view</span>
+              </div>
             </div>
           </div>
         </section>
@@ -207,7 +230,7 @@ const ReportsPage = () => {
 
           {filteredReports.length === 0 && (
             <div className="text-center py-20 border border-dashed border-[rgba(198,218,236,0.18)] rounded-3xl bg-[#10172266] text-[#88a8c9]">
-              No reports match your search. Try a different term or timeframe.
+              No reports match your search. Try a different term.
             </div>
           )}
         </section>
