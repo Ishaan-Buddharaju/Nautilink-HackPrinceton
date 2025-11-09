@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Alert, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
-import { nfcManager, initNFC, readNFC, isNFCAvailable, simulateNFC, cleanupNFC } from '../../utils/nfcManager';
+import { nfcManager, initNFC, readNFC, isNFCAvailable, cleanupNFC } from '../../utils/nfcManager';
 
 export default function NFCTapScreen() {
   const router = useRouter();
@@ -109,9 +109,9 @@ export default function NFCTapScreen() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Navigate back to trip screen after success
+      // Navigate back to dashboard after successful transaction
       setTimeout(() => {
-        router.push('/(main)/trip');
+        router.push('/(main)/dashboard');
       }, 800);
     });
   };
@@ -150,33 +150,14 @@ export default function NFCTapScreen() {
         </Text>
         <Text style={styles.subtitle}>
           {tapped
-            ? 'Trip data recorded successfully'
-            : nfcSupported
-            ? 'Position your device near the NFC reader'
-            : 'Running in Expo Go - Tap button to simulate NFC'}
+            ? 'Transaction recorded successfully'
+            : 'Position your device near the NFC reader'}
         </Text>
 
         {tapped && (
           <View style={styles.successIndicator}>
             <Ionicons name="checkmark-circle" size={60} color="#4CAF50" />
           </View>
-        )}
-
-        {/* Fallback button for Expo Go */}
-        {!nfcSupported && !tapped && (
-          <TouchableOpacity
-            style={styles.simulateButton}
-            onPress={() => {
-              const result = simulateNFC();
-              if (result.success) {
-                console.log('Simulated NFC tap:', result.data);
-                handleNFCSuccess();
-              }
-            }}
-          >
-            <Text style={styles.simulateButtonText}>Simulate NFC Tap</Text>
-            <Text style={styles.simulateNote}>(Development build required for real NFC)</Text>
-          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -229,31 +210,5 @@ const styles = StyleSheet.create({
   },
   successIndicator: {
     marginTop: 40,
-  },
-  simulateButton: {
-    marginTop: 40,
-    backgroundColor: Colors.accentPrimary,
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    shadowColor: Colors.accentPrimary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  simulateButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.background,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  simulateNote: {
-    fontSize: 12,
-    color: Colors.background,
-    textAlign: 'center',
-    marginTop: 8,
-    opacity: 0.8,
   },
 });

@@ -137,6 +137,27 @@ export default function DashboardScreen() {
     router.push('/(main)/qr-scanner');
   };
 
+  const addNewTransaction = () => {
+    const newTransactionNumber = transactions.length + 1;
+    const newTransaction: BlockchainTransaction = {
+      id: String(newTransactionNumber),
+      number: newTransactionNumber,
+      timestamp: new Date(),
+      signature: `${Math.random().toString(16).substr(2, 8)}${Date.now().toString(16)}`,
+      slot: String(245891239 + newTransactionNumber),
+      status: 'Finalized',
+      operation: 'CREATE_CRATE',
+      crateId: `ITEM_${String(newTransactionNumber).padStart(3, '0')}`,
+      weight: Math.floor(Math.random() * 2000) + 500,
+      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
+    };
+    
+    setTransactions(prev => [...prev, newTransaction]);
+  };
+
+  // For demo purposes, we'll add a manual button to simulate transaction completion
+  // In a real app, this would be triggered by successful QR + NFC scan completion
+
   const handleTransactionPress = (transaction: BlockchainTransaction) => {
     setSelectedTransaction(transaction);
     Animated.spring(slideAnim, {
@@ -206,9 +227,9 @@ export default function DashboardScreen() {
           </ScrollView>
         </View>
 
-        {/* Blockchain Traceability Section */}
+        {/* Transaction Log Section */}
         <View style={styles.transactionSection}>
-          <Text style={styles.sectionTitle}>Supply Chain Traceability</Text>
+          <Text style={styles.sectionTitle}>Log</Text>
           <ScrollView style={styles.transactionList} showsVerticalScrollIndicator={false}>
             {transactions.map((transaction) => (
               <TouchableOpacity
@@ -232,7 +253,7 @@ export default function DashboardScreen() {
                   <Text style={[
                     styles.transactionTitle,
                     selectedTransaction?.id === transaction.id && styles.transactionTitleHighlighted
-                  ]}>{transaction.operation.replace('_', ' ')} - {transaction.crateId}</Text>
+                  ]}>Transaction {transaction.number}</Text>
                   <Text style={styles.transactionTime}>{transaction.weight}g • {transaction.timestamp.toLocaleTimeString()}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
@@ -248,7 +269,7 @@ export default function DashboardScreen() {
           activeOpacity={0.8}
         >
           <Ionicons name="add-circle" size={28} color={Colors.accentPrimary} />
-          <Text style={styles.addTransactionText}>Scan NFC Tag</Text>
+          <Text style={styles.addTransactionText}>Add Transaction</Text>
         </TouchableOpacity>
       </View>
 

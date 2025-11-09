@@ -22,8 +22,8 @@ export default function QRScannerScreen() {
     setScanned(true);
     console.log(`QR Code scanned: ${data}`);
     
-    // Go back to dashboard - the new transaction will be added there
-    router.back();
+    // Navigate to NFC scanner after QR code is scanned
+    router.push('/(main)/nfc-tap');
   };
 
   if (!permission) {
