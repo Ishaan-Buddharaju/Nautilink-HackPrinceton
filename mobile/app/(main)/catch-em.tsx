@@ -183,35 +183,48 @@ export default function CatchEmScreen() {
     }, 2000);
   };
 
-  // Camera Functions from qr-scanner.tsx
+  // Camera Functions with error handling
   const handleTakePhoto = async () => {
     if (!cameraPermission?.granted) {
       Alert.alert('Permission required', 'Camera permission is needed to take photos');
       return;
     }
 
-    try {
-      if (cameraRef.current) {
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: false,
-          skipProcessing: true,
-        });
+    // Prevent taking photo if camera is not ready or being unmounted
+    if (status !== 'camera' || !cameraRef.current) {
+      console.warn('Camera not ready for photo capture');
+      return;
+    }
 
-        if (photo.uri) {
-          setCapturedImage(photo.uri);
-          // Simulate AI analysis
-          setTimeout(() => {
+    try {
+      setIsLoading(true);
+      
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+        skipProcessing: true,
+      });
+
+      if (photo?.uri && status === 'camera') {
+        setCapturedImage(photo.uri);
+        // Simulate AI analysis
+        setTimeout(() => {
+          if (status === 'camera') { // Only proceed if still in camera mode
             setStatus('nfc');
             // Mock sustainability score (60-100)
             const score = Math.floor(Math.random() * 40) + 60;
             setSustainabilityScore(score);
-          }, 1500);
-        }
+          }
+        }, 1500);
       }
     } catch (error) {
       console.error('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo');
+      // Only show alert if still in camera mode
+      if (status === 'camera') {
+        Alert.alert('Error', 'Failed to take photo. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -323,48 +336,54 @@ export default function CatchEmScreen() {
     </View>
   );
 
-  // Render Camera View (consistent with qr-scanner.tsx)
+  // Render Camera View with overlay positioned absolutely
   const renderCameraView = () => (
     <View style={styles.cameraContainer}>
       <CameraView
         ref={cameraRef}
         style={styles.camera}
         facing="back"
-      >
-        <View style={styles.cameraOverlay}>
-          {/* Header with close button */}
-          <View style={styles.cameraHeader}>
-            <TouchableOpacity onPress={backToList} style={styles.closeButton}>
-              <Ionicons name="close" size={32} color="#FFF" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Center frame */}
-          <View style={styles.centerContainer}>
-            <View style={styles.scanFrame}>
-              <View style={[styles.corner, styles.topLeft]} />
-              <View style={[styles.corner, styles.topRight]} />
-              <View style={[styles.corner, styles.bottomLeft]} />
-              <View style={[styles.corner, styles.bottomRight]} />
-            </View>
-            <Text style={styles.instructionText}>
-              Frame your catch within the guide
-            </Text>
-          </View>
-
-          {/* Footer with capture button */}
-          <View style={styles.cameraFooter}>
-            <TouchableOpacity 
-              style={styles.captureButtonWrapper}
-              onPress={handleTakePhoto}
-            >
-              <View style={styles.captureButtonInner}>
-                <Ionicons name="camera" size={32} color={Colors.background} />
-              </View>
-            </TouchableOpacity>
-          </View>
+      />
+      
+      {/* Overlay positioned absolutely over camera */}
+      <View style={styles.cameraOverlay}>
+        {/* Header with close button */}
+        <View style={styles.cameraHeader}>
+          <TouchableOpacity onPress={backToList} style={styles.closeButton}>
+            <Ionicons name="close" size={32} color="#FFF" />
+          </TouchableOpacity>
         </View>
-      </CameraView>
+
+        {/* Center frame */}
+        <View style={styles.centerContainer}>
+          <View style={styles.scanFrame}>
+            <View style={[styles.corner, styles.topLeft]} />
+            <View style={[styles.corner, styles.topRight]} />
+            <View style={[styles.corner, styles.bottomLeft]} />
+            <View style={[styles.corner, styles.bottomRight]} />
+          </View>
+          <Text style={styles.instructionText}>
+            Frame your catch within the guide
+          </Text>
+        </View>
+
+        {/* Footer with capture button */}
+        <View style={styles.cameraFooter}>
+          <TouchableOpacity 
+            style={styles.captureButtonWrapper}
+            onPress={handleTakePhoto}
+            disabled={isLoading}
+          >
+            <View style={styles.captureButtonInner}>
+              <Ionicons 
+                name={isLoading ? "hourglass" : "camera"} 
+                size={32} 
+                color={Colors.background} 
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 
@@ -490,7 +509,7 @@ export default function CatchEmScreen() {
           You've earned {Math.floor(sustainabilityScore / 10)} Blue Tokens 🏆
         </Text>
         
-        <View style={styles.statsContainer}>
+        <View style={styles.verificationStatsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{sustainabilityScore}</Text>
             <Text style={styles.statLabel}>Sustainability</Text>
@@ -853,8 +872,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cameraOverlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'transparent',
+    zIndex: 1,
   },
   cameraHeader: {
     paddingTop: 60,
@@ -1199,7 +1223,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFD700',
   },
-  statsContainer: {
+  verificationStatsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: 20,

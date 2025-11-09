@@ -39,14 +39,16 @@ class UnifiedNFCManager {
   private isEnabled = false;
 
   /**
-   * Initialize NFC manager
+   * Initialize NFC manager with better error handling
    */
   async init(): Promise<NFCResult> {
     if (!NFC_ENABLED) {
+      console.log('NFC disabled by build configuration');
       return { success: false, error: 'NFC disabled by build flag' };
     }
 
     if (!NfcManager) {
+      console.log('NFC not available in this environment - using fallback mode');
       return { success: false, error: 'NFC not available in this environment' };
     }
 
@@ -55,6 +57,7 @@ class UnifiedNFCManager {
       this.isSupported = await NfcManager.isSupported();
       
       if (!this.isSupported) {
+        console.log('NFC not supported on this device');
         return { success: false, error: 'NFC not supported on this device' };
       }
 
@@ -62,6 +65,7 @@ class UnifiedNFCManager {
       this.isEnabled = await NfcManager.isEnabled();
       
       if (!this.isEnabled) {
+        console.log('NFC is disabled in device settings');
         return { success: false, error: 'NFC is disabled. Please enable NFC in device settings.' };
       }
 
@@ -71,8 +75,9 @@ class UnifiedNFCManager {
       console.log('NFC Manager initialized successfully');
       return { success: true };
     } catch (error) {
-      console.error('NFC initialization error:', error);
-      return { success: false, error: `NFC initialization failed: ${error}` };
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.log('NFC init failed:', errorMsg);
+      return { success: false, error: `NFC initialization failed: ${errorMsg}` };
     }
   }
 
