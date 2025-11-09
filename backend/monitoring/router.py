@@ -5,6 +5,7 @@ Real-time fleet monitoring with xAI-powered insights
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
+from pydantic import BaseModel
 import asyncio
 
 from config import settings
@@ -12,6 +13,12 @@ from supabase import create_client, Client
 import jwt
 
 from services.xai_service import get_xai_service
+
+
+class SummarizeRequest(BaseModel):
+    """Request model for content summarization."""
+    content: str
+    context: str
 
 router = APIRouter(prefix="/monitoring", tags=["monitoring"])
 
@@ -363,3 +370,37 @@ async def _fetch_live_events(limit: int) -> List[Dict[str, Any]]:
             "severity": "info"
         }
     ]
+
+
+@router.post("/summarize")
+async def summarize_content(
+    request: SummarizeRequest,
+    authorization: str = Depends(get_current_user)
+):
+    """
+    Summarize content using xAI (Grok).
+    Used for alerts and news summarization.
+    """
+    try:
+        xai_service = get_xai_service()
+        
+        # Create prompt for summarization
+        prompt = f"""You are a maritime operations expert. Summarize the following {request.context} in 2-3 concise sentences, highlighting the most critical information and actionable insights.
+
+Content:
+{request.content}
+
+Provide a professional, actionable summary:"""
+        
+        summary = await xai_service.get_completion(prompt)
+        
+        return {
+            "success": True,
+            "summary": summary,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate summary: {str(e)}"
+        )

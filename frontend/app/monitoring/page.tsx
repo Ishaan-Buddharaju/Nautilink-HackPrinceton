@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
-import { FiActivity, FiAlertCircle, FiCheckCircle, FiRefreshCw, FiMic, FiMicOff, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiAlertOctagon, FiInfo, FiFileText, FiDollarSign, FiSettings, FiGlobe } from 'react-icons/fi';
+import { FiActivity, FiAlertCircle, FiCheckCircle, FiRefreshCw, FiMic, FiMicOff, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiAlertOctagon, FiInfo, FiFileText, FiDollarSign, FiSettings, FiGlobe, FiZap } from 'react-icons/fi';
 
 // ElevenLabs Agent ID
 const ELEVENLABS_AGENT_ID = "agent_3401k9m6k2f7fv78tav8pd9x79ca";
@@ -147,6 +147,10 @@ export default function LiveMonitoringPage() {
   const [agentStatus, setAgentStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
   const [audioLevel, setAudioLevel] = useState(0);
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'agent', message: string, timestamp: Date}>>([]);
+  const [alertsSummary, setAlertsSummary] = useState<string>('');
+  const [newsSummary, setNewsSummary] = useState<string>('');
+  const [isSummarizingAlerts, setIsSummarizingAlerts] = useState(false);
+  const [isSummarizingNews, setIsSummarizingNews] = useState(false);
   
   const conversationRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -490,6 +494,68 @@ export default function LiveMonitoringPage() {
     }
   }, [refreshAll, fetchFleetAnalysis, fetchMonitoringData, accessToken]);
 
+  // Summarize alerts with xAI
+  const summarizeAlerts = useCallback(async () => {
+    if (!accessToken || alerts.length === 0) return;
+    
+    setIsSummarizingAlerts(true);
+    try {
+      const alertsText = alerts.map(a => `${a.severity} - ${a.type}: ${a.message}`).join('\n\n');
+      
+      const response = await fetch('http://127.0.0.1:8000/monitoring/summarize', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: alertsText,
+          context: 'critical maritime alerts'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAlertsSummary(data.summary);
+      }
+    } catch (error) {
+      console.error('Failed to summarize alerts:', error);
+    } finally {
+      setIsSummarizingAlerts(false);
+    }
+  }, [accessToken, alerts]);
+
+  // Summarize news with xAI
+  const summarizeNews = useCallback(async () => {
+    if (!accessToken || newsItems.length === 0) return;
+    
+    setIsSummarizingNews(true);
+    try {
+      const newsText = newsItems.map(n => `${n.title}\n${n.summary}\nSource: ${n.source}`).join('\n\n');
+      
+      const response = await fetch('http://127.0.0.1:8000/monitoring/summarize', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: newsText,
+          context: 'maritime industry news'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setNewsSummary(data.summary);
+      }
+    } catch (error) {
+      console.error('Failed to summarize news:', error);
+    } finally {
+      setIsSummarizingNews(false);
+    }
+  }, [accessToken, newsItems]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#171717]">
@@ -502,19 +568,16 @@ export default function LiveMonitoringPage() {
     <div className="min-h-screen bg-[#171717] text-[#e0f2fd] p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <FiActivity className="w-8 h-8 text-[#4662ab]" />
-          <h1 className="text-3xl font-bold">Live Monitoring Command Center</h1>
-        </div>
+        <div />
         
         <div className="flex items-center gap-4">
           {/* Agent Brady Voice Control */}
           <button
             onClick={toggleVoice}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all shadow-lg ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors ${
               isVoiceActive
-                ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white animate-pulse shadow-red-500/50'
-                : 'bg-gradient-to-r from-[#4662ab] to-[#5773bc] hover:from-[#5773bc] hover:to-[#4662ab] text-white shadow-[#4662ab]/50'
+                ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse'
+                : 'bg-[#4662ab] hover:bg-[#5773bc] text-white'
             }`}
           >
             {isVoiceActive ? (
@@ -708,12 +771,12 @@ export default function LiveMonitoringPage() {
 
       {/* AI Summary Card */}
       {aiSummary && (
-        <div className="mb-8 p-6 bg-gradient-to-r from-[#4662ab33] to-[#4662ab1f] border border-[#4662ab] rounded-xl">
+        <div className="mb-8 p-6 bg-[rgba(70,98,171,0.15)] border border-[rgba(70,98,171,0.35)] rounded-xl">
           <div className="flex items-start gap-3">
             <FiActivity className="w-6 h-6 text-[#4662ab] flex-shrink-0 mt-1" />
             <div>
-              <h3 className="text-lg font-semibold mb-2">AI-Powered Insights</h3>
-              <p className="text-[#d2deea]">{aiSummary}</p>
+              <h3 className="text-[18px] font-bold mb-2">AI-Powered Insights</h3>
+              <p className="text-[#e0f2fd] text-[14px] leading-relaxed">{aiSummary}</p>
             </div>
           </div>
         </div>
@@ -761,18 +824,41 @@ export default function LiveMonitoringPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Critical Alerts Section */}
         <div id="alerts-section" className="bg-[rgba(23,23,23,0.92)] border border-[rgba(198,218,236,0.35)] rounded-xl p-6 backdrop-blur-lg shadow-xl shadow-[rgba(70,98,171,0.25)]">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <div className="p-2 bg-orange-500/10 rounded-lg">
-                <FiAlertCircle className="text-orange-400" />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[18px] font-bold flex items-center gap-2">
+              <div className="p-2 bg-[rgba(70,98,171,0.15)] rounded-lg">
+                <FiAlertCircle className="text-[#4662ab]" />
               </div>
               Critical Alerts
             </h2>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              <span className="text-xs text-[#c0d9ef]">{alerts.length} Active</span>
+              <span className="text-[12px] text-[#c0d9ef]">{alerts.length} Active</span>
             </div>
           </div>
+          
+          {/* xAI Summarize Button */}
+          <button
+            onClick={summarizeAlerts}
+            disabled={isSummarizingAlerts || alerts.length === 0}
+            className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4662ab] hover:bg-[#5773bc] text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FiZap className="w-4 h-4" />
+            <span className="text-[14px] font-semibold">
+              {isSummarizingAlerts ? 'Analyzing with xAI...' : 'Summarize Alerts with xAI'}
+            </span>
+          </button>
+          
+          {/* xAI Summary Display */}
+          {alertsSummary && (
+            <div className="mb-4 p-4 bg-[rgba(70,98,171,0.15)] border border-[rgba(70,98,171,0.35)] rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <FiZap className="w-4 h-4 text-[#4662ab]" />
+                <span className="text-[12px] font-bold text-[#4662ab] uppercase">xAI Analysis</span>
+              </div>
+              <p className="text-[14px] text-[#e0f2fd] leading-relaxed">{alertsSummary}</p>
+            </div>
+          )}
           <div className="space-y-4 max-h-[500px] overflow-y-auto">
             {alerts.length > 0 ? (
               alerts.map((alert) => (
@@ -793,17 +879,40 @@ export default function LiveMonitoringPage() {
 
         {/* Maritime News Feed */}
         <div className="bg-[rgba(23,23,23,0.92)] border border-[rgba(198,218,236,0.35)] rounded-xl p-6 backdrop-blur-lg shadow-xl shadow-[rgba(70,98,171,0.25)]">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <div className="p-2 bg-cyan-500/10 rounded-lg">
-                <FiActivity className="text-cyan-400" />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[18px] font-bold flex items-center gap-2">
+              <div className="p-2 bg-[rgba(70,98,171,0.15)] rounded-lg">
+                <FiActivity className="text-[#4662ab]" />
               </div>
               Maritime Industry News
             </h2>
-            <div className="text-xs text-[#c0d9ef] bg-[rgba(70,98,171,0.2)] px-3 py-1 rounded-full">
+            <div className="text-[12px] text-[#c0d9ef] bg-[rgba(70,98,171,0.2)] px-3 py-1 rounded-full">
               Live Updates
             </div>
           </div>
+          
+          {/* xAI Summarize Button */}
+          <button
+            onClick={summarizeNews}
+            disabled={isSummarizingNews || newsItems.length === 0}
+            className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4662ab] hover:bg-[#5773bc] text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FiZap className="w-4 h-4" />
+            <span className="text-[14px] font-semibold">
+              {isSummarizingNews ? 'Analyzing with xAI...' : 'Summarize News with xAI'}
+            </span>
+          </button>
+          
+          {/* xAI Summary Display */}
+          {newsSummary && (
+            <div className="mb-4 p-4 bg-[rgba(70,98,171,0.15)] border border-[rgba(70,98,171,0.35)] rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <FiZap className="w-4 h-4 text-[#4662ab]" />
+                <span className="text-[12px] font-bold text-[#4662ab] uppercase">xAI Analysis</span>
+              </div>
+              <p className="text-[14px] text-[#e0f2fd] leading-relaxed">{newsSummary}</p>
+            </div>
+          )}
           <div className="space-y-4 max-h-[500px] overflow-y-auto">
             {newsItems.map((news) => (
               <NewsCard key={news.id} news={news} />
@@ -814,9 +923,14 @@ export default function LiveMonitoringPage() {
 
       {/* Fleet Analysis */}
       {fleetAnalysis && (
-        <div className="mt-8 bg-[#1a1a1a] border border-[rgba(198,218,236,0.22)] rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4">Fleet Analysis</h2>
-          <p className="text-[#d2deea] whitespace-pre-wrap">{fleetAnalysis}</p>
+        <div className="mt-8 bg-[rgba(23,23,23,0.92)] border border-[rgba(198,218,236,0.35)] rounded-xl p-6 backdrop-blur-lg shadow-xl shadow-[rgba(70,98,171,0.25)]">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-[#4662ab]/10 rounded-lg">
+              <FiActivity className="text-[#4662ab]" />
+            </div>
+            <h2 className="text-[18px] font-bold">Fleet Analysis</h2>
+          </div>
+          <p className="text-[#d2deea] text-[14px] leading-relaxed whitespace-pre-wrap">{fleetAnalysis}</p>
         </div>
       )}
     </div>

@@ -249,6 +249,29 @@ class XAIService:
         
         return response
     
+    async def get_completion(
+        self,
+        prompt: str,
+        temperature: float = 0.5,
+        max_tokens: int = 500
+    ) -> str:
+        """
+        Get a simple completion from xAI.
+        
+        Args:
+            prompt: User prompt
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens in response
+            
+        Returns:
+            AI response text
+        """
+        return await self._chat_completion(
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+    
     async def _chat_completion(
         self,
         messages: List[Dict[str, str]],
