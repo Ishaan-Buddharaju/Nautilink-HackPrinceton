@@ -8,7 +8,8 @@ interface Report {
   title: string;
   date: string;
   clearance: string;
-  sustainability: string;
+  sustainabilityScore: number;
+  sustainabilityLabel: string;
 }
 
 const reports: Report[] = [
@@ -17,21 +18,24 @@ const reports: Report[] = [
     title: 'Template Summary',
     date: '2025-09-20',
     clearance: 'Public Trust',
-    sustainability: '92% • Excellent',
+    sustainabilityScore: 92,
+    sustainabilityLabel: 'Excellent',
   },
   {
     id: 'voice-agent-performance-q3-2025',
-    title: 'Voice Agent Performance Q3',
+    title: 'FV King II',
     date: '2025-09-18',
     clearance: 'Confidential',
-    sustainability: '78% • Moderate',
+    sustainabilityScore: 78,
+    sustainabilityLabel: 'Moderate',
   },
   {
     id: 'bodega-bay-mpa-analysis-2025-09-15',
-    title: 'Bodega Bay MPA Analysis',
+    title: 'FV Georgian Cloud',
     date: '2025-09-15',
     clearance: 'Top Secret',
-    sustainability: '64% • Needs Review',
+    sustainabilityScore: 64,
+    sustainabilityLabel: 'Needs Review',
   },
 ];
 
@@ -58,7 +62,9 @@ const ReportsPage = () => {
       return (
         report.title.toLowerCase().includes(term) ||
         report.date.toLowerCase().includes(term) ||
-        report.sustainability.toLowerCase().includes(term) ||
+        `${report.sustainabilityScore}% ${report.sustainabilityLabel}`
+          .toLowerCase()
+          .includes(term) ||
         report.clearance.toLowerCase().includes(term)
       );
     });
@@ -74,9 +80,6 @@ const ReportsPage = () => {
       <div className="max-w-4xl mx-auto w-full flex flex-col gap-8">
         <header>
           <h1 className="text-4xl font-bold tracking-tight text-[#e0f2fd]">Database</h1>
-          <p className="text-[#c0d9ef] mt-3 text-base">
-          Review and share weekly summaries, performance analyses, and incident reports.
-        </p>
         </header>
 
         <div className="relative">
@@ -150,12 +153,12 @@ const ReportsPage = () => {
               key={report.id}
               className="flex items-center justify-between gap-6 p-6 bg-[#101722] border border-[rgba(198,218,236,0.18)] rounded-[26px] shadow-[0_18px_40px_rgba(10,14,28,0.15)] hover:border-[#4662ab66] transition-colors"
             >
-              <Link href={`/reports/${report.id}`} className="flex-1 group">
+              <Link href={`/database/${report.id}`} className="flex-1 group">
                 <div className="font-sans flex flex-col gap-1">
                   <h3 className="text-lg font-semibold text-[#e0f2fd] group-hover:text-[#c6daec] transition-colors">
                     {report.title}
                   </h3>
-                  <div className="flex items-center gap-4 text-sm text-[#88a8c9] uppercase tracking-[0.35em]">
+                  <div className="flex items-center gap-4 text-sm text-[#88a8c9] uppercase tracking-[0.2em]">
                     <span>{report.date}</span>
                     <span className="hidden sm:block">•</span>
                     <span className="hidden sm:block">{report.clearance}</span>
@@ -164,8 +167,18 @@ const ReportsPage = () => {
               </Link>
 
               <div className="flex items-center gap-4 shrink-0">
-                <span className="px-4 py-2 text-sm font-semibold rounded-full border border-[rgba(198,218,236,0.25)] bg-[#0d141f] text-[#c6daec] font-sans">
-                  {report.sustainability}
+                <span
+                  className="px-4 py-2 text-sm font-semibold rounded-full border border-[rgba(198,218,236,0.25)] bg-[#0d141f] font-sans"
+                  style={{
+                    color:
+                      report.sustainabilityScore >= 85
+                        ? '#34d399'
+                        : report.sustainabilityScore >= 70
+                        ? '#f97316'
+                        : '#f87171',
+                  }}
+                >
+                  {report.sustainabilityScore}% • {report.sustainabilityLabel}
                 </span>
                 <button
                   onClick={() => handleShareClick(report)}
