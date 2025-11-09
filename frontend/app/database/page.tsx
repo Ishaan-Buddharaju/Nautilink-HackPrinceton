@@ -87,7 +87,13 @@ const ReportsPage = () => {
 
   const allReports = useMemo(() => {
     const combined = [...customReports, ...defaultReports];
-    return combined.sort((a, b) => b.date.localeCompare(a.date));
+    return combined.sort((a, b) => {
+      const scoreDiff = (a.sustainabilityScore ?? 0) - (b.sustainabilityScore ?? 0);
+      if (scoreDiff !== 0) return scoreDiff;
+      const dateDiff = b.date.localeCompare(a.date);
+      if (dateDiff !== 0) return dateDiff;
+      return a.title.localeCompare(b.title);
+    });
   }, [customReports]);
 
   const filteredReports = useMemo(() => {
