@@ -14,7 +14,7 @@ IDL_PATH = Path(__file__).parent / "target" / "idl" / "nautilink.json"
 def fix_idl():
     """Fix IDL account definitions for anchorpy compatibility."""
     if not IDL_PATH.exists():
-        print(f"❌ IDL file not found: {IDL_PATH}")
+        print(f"[ERROR] IDL file not found: {IDL_PATH}")
         print("   Please run 'anchor build' first.")
         sys.exit(1)
     
@@ -27,29 +27,23 @@ def fix_idl():
     for inst in data.get('instructions', []):
         for acc in inst.get('accounts', []):
             if isinstance(acc, dict) and 'name' in acc:
-                # Accounts with addresses (like system_program) should only have name and address
+                # Remove 'address' field (not supported by anchorpy)
                 if 'address' in acc:
-                    # Remove any writable/signer flags from accounts with addresses
-                    if 'writable' in acc:
-                        del acc['writable']
-                        fixed_count += 1
-                    if 'signer' in acc:
-                        del acc['signer']
-                        fixed_count += 1
-                else:
-                    # Regular accounts must have both writable and signer flags
-                    if 'writable' not in acc:
-                        acc['writable'] = False
-                        fixed_count += 1
-                    if 'signer' not in acc:
-                        acc['signer'] = False
-                        fixed_count += 1
+                    del acc['address']
+                    fixed_count += 1
+                # Ensure all accounts have writable and signer flags
+                if 'writable' not in acc:
+                    acc['writable'] = False
+                    fixed_count += 1
+                if 'signer' not in acc:
+                    acc['signer'] = False
+                    fixed_count += 1
     
     # Save the fixed IDL
     with open(IDL_PATH, 'w') as f:
         json.dump(data, f, indent=2)
     
-    print(f"✅ Fixed {fixed_count} account definition(s) in IDL")
+    print(f"[FIXED] Fixed {fixed_count} account definition(s) in IDL")
     print(f"   IDL file: {IDL_PATH}")
     
     # Verify the fix works
@@ -57,10 +51,10 @@ def fix_idl():
         from anchorpy import Idl
         with open(IDL_PATH, 'r') as f:
             idl = Idl.from_json(f.read())
-        print("✅ IDL is now parseable by anchorpy!")
+        print("[PASS] IDL is now parseable by anchorpy!")
         return 0
     except Exception as e:
-        print(f"⚠️  Warning: IDL still cannot be parsed by anchorpy: {e}")
+        print(f"[WARNING] IDL still cannot be parsed by anchorpy: {e}")
         print("   This may indicate a deeper compatibility issue.")
         print("   Consider upgrading anchorpy or downgrading Anchor CLI.")
         return 1

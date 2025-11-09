@@ -26,6 +26,10 @@ module.exports = {
           'This app needs access to your photo library to select photos of your catch.',
         NFCReaderUsageDescription:
           'This app uses NFC to verify and authenticate fishing catch data.',
+        NSLocationWhenInUseUsageDescription:
+          'This app needs your location to record where catches are made for blockchain verification.',
+        NSLocationAlwaysUsageDescription:
+          'This app needs your location to record where catches are made for blockchain verification.',
         ITSAppUsesNonExemptEncryption: false,
       },
     },
@@ -40,7 +44,9 @@ module.exports = {
         'READ_EXTERNAL_STORAGE', 
         'WRITE_EXTERNAL_STORAGE',
         'NFC',
-        'android.permission.NFC'
+        'android.permission.NFC',
+        'ACCESS_FINE_LOCATION',
+        'ACCESS_COARSE_LOCATION'
       ],
     },
     web: {
@@ -58,6 +64,12 @@ module.exports = {
         'react-native-nfc-manager',
         {
           nfcPermission: 'Allow Nautilink to use NFC to verify trip data.',
+        },
+      ],
+      [
+        'expo-location',
+        {
+          locationAlwaysAndWhenInUsePermission: 'Allow Nautilink to use your location to record where catches are made.',
         },
       ],
     ],

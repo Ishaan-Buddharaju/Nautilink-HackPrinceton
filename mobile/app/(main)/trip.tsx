@@ -10,12 +10,17 @@ import {
   Dimensions,
   Alert,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import * as Crypto from 'expo-crypto';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabaseClient';
 
 const { height } = Dimensions.get('window');
 
@@ -38,6 +43,12 @@ export default function TripScreen() {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [slideAnim] = useState(new Animated.Value(500));
   const [tripInProgress, setTripInProgress] = useState(false);
+  const [showMintPrompt, setShowMintPrompt] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [isMinting, setIsMinting] = useState(false);
+  const [mintingStatus, setMintingStatus] = useState<string>('');
+  
+  const { user } = useAuth();
   
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -95,8 +106,128 @@ export default function TripScreen() {
     if (cameraRef.current) {
       const photo = await cameraRef.current.takePictureAsync();
       console.log('Photo taken:', photo.uri);
+      setCapturedPhoto(photo.uri);
       setShowCamera(false);
-      router.push('/(main)/nfc-tap');
+      setShowMintPrompt(true);
+    }
+  };
+
+  const handleMint = async () => {
+    if (!user) {
+      Alert.alert('Error', 'Please sign in to mint a catch');
+      return;
+    }
+    
+    setIsMinting(true);
+    setMintingStatus('Getting your location...');
+    
+    try {
+      // Step 1: Get location permission and coordinates
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Location permission is required to mint a catch');
+        setIsMinting(false);
+        return;
+      }
+      
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      const locationString = `${latitude},${longitude}`;
+      
+      setMintingStatus('Preparing catch data...');
+      
+      // Step 2: Generate unique IDs and metadata
+      const timestamp = Math.floor(Date.now() / 1000);
+      const crateId = `CATCH_${timestamp}_${user.sub.substring(0, 8)}`;
+      const crateDid = `did:nautilink:crate:${crateId}`;
+      const ownerDid = `did:nautilink:user:${user.sub}`;
+      const deviceDid = `did:nautilink:device:mobile_${timestamp}`;
+      
+      // Step 3: Generate hash and IPFS CID (mock for now)
+      const dataToHash = `${crateId}${locationString}${timestamp}${user.sub}`;
+      const hashDigest = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        dataToHash
+      );
+      
+      // Mock IPFS CID (in production, upload photo to IPFS first)
+      const ipfsCid = `Qm${hashDigest.substring(0, 44)}`;
+      
+      // Default weight (could be user input in future)
+      const weight = 1000; // 1kg default
+      
+      setMintingStatus('Connecting to blockchain...');
+      
+      // Step 4: Get auth token
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      
+      if (!accessToken) {
+        throw new Error('No authentication token available');
+      }
+      
+      // Step 5: Call backend API
+      // IMPORTANT: Replace with your computer's local IP address (run: ipconfig getifaddr en0)
+      const apiUrl = 'http://192.168.1.100:8000/web3/create-crate';  // ← Update this IP!
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          crate_id: crateId,
+          crate_did: crateDid,
+          owner_did: ownerDid,
+          device_did: deviceDid,
+          location: locationString,
+          weight: weight,
+          ipfs_cid: ipfsCid,
+          hash: hashDigest,
+          timestamp: timestamp,
+          solana_wallet: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM', // Default wallet for mobile
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to mint catch');
+      }
+      
+      const result = await response.json();
+      
+      setMintingStatus('Success!');
+      setIsMinting(false);
+      setShowMintPrompt(false);
+      setCapturedPhoto(null);
+      
+      // Show success with blockchain details
+      Alert.alert(
+        'Catch Minted! 🎣',
+        `Your catch has been recorded on the blockchain!\n\nCrate ID: ${crateId}\nLocation: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}\nWeight: ${weight}g\n\nTransaction ready for signing.`,
+        [
+          {
+            text: 'View Details',
+            onPress: () => console.log('View transaction:', result.crate_pubkey),
+          },
+          { text: 'OK' },
+        ]
+      );
+      
+    } catch (error: any) {
+      console.error('Minting error:', error);
+      setIsMinting(false);
+      
+      let errorMessage = 'Failed to mint catch. Please try again.';
+      if (error.message.includes('Location')) {
+        errorMessage = 'Could not get your location. Please enable GPS.';
+      } else if (error.message.includes('authentication')) {
+        errorMessage = 'Please sign in again.';
+      } else if (error.message.includes('Network')) {
+        errorMessage = 'Connection error. Please check your internet.';
+      }
+      
+      Alert.alert('Minting Failed', errorMessage);
     }
   };
 
@@ -216,15 +347,17 @@ export default function TripScreen() {
           </ScrollView>
         </View>
 
-        {/* Add Trip Button */}
-        <TouchableOpacity
-          style={styles.addTripButton}
-          onPress={() => router.push('/(main)/add-trip')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="add-circle" size={28} color={Colors.accentPrimary} />
-          <Text style={styles.addTripText}>Add Trip</Text>
-        </TouchableOpacity>
+        {/* Mint a Catch Button - Only shown when trip is in progress */}
+        {tripInProgress && (
+          <TouchableOpacity
+            style={styles.mintCatchButton}
+            onPress={openCamera}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="fish" size={28} color={Colors.accentPrimary} />
+            <Text style={styles.mintCatchText}>Mint a Catch</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Camera Modal */}
@@ -265,6 +398,49 @@ export default function TripScreen() {
                 <View style={styles.captureButtonInner} />
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Mint Prompt Modal */}
+      <Modal
+        visible={showMintPrompt}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMintPrompt(false)}
+      >
+        <View style={styles.mintModalOverlay}>
+          <View style={styles.mintModalContent}>
+            <View style={styles.mintIconContainer}>
+              <Ionicons name="checkmark-circle" size={80} color={Colors.accentPrimary} />
+            </View>
+            
+            <Text style={styles.mintModalTitle}>Photo Captured!</Text>
+            <Text style={styles.mintModalSubtitle}>Ready to mint your catch</Text>
+            
+            {isMinting ? (
+              <View style={styles.mintingContainer}>
+                <ActivityIndicator size="large" color={Colors.accentPrimary} />
+                <Text style={styles.mintingText}>{mintingStatus}</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.mintButton}
+                onPress={handleMint}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="flash" size={24} color={Colors.background} />
+                <Text style={styles.mintButtonText}>Press to Mint</Text>
+              </TouchableOpacity>
+            )}
+            
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowMintPrompt(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -661,5 +837,112 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: Colors.success,
+  },
+  mintCatchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surfaceGlass,
+    borderWidth: 2,
+    borderColor: Colors.accentPrimary,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginBottom: 24,
+    shadowColor: Colors.accentPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  mintCatchText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.accentPrimary,
+    marginLeft: 12,
+  },
+  mintModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  mintModalContent: {
+    backgroundColor: Colors.surfacePrimary,
+    borderRadius: 24,
+    padding: 32,
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.accentPrimary,
+    shadowColor: Colors.accentPrimary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  mintIconContainer: {
+    marginBottom: 24,
+  },
+  mintModalTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: Colors.foreground,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  mintModalSubtitle: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    marginBottom: 32,
+    textAlign: 'center',
+  },
+  mintButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.accentPrimary,
+    paddingVertical: 18,
+    paddingHorizontal: 40,
+    borderRadius: 16,
+    width: '100%',
+    marginBottom: 16,
+    shadowColor: Colors.accentPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  mintButtonText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.background,
+    marginLeft: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  cancelButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: Colors.textMuted,
+    fontWeight: '600',
+  },
+  mintingContainer: {
+    paddingVertical: 32,
+    alignItems: 'center',
+    width: '100%',
+  },
+  mintingText: {
+    fontSize: 16,
+    color: Colors.accentPrimary,
+    marginTop: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

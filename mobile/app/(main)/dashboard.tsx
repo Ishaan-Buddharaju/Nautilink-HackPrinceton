@@ -8,11 +8,13 @@ import {
   Modal,
   Animated,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../hooks/useAuth';
+import Constants from 'expo-constants';
 
 interface BlockchainTransaction {
   id: string;
@@ -27,89 +29,60 @@ interface BlockchainTransaction {
   programId: string; // Nautilink program ID
 }
 
+// Backend API URL - update this to match your backend URL
+const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://127.0.0.1:8000';
+
 export default function DashboardScreen() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, session } = useAuth();
 
   // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY RETURNS
   const [selectedTransaction, setSelectedTransaction] = useState<BlockchainTransaction | null>(null);
   const [slideAnim] = useState(new Animated.Value(500));
-  const [transactions, setTransactions] = useState<BlockchainTransaction[]>([
-    {
-      id: '1',
-      number: 1,
-      timestamp: new Date(Date.now() - 86400000 * 7), // 7 days ago
-      signature: '3K8mYzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
-      slot: '245891234',
-      status: 'Finalized',
-      operation: 'CREATE_CRATE',
-      crateId: 'TUNA_001',
-      weight: 2500,
-      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
-    },
-    {
-      id: '2',
-      number: 2,
-      timestamp: new Date(Date.now() - 86400000 * 6), // 6 days ago
-      signature: '4L9nZzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
-      slot: '245891235',
-      status: 'Finalized',
-      operation: 'TRANSFER_OWNERSHIP',
-      crateId: 'TUNA_001',
-      weight: 2500,
-      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
-    },
-    {
-      id: '3',
-      number: 3,
-      timestamp: new Date(Date.now() - 86400000 * 4), // 4 days ago
-      signature: '5M0oAzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
-      slot: '245891236',
-      status: 'Finalized',
-      operation: 'SPLIT_CRATE',
-      crateId: 'TUNA_001A',
-      weight: 1200,
-      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
-    },
-    {
-      id: '4',
-      number: 4,
-      timestamp: new Date(Date.now() - 86400000 * 3), // 3 days ago
-      signature: '6N1pBzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
-      slot: '245891237',
-      status: 'Finalized',
-      operation: 'TRANSFER_OWNERSHIP',
-      crateId: 'TUNA_001A',
-      weight: 1200,
-      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
-    },
-    {
-      id: '5',
-      number: 5,
-      timestamp: new Date(Date.now() - 86400000 * 2), // 2 days ago
-      signature: '7O2qCzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
-      slot: '245891238',
-      status: 'Finalized',
-      operation: 'SPLIT_CRATE',
-      crateId: 'TUNA_FILLET_12',
-      weight: 300,
-      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
-    },
-    {
-      id: '6',
-      number: 6,
-      timestamp: new Date(Date.now() - 86400000), // 1 day ago
-      signature: '8P3rDzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
-      slot: '245891239',
-      status: 'Finalized',
-      operation: 'TRANSFER_OWNERSHIP',
-      crateId: 'TUNA_FILLET_12',
-      weight: 300,
-      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
-    },
-  ]);
+  const [transactions, setTransactions] = useState<BlockchainTransaction[]>([]);
+  const [fetchingTransactions, setFetchingTransactions] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const canScan = user?.roles?.includes('fisher') || user?.roles?.includes('supplier');
+
+  // Fetch transactions from backend
+  const fetchTransactions = async () => {
+    if (!session?.access_token) return;
+    
+    setFetchingTransactions(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${API_URL}/web3/transactions`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch transactions: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Transform API data to match component interface
+      const transformedTransactions = data.transactions.map((tx: any, index: number) => ({
+        ...tx,
+        number: index + 1,
+        timestamp: new Date(tx.timestamp),
+      }));
+      
+      setTransactions(transformedTransactions);
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
+      Alert.alert('Error', 'Failed to load transactions. Using offline mode.');
+    } finally {
+      setFetchingTransactions(false);
+    }
+  };
 
   // Redirect to login if not authenticated (exactly like web app)
   useEffect(() => {
@@ -118,12 +91,21 @@ export default function DashboardScreen() {
     }
   }, [user, isLoading, router]);
 
-  // Show loading while checking auth
-  if (isLoading) {
+  // Fetch transactions when component mounts and user is authenticated
+  useEffect(() => {
+    if (user && session?.access_token) {
+      fetchTransactions();
+    }
+  }, [user, session]);
+
+  // Show loading while checking auth or fetching transactions
+  if (isLoading || fetchingTransactions) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={Colors.accentPrimary} />
-        <Text style={{ color: Colors.foreground, marginTop: 16 }}>Loading...</Text>
+        <Text style={{ color: Colors.foreground, marginTop: 16 }}>
+          {isLoading ? 'Loading...' : 'Fetching transactions...'}
+        </Text>
       </View>
     );
   }
@@ -137,22 +119,9 @@ export default function DashboardScreen() {
     router.push('/(main)/qr-scanner');
   };
 
-  const addNewTransaction = () => {
-    const newTransactionNumber = transactions.length + 1;
-    const newTransaction: BlockchainTransaction = {
-      id: String(newTransactionNumber),
-      number: newTransactionNumber,
-      timestamp: new Date(),
-      signature: `${Math.random().toString(16).substr(2, 8)}${Date.now().toString(16)}`,
-      slot: String(245891239 + newTransactionNumber),
-      status: 'Finalized',
-      operation: 'CREATE_CRATE',
-      crateId: `ITEM_${String(newTransactionNumber).padStart(3, '0')}`,
-      weight: Math.floor(Math.random() * 2000) + 500,
-      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
-    };
-    
-    setTransactions(prev => [...prev, newTransaction]);
+  // Refresh transactions
+  const refreshTransactions = () => {
+    fetchTransactions();
   };
 
   // For demo purposes, we'll add a manual button to simulate transaction completion
@@ -229,8 +198,28 @@ export default function DashboardScreen() {
 
         {/* Transaction Log Section */}
         <View style={styles.transactionSection}>
-          <Text style={styles.sectionTitle}>Log</Text>
-          <ScrollView style={styles.transactionList} showsVerticalScrollIndicator={false}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Log</Text>
+            <TouchableOpacity onPress={refreshTransactions} style={styles.refreshButton}>
+              <Ionicons name="refresh" size={18} color={Colors.accentPrimary} />
+            </TouchableOpacity>
+          </View>
+          
+          {error && (
+            <View style={styles.errorBanner}>
+              <Ionicons name="warning" size={16} color="#ff6b6b" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+          
+          {transactions.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="cube-outline" size={48} color={Colors.textMuted} />
+              <Text style={styles.emptyText}>No transactions yet</Text>
+              <Text style={styles.emptySubtext}>Scan a QR code to add your first transaction</Text>
+            </View>
+          ) : (
+            <ScrollView style={styles.transactionList} showsVerticalScrollIndicator={false}>
             {transactions.map((transaction) => (
               <TouchableOpacity
                 key={transaction.id}
@@ -259,7 +248,8 @@ export default function DashboardScreen() {
                 <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
               </TouchableOpacity>
             ))}
-          </ScrollView>
+            </ScrollView>
+          )}
         </View>
 
         {/* Add Transaction Button */}
@@ -607,5 +597,56 @@ const styles = StyleSheet.create({
   transactionTitleHighlighted: {
     color: Colors.accentPrimary,
     fontWeight: '700',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: Colors.surfaceGlass,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.3)',
+    marginBottom: 16,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#ff6b6b',
+    fontWeight: '500',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    backgroundColor: Colors.surfacePrimary,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.foreground,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    textAlign: 'center',
   },
 });

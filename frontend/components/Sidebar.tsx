@@ -11,6 +11,7 @@ import {
   FiFileText,
   FiUser,
   FiShield,
+  FiActivity,
 } from 'react-icons/fi';
 
 interface NavItem {
@@ -71,6 +72,7 @@ const Sidebar = () => {
       { href: '/', label: 'Landing', icon: FiHome },
       { href: '/dashboard', label: 'Dashboard', icon: FiBarChart },
       { href: '/database', label: 'Database', icon: FiFileText },
+      { href: '/monitoring', label: 'Live Monitoring', icon: FiActivity },
       { href: '/profile', label: 'Profile', icon: FiUser },
     ];
 
