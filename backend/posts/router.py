@@ -1,14 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
-from typing import Optional
+from typing import Optional, List, Dict, Any, Set
+from collections import deque
 from pydantic import BaseModel, Field
 from datetime import datetime
 import httpx
+import base64
 
 from config import settings
 from supabase import create_client
-from posts.solana import build_create_crate_transaction, build_transfer_ownership_transaction
+from posts.solana import build_create_crate_transaction, build_transfer_ownership_transaction, PROGRAM_ID, SOLANA_RPC_URL, load_program
 
 router = APIRouter(prefix="/web3", tags=["web3"])
 security = HTTPBearer()
@@ -179,6 +181,39 @@ class TransferOwnershipOnChainResponse(BaseModel):
         }
 
 
+class CrateNode(BaseModel):
+    """Represents a single crate in the supply chain."""
+    pubkey: str = Field(..., description="Public key of the crate account")
+    crate_id: str = Field(..., description="Unique crate identifier")
+    authority: str = Field(..., description="Current owner's wallet address")
+    weight: int = Field(..., description="Weight in grams")
+    timestamp: int = Field(..., description="Unix timestamp")
+    hash: str = Field(..., description="SHA256 hash")
+    ipfs_cid: str = Field(..., description="IPFS content ID")
+    operation_type: str = Field(..., description="Created, Transferred, Mixed, or Split")
+    parent_crates: List[str] = Field(default_factory=list, description="Parent crate public keys")
+    child_crates: List[str] = Field(default_factory=list, description="Child crate public keys")
+    parent_weights: List[int] = Field(default_factory=list, description="Original weights of parent crates")
+    split_distribution: Optional[List[int]] = Field(None, description="Weight distribution if split operation")
+    is_root: bool = Field(False, description="True if this is a root crate (no parents)")
+    depth: int = Field(0, description="Depth from root (0 for root crates)")
+
+
+class SupplyChainGraph(BaseModel):
+    """Complete supply chain graph with all crates and relationships."""
+    total_crates: int = Field(..., description="Total number of crates")
+    root_crates: List[str] = Field(..., description="Public keys of root crates (original creations)")
+    crates: Dict[str, CrateNode] = Field(..., description="Map of pubkey -> CrateNode")
+    lineages: Dict[str, List[str]] = Field(..., description="Map of crate pubkey -> lineage path to root(s)")
+
+
+class GetAllCratesResponse(BaseModel):
+    """Response model for get all crates endpoint."""
+    success: bool
+    message: str
+    graph: SupplyChainGraph
+
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """
     Dependency to get the current authenticated user from the JWT token.
@@ -242,12 +277,344 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail=f"Could not validate credentials: {error_msg}",
         )
 
-@router.get("/get-all-posts")
-async def get_all_posts(current_user: dict = Depends(get_current_user)):
+
+async def fetch_all_crate_accounts() -> List[Dict[str, Any]]:
     """
-    Get all posts from the database.
+    Fetch all CrateRecord accounts owned by the Nautilink program from Solana.
+    
+    Uses get_program_accounts to retrieve all accounts owned by the program,
+    then deserializes each account using Anchor's account decoder.
+    
+    Returns:
+        List of dictionaries containing deserialized crate data with the following keys:
+        - pubkey: Public key of the crate account
+        - authority: Current owner's wallet address
+        - crate_id: Unique crate identifier
+        - weight: Weight in grams
+        - timestamp: Unix timestamp
+        - hash: SHA256 hash
+        - ipfs_cid: IPFS content ID
+        - parent_crates: List of parent crate public keys
+        - child_crates: List of child crate public keys
+        - parent_weights: List of original weights of parent crates
+        - split_distribution: Weight distribution if split operation (optional)
+        - operation_type: Type of operation (Created, Transferred, Mixed, Split)
+    
+    Raises:
+        Exception: If program accounts cannot be fetched or deserialized
     """
-    return {"message": "Hello, World!"}
+    from solana.rpc.async_api import AsyncClient
+    
+    try:
+        # Load program for deserialization
+        program = await load_program()
+        client = AsyncClient(SOLANA_RPC_URL)
+        
+        print(f"Fetching all accounts for program: {PROGRAM_ID}")
+        
+        # Get all accounts owned by the program
+        # Using get_program_accounts with base64 encoding
+        accounts_response = await client.get_program_accounts(
+            PROGRAM_ID,
+            encoding="base64",
+            commitment="confirmed"
+        )
+        
+        print(f"Found {len(accounts_response.value)} accounts")
+        
+        crates = []
+        
+        # Deserialize each account
+        for account_info in accounts_response.value:
+            pubkey = str(account_info.pubkey)
+            account_data = account_info.account.data
+            
+            try:
+                # Decode base64 data
+                if isinstance(account_data, list):
+                    # Data is already a list of bytes
+                    data_bytes = bytes(account_data)
+                elif isinstance(account_data, str):
+                    # Data is base64 string
+                    data_bytes = base64.b64decode(account_data)
+                else:
+                    print(f"Skipping account {pubkey}: unexpected data type")
+                    continue
+                
+                # Skip if data is too small (needs at least 8 bytes for discriminator)
+                if len(data_bytes) < 8:
+                    print(f"Skipping account {pubkey}: data too small ({len(data_bytes)} bytes)")
+                    continue
+                
+                # Deserialize using Anchor's account decoder
+                # Skip the 8-byte discriminator (first 8 bytes)
+                account_data_bytes = data_bytes[8:]
+                
+                # Use the program's account decoder for CrateRecord
+                crate_record = program.account["CrateRecord"].coder.accounts.decode(account_data_bytes)
+                
+                # Convert to dictionary
+                crate_dict = {
+                    "pubkey": pubkey,
+                    "authority": str(crate_record.authority),
+                    "crate_id": crate_record.crate_id,
+                    "weight": crate_record.weight,
+                    "timestamp": crate_record.timestamp,
+                    "hash": crate_record.hash,
+                    "ipfs_cid": crate_record.ipfs_cid,
+                    "parent_crates": [str(p) for p in crate_record.parent_crates],
+                    "child_crates": [str(c) for c in crate_record.child_crates],
+                    "parent_weights": list(crate_record.parent_weights),
+                    "split_distribution": list(crate_record.split_distribution) if hasattr(crate_record, 'split_distribution') and crate_record.split_distribution else None,
+                    "operation_type": str(crate_record.operation_type),
+                }
+                
+                crates.append(crate_dict)
+                print(f"✓ Deserialized crate: {crate_dict['crate_id']} ({pubkey[:8]}...)")
+                
+            except Exception as e:
+                print(f"Error deserializing account {pubkey}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        await client.close()
+        print(f"Successfully fetched {len(crates)} crate accounts")
+        return crates
+        
+    except Exception as e:
+        print(f"Error fetching crate accounts: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
+
+
+def build_supply_chain_graph(crates: List[Dict[str, Any]]) -> SupplyChainGraph:
+    """
+    Build a complete supply chain graph from crate data.
+    
+    This function:
+    1. Creates CrateNode objects for each crate
+    2. Identifies root crates (those with no parents)
+    3. Calculates depth from root using BFS
+    4. Builds lineage paths tracing back to root crates
+    
+    Args:
+        crates: List of crate dictionaries from Solana accounts
+        
+    Returns:
+        SupplyChainGraph with all crates, relationships, and lineage paths
+    """
+    # Create map of pubkey -> CrateNode
+    crate_map: Dict[str, CrateNode] = {}
+    root_crates: Set[str] = set()
+    
+    # First pass: create all nodes
+    for crate_data in crates:
+        pubkey = crate_data["pubkey"]
+        is_root = len(crate_data["parent_crates"]) == 0
+        
+        node = CrateNode(
+            pubkey=pubkey,
+            crate_id=crate_data["crate_id"],
+            authority=crate_data["authority"],
+            weight=crate_data["weight"],
+            timestamp=crate_data["timestamp"],
+            hash=crate_data["hash"],
+            ipfs_cid=crate_data["ipfs_cid"],
+            operation_type=crate_data["operation_type"],
+            parent_crates=crate_data["parent_crates"],
+            child_crates=crate_data["child_crates"],
+            parent_weights=crate_data["parent_weights"],
+            split_distribution=crate_data.get("split_distribution"),
+            is_root=is_root,
+            depth=0,  # Will calculate in second pass
+        )
+        
+        crate_map[pubkey] = node
+        if is_root:
+            root_crates.add(pubkey)
+    
+    # Second pass: calculate depths using BFS from root crates
+    visited = set()
+    queue = deque()
+    
+    # Start BFS from all root crates
+    for root_pubkey in root_crates:
+        queue.append((root_pubkey, 0))
+        visited.add(root_pubkey)
+        crate_map[root_pubkey].depth = 0
+    
+    # BFS to assign depths
+    while queue:
+        current_pubkey, depth = queue.popleft()
+        current_node = crate_map[current_pubkey]
+        
+        # Visit all children
+        for child_pubkey in current_node.child_crates:
+            if child_pubkey in crate_map and child_pubkey not in visited:
+                visited.add(child_pubkey)
+                child_node = crate_map[child_pubkey]
+                child_node.depth = depth + 1
+                queue.append((child_pubkey, depth + 1))
+    
+    # Handle unvisited nodes (orphaned crates or cycles)
+    for pubkey, node in crate_map.items():
+        if pubkey not in visited:
+            # Try to find minimum depth from any parent
+            if node.parent_crates:
+                min_parent_depth = min(
+                    (crate_map[p].depth for p in node.parent_crates if p in crate_map),
+                    default=-1
+                )
+                node.depth = min_parent_depth + 1 if min_parent_depth >= 0 else 0
+            else:
+                # No parents but not marked as root - treat as root
+                node.is_root = True
+                node.depth = 0
+                root_crates.add(pubkey)
+    
+    # Third pass: build lineage paths (trace back to root for each crate)
+    lineages: Dict[str, List[str]] = {}
+    
+    def trace_to_roots(pubkey: str, visited_path: Set[str] = None) -> List[List[str]]:
+        """
+        Recursively trace back to all root crates.
+        Returns list of paths, where each path is a list of pubkeys from root to this crate.
+        """
+        if visited_path is None:
+            visited_path = set()
+        
+        if pubkey in visited_path:
+            # Cycle detected, return empty
+            return []
+        
+        if pubkey not in crate_map:
+            return []
+        
+        node = crate_map[pubkey]
+        
+        # If root, return path with just this pubkey
+        if node.is_root:
+            return [[pubkey]]
+        
+        # If no parents, treat as root
+        if not node.parent_crates:
+            return [[pubkey]]
+        
+        # Trace through all parents (for mix operations)
+        all_paths = []
+        visited_path.add(pubkey)
+        
+        for parent_pubkey in node.parent_crates:
+            parent_paths = trace_to_roots(parent_pubkey, visited_path.copy())
+            for parent_path in parent_paths:
+                if parent_path:
+                    # Prepend current crate to each path
+                    all_paths.append([pubkey] + parent_path)
+        
+        visited_path.remove(pubkey)
+        
+        # If no paths found, return current crate as endpoint
+        if not all_paths:
+            return [[pubkey]]
+        
+        return all_paths
+    
+    # Build lineage for all crates
+    # For simplicity, store the shortest path to root (first path)
+    for pubkey in crate_map:
+        paths = trace_to_roots(pubkey)
+        if paths:
+            # Store the shortest path (or first path if equal length)
+            lineages[pubkey] = min(paths, key=len) if paths else [pubkey]
+        else:
+            lineages[pubkey] = [pubkey]
+    
+    return SupplyChainGraph(
+        total_crates=len(crate_map),
+        root_crates=list(root_crates),
+        crates={pubkey: node for pubkey, node in crate_map.items()},
+        lineages=lineages,
+    )
+
+
+@router.get("/get-all-crates", response_model=GetAllCratesResponse, status_code=status.HTTP_200_OK)
+async def get_all_crates(
+    current_user: dict = Depends(get_current_user)
+) -> GetAllCratesResponse:
+    """
+    Get all crates in the supply chain and build the complete graph.
+    
+    This endpoint:
+    1. Fetches all CrateRecord accounts from the Solana program
+    2. Deserializes each account to extract crate data
+    3. Builds a graph structure showing parent-child relationships
+    4. Traces lineage paths back to root crates (original creations)
+    
+    **Response Structure:**
+    - `graph.crates`: Map of all crates by public key
+    - `graph.root_crates`: List of root crate pubkeys (original creations)
+    - `graph.lineages`: Map of crate pubkey -> path to root
+    - Each crate includes depth, operation type, and relationships
+    
+    **Use Cases:**
+    - View complete supply chain
+    - Trace any crate back to its origin
+    - Identify root crates vs. transferred/split crates
+    - Build visualization of supply chain relationships
+    
+    Args:
+        current_user: Authenticated user from JWT token (auto-injected)
+    
+    Returns:
+        GetAllCratesResponse with complete supply chain graph
+    
+    Raises:
+        HTTPException 401: Invalid or missing JWT token
+        HTTPException 500: Failed to fetch or deserialize accounts
+    """
+    try:
+        # Step 1: Fetch all crate accounts from Solana
+        print("Fetching all crate accounts from Solana...")
+        crates = await fetch_all_crate_accounts()
+        
+        if not crates:
+            return GetAllCratesResponse(
+                success=True,
+                message="No crates found in the supply chain",
+                graph=SupplyChainGraph(
+                    total_crates=0,
+                    root_crates=[],
+                    crates={},
+                    lineages={},
+                ),
+            )
+        
+        print(f"Found {len(crates)} crate accounts")
+        
+        # Step 2: Build supply chain graph
+        print("Building supply chain graph...")
+        graph = build_supply_chain_graph(crates)
+        
+        print(f"✓ Built graph with {graph.total_crates} crates, {len(graph.root_crates)} root crates")
+        
+        return GetAllCratesResponse(
+            success=True,
+            message=f"Successfully retrieved {graph.total_crates} crates from supply chain",
+            graph=graph,
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in get_all_crates: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch supply chain data: {str(e)}"
+        )
 
 @router.post("/create-crate", response_model=CreateCrateResponse, status_code=status.HTTP_200_OK)
 async def create_crate(
