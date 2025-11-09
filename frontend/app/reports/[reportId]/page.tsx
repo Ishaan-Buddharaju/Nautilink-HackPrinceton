@@ -35,6 +35,124 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
   const [generatedJson, setGeneratedJson] = useState<any | null>(null);
   const [customTitle, setCustomTitle] = useState<string>('');
 
+  if (resolvedParams.reportId === 'template-summary') {
+    const [chatMessages, setChatMessages] = useState<Array<{ id: string; role: 'user' | 'assistant'; content: string }>>([
+      {
+        id: 'assistant-welcome',
+        role: 'assistant',
+        content:
+          'Gemini 2.5 Flash is online. Ask me about this report template or how to generate a new analysis.',
+      },
+    ]);
+    const [chatInput, setChatInput] = useState('');
+    const [chatLoading, setChatLoading] = useState(false);
+
+    const sendChatMessage = async () => {
+      const trimmed = chatInput.trim();
+      if (!trimmed || chatLoading) return;
+
+      const userMessage = { id: `user-${Date.now()}`, role: 'user' as const, content: trimmed };
+      setChatMessages((prev) => [...prev, userMessage]);
+      setChatInput('');
+      setChatLoading(true);
+
+      try {
+        const response = await fetch('/api/reports/template-support', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: trimmed,
+            history: chatMessages,
+          }),
+        });
+
+        if (!response.ok) {
+          const { error } = await response.json();
+          throw new Error(error || 'Gemini support agent failed to respond.');
+        }
+
+        const data = await response.json();
+        setChatMessages((prev) => [
+          ...prev,
+          { id: `assistant-${Date.now()}`, role: 'assistant' as const, content: data.reply || 'No response.' },
+        ]);
+      } catch (error: any) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-error-${Date.now()}`,
+            role: 'assistant' as const,
+            content: error?.message || 'I ran into an issue fetching a response.',
+          },
+        ]);
+      } finally {
+        setChatLoading(false);
+      }
+    };
+
+    return (
+      <div className="flex-1 p-8 text-[#e0f2fd] min-h-screen">
+        <div className="flex gap-8 h-full">
+          <div className="flex-1 max-w-3xl">
+            <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5"/>
+                <path d="m12 19-7-7 7-7"/>
+              </svg>
+              <span>Database</span>
+            </Link>
+            <h1 className="text-3xl font-bold mb-4 text-[#e0f2fd]">Template Summary</h1>
+            <p className="text-[#c0d9ef] text-sm">This template is empty—use the generator to produce content or consult the Gemini assistant for guidance.</p>
+          </div>
+
+          <aside className="w-96 ml-auto flex flex-col bg-[#171717] border border-[rgba(198,218,236,0.18)] rounded-lg shadow-lg h-[calc(100vh-4rem)] sticky top-8">
+            <header className="px-4 py-3 border-b border-[rgba(198,218,236,0.18)]">
+              <h2 className="text-lg font-semibold text-[#e0f2fd]">Gemini 2.5 Flash Assistant</h2>
+              <p className="text-xs text-[#9fb7d8] mt-1">Ask anything about report generation or this template.</p>
+            </header>
+
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {chatMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`rounded-lg px-3 py-2 text-sm leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-[#4662ab] text-[#e0f2fd] ml-8 self-end'
+                      : 'bg-[#151d2e] text-[#d2deea] mr-8 self-start border border-[rgba(198,218,236,0.16)]'
+                  }`}
+                >
+                  {msg.content}
+                </div>
+              ))}
+            </div>
+
+            <form
+              className="p-4 border-t border-[rgba(198,218,236,0.18)] flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendChatMessage();
+              }}
+            >
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="flex-1 bg-[#101726] border border-[rgba(198,218,236,0.22)] rounded-md px-3 py-2 text-sm text-[#e0f2fd] focus:outline-none focus:ring-2 focus:ring-[#4662ab]"
+                placeholder="Ask the Gemini agent anything…"
+              />
+              <button
+                type="submit"
+                disabled={chatLoading}
+                className="px-3 py-2 bg-[#4662ab] text-[#e0f2fd] rounded-md text-sm font-semibold disabled:opacity-60"
+              >
+                {chatLoading ? '...' : 'Send'}
+              </button>
+            </form>
+          </aside>
+        </div>
+      </div>
+    );
+  }
+
   const exportElementToPDF = (elementId: string, title: string) => {
     if (typeof window === 'undefined') return;
     const node = document.getElementById(elementId);
@@ -96,7 +214,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
         <div className="max-w-4xl">
           <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-            <span>All Reports</span>
+            <span>Database</span>
           </Link>
           <h1 className="text-3xl font-bold mb-2 text-[#e0f2fd]">
             {customTitle ? (
@@ -287,7 +405,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
       <div className="max-w-4xl">
         <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-          <span>All Reports</span>
+          <span>Database</span>
         </Link>
         <h1 className="text-3xl font-bold mb-2 text-[#e0f2fd]">
           Report: <span className="text-[#c0d9ef] capitalize">{resolvedParams.reportId.replaceAll('-', ' ')}</span>

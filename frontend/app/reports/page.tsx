@@ -1,182 +1,181 @@
 'use client';
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
-import { useAuth } from '../../hooks/useAuth';
 
 interface Report {
   id: string;
   title: string;
   date: string;
   clearance: string;
+  sustainability: string;
 }
 
 const reports: Report[] = [
   {
-    id: 'weekly-iuu-summary-2025-09-20',
-    title: 'Weekly IUU Summary',
+    id: 'template-summary',
+    title: 'Template Summary',
     date: '2025-09-20',
     clearance: 'Public Trust',
+    sustainability: '92% • Excellent',
   },
   {
     id: 'voice-agent-performance-q3-2025',
     title: 'Voice Agent Performance Q3',
     date: '2025-09-18',
     clearance: 'Confidential',
+    sustainability: '78% • Moderate',
   },
   {
     id: 'bodega-bay-mpa-analysis-2025-09-15',
     title: 'Bodega Bay MPA Analysis',
     date: '2025-09-15',
     clearance: 'Top Secret',
+    sustainability: '64% • Needs Review',
   },
 ];
 
-const timeOptions: string[] = [];
-for (let i = 0; i < 24; i++) {
-  const hours = i;
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
-  timeOptions.push(`${formattedHours}:00 ${ampm}`);
-}
+const timeframeOptions = [
+  { value: 'this-month', label: 'This Month' },
+  { value: 'last-quarter', label: 'Last Quarter' },
+  { value: 'year-to-date', label: 'Year to Date' },
+  { value: 'all-time', label: 'All Time' },
+];
 
 const ReportsPage = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [reportToShare, setReportToShare] = useState<Report | null>(null);
-  const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [timeframe, setTimeframe] = useState<string>('this-month');
 
-  // Form state
-  const [dateStart, setDateStart] = useState<string>('');
-  const [dateEnd, setDateEnd] = useState<string>('');
-  const [timeStart, setTimeStart] = useState<string>('');
-  const [timeEnd, setTimeEnd] = useState<string>('');
-  const [clearance, setClearance] = useState<string>('Public Trust');
-  const [sections, setSections] = useState({
-    iuu_activity: false,
-    ai_voice_agent: false,
-    vessel_tracks: false,
-    economic_impact: false,
-  });
+  const selectedTimeframeLabel =
+    timeframeOptions.find((option) => option.value === timeframe)?.label ?? 'This Month';
 
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [generatedReport, setGeneratedReport] = useState<any>(null);
-  const [includedSections, setIncludedSections] = useState<string[]>([]);
-  const [lastGeneratedId, setLastGeneratedId] = useState<string | null>(null);
-  const [titleInput, setTitleInput] = useState<string>('');
+  const filteredReports = useMemo(() => {
+    if (!searchTerm.trim()) return reports;
+    const term = searchTerm.toLowerCase();
+    return reports.filter((report) => {
+      return (
+        report.title.toLowerCase().includes(term) ||
+        report.date.toLowerCase().includes(term) ||
+        report.sustainability.toLowerCase().includes(term) ||
+        report.clearance.toLowerCase().includes(term)
+      );
+    });
+  }, [searchTerm]);
 
   const handleShareClick = (report: Report) => {
     setReportToShare(report);
     setIsShareModalOpen(true);
   };
 
-  const handleSectionToggle = (key: keyof typeof sections) => {
-    setSections((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    setError(null);
-    setGeneratedReport(null);
-    setIncludedSections([]);
-    try {
-      const payload = {
-        date_start: dateStart || null,
-        date_end: dateEnd || null,
-        time_start: timeStart || null,
-        time_end: timeEnd || null,
-        clearance,
-        user_id: user?.sub || 'anonymous',
-        title: titleInput.trim(),
-        sections: {
-          iuu_activity: sections.iuu_activity,
-          ai_voice_agent: sections.ai_voice_agent,
-          vessel_tracks: sections.vessel_tracks,
-          economic_impact: sections.economic_impact,
-        },
-      };
-
-      // Diagnostics for troubleshooting
-      console.log('[Reports] Generate clicked with payload:', payload);
-
-      const res = await fetch('http://127.0.0.1:8000/api/reports/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('[Reports] Backend error response:', text);
-        throw new Error(text || 'Failed to generate report');
-      }
-
-      const data = await res.json();
-      const reportJson = data.report ?? null;
-      console.log('[Reports] Generation success. Included sections:', data.included_sections);
-      setGeneratedReport(reportJson);
-      setIncludedSections(data.included_sections ?? []);
-
-      // Create a lightweight report entry and persist the JSON by id in localStorage
-      const id = `generated-${Date.now()}`;
-      const title = (titleInput && titleInput.trim()) ? titleInput.trim() : 'Generated Report';
-      const date = new Date().toISOString().slice(0, 10);
-      const clearanceSaved = clearance;
-      const storageKey = `report_json_${id}`;
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(reportJson));
-        localStorage.setItem(`report_title_${id}`, title);
-      } catch (e) {
-        console.warn('Failed saving report HTML to localStorage', e);
-      }
-      setLastGeneratedId(id);
-
-      // Optimistically show it at top of the list by mutating local array for this session
-      reports.unshift({ id, title, date, clearance: clearanceSaved });
-    } catch (e: any) {
-      console.error('[Reports] Generation failed:', e);
-      setError(e.message || 'Something went wrong');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   return (
-    <div className="flex-1 p-8 text-[#e0f2fd] flex" style={{marginLeft:"104px"}}>
-      {/* Left side: Reports List */}
-      <div className="w-1/2 pr-8 border-r border-[rgba(198,218,236,0.18)]">
-        <h1 className="text-3xl font-bold mb-4 text-[#e0f2fd]">Reports</h1>
-        <p className="text-[#c0d9ef] mb-8">
+    <div className="flex-1 p-8 text-[#e0f2fd]" style={{ marginLeft: '104px' }}>
+      <div className="max-w-4xl mx-auto w-full flex flex-col gap-8">
+        <header>
+          <h1 className="text-4xl font-bold tracking-tight text-[#e0f2fd]">Database</h1>
+          <p className="text-[#c0d9ef] mt-3 text-base">
           Review and share weekly summaries, performance analyses, and incident reports.
         </p>
+        </header>
 
-        <div className="space-y-4">
-          {reports.map((report) => (
-            <div
+        <div className="relative">
+          <input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            type="search"
+            placeholder="Search reports, vessels, or analysts..."
+            className="w-full bg-[#101722] border border-[rgba(198,218,236,0.18)] rounded-[28px] py-4 pl-14 pr-6 text-[#e0f2fd] placeholder-[#88a8c9] font-sans text-base focus:outline-none focus:ring-4 focus:ring-[#4662ab55]"
+            aria-label="Search reports"
+          />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-[#88a8c9]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 105.5 5.5a7.5 7.5 0 0011.15 11.15z"
+            />
+          </svg>
+        </div>
+
+        <section className="flex flex-wrap gap-6 bg-[#101722] border border-[rgba(198,218,236,0.18)] rounded-3xl px-8 py-6 items-center">
+          <div className="flex items-center gap-4 min-w-[220px]">
+            <div className="w-12 h-12 rounded-full bg-[#4662ab33] border border-[#4662ab66] flex items-center justify-center text-[#c6daec] font-semibold text-lg">
+              N
+            </div>
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-[#88a8c9]">Analyst Overview</p>
+              <p className="text-xl font-semibold text-[#e0f2fd]">{selectedTimeframeLabel}</p>
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-[220px] flex justify-center">
+            <label className="flex items-center gap-3 bg-[#0d141f] border border-[rgba(198,218,236,0.12)] rounded-full px-5 py-3 text-sm text-[#c0d9ef]">
+              <span className="text-[#88a8c9] uppercase tracking-[0.3em] text-xs">Timeframe</span>
+              <select
+                value={timeframe}
+                onChange={(e) => setTimeframe(e.target.value)}
+                className="bg-transparent border-none text-[#e0f2fd] font-semibold outline-none cursor-pointer"
+              >
+                {timeframeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="flex items-center gap-3 bg-[#0d141f] border border-[rgba(198,218,236,0.12)] rounded-3xl px-6 py-4">
+            <div className="w-12 h-12 rounded-full bg-[#4662ab] text-[#e0f2fd] flex items-center justify-center text-xl font-bold">
+              {filteredReports.length}
+            </div>
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-[#88a8c9]">Total Reports</p>
+              <p className="text-base font-semibold text-[#e0f2fd]">in view</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-5">
+          {filteredReports.map((report) => (
+            <article
               key={report.id}
-              className="flex items-center justify-between p-4 bg-[#171717] border border-[rgba(198,218,236,0.18)] rounded-lg"
+              className="flex items-center justify-between gap-6 p-6 bg-[#101722] border border-[rgba(198,218,236,0.18)] rounded-[26px] shadow-[0_18px_40px_rgba(10,14,28,0.15)] hover:border-[#4662ab66] transition-colors"
             >
-              <Link href={`/reports/${report.id}`} className="flex-1 hover:underline">
-                <div className="font-sans">
-                  <h3 className="font-medium">{report.title}</h3>
-                  <p className="text-sm text-[#c0d9ef]">{report.date}</p>
+              <Link href={`/reports/${report.id}`} className="flex-1 group">
+                <div className="font-sans flex flex-col gap-1">
+                  <h3 className="text-lg font-semibold text-[#e0f2fd] group-hover:text-[#c6daec] transition-colors">
+                    {report.title}
+                  </h3>
+                  <div className="flex items-center gap-4 text-sm text-[#88a8c9] uppercase tracking-[0.35em]">
+                    <span>{report.date}</span>
+                    <span className="hidden sm:block">•</span>
+                    <span className="hidden sm:block">{report.clearance}</span>
+                  </div>
                 </div>
               </Link>
-              <div className="flex items-center space-x-4">
-                <span
-                  className="px-3 py-1 text-xs font-semibold rounded-full border border-[rgba(198,218,236,0.25)] bg-[#171717] text-[#c6daec] font-sans"
-                >
-                  {report.clearance}
+
+              <div className="flex items-center gap-4 shrink-0">
+                <span className="px-4 py-2 text-sm font-semibold rounded-full border border-[rgba(198,218,236,0.25)] bg-[#0d141f] text-[#c6daec] font-sans">
+                  {report.sustainability}
                 </span>
                 <button
                   onClick={() => handleShareClick(report)}
-                  className="w-10 h-10 flex items-center justify-center border border-[rgba(198,218,236,0.25)] rounded-md hover:bg-[#4662ab33] transition-colors"
+                  className="w-12 h-12 flex items-center justify-center border border-[rgba(198,218,236,0.25)] rounded-xl hover:bg-[#4662ab33] transition-colors"
+                  aria-label={`Share ${report.title}`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
+                    width="18"
+                    height="18"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -190,128 +189,15 @@ const ReportsPage = () => {
                   </svg>
                 </button>
               </div>
-            </div>
+            </article>
           ))}
-        </div>
-      </div>
 
-      {/* Right side: Generate Report */}
-      <div className="w-1/2 pl-8 flex flex-col font-sans">
-          <h2 className="text-xl font-bold mb-4 text-[#e0f2fd]">Generate New Report</h2>
-          <p className="text-[#c0d9ef] mb-6">Customize and create a new report based on the latest data.</p>
-          
-          <div className="space-y-6 flex-1">
-            {/* Report Title */}
-            <div>
-              <label className="block text-sm font-medium text-[#c0d9ef] mb-2">Report Title</label>
-              <input
-                value={titleInput}
-                onChange={(e) => setTitleInput(e.target.value)}
-                type="text"
-                placeholder="e.g., Southeast Patrol IUU Summary"
-                className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans placeholder-[#c0d9ef]"
-              />
+          {filteredReports.length === 0 && (
+            <div className="text-center py-20 border border-dashed border-[rgba(198,218,236,0.18)] rounded-3xl bg-[#10172266] text-[#88a8c9]">
+              No reports match your search. Try a different term or timeframe.
             </div>
-            {/* Date Range */}
-            <div>
-              <label className="block text-sm font-medium text-[#c0d9ef] mb-2">Date Range</label>
-              <div className="flex space-x-4">
-                <input value={dateStart} onChange={(e) => setDateStart(e.target.value)} type="date" className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans [color-scheme:dark]" />
-                <input value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} type="date" className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans [color-scheme:dark]" />
-              </div>
-            </div>
-
-            {/* Time Range */}
-            <div>
-              <label className="block text-sm font-medium text-[#c0d9ef] mb-2">Time Range (EST)</label>
-              <div className="flex space-x-4">
-                <div className="relative w-full">
-                  <select value={timeStart} onChange={(e) => setTimeStart(e.target.value)} className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans appearance-none pr-8">
-                    <option value="">Select start</option>
-                    {timeOptions.map(time => <option key={time} value={time}>{time}</option>)}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#c0d9ef]">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                  </div>
-                </div>
-                <div className="relative w-full">
-                  <select value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans appearance-none pr-8">
-                    <option value="">Select end</option>
-                    {timeOptions.map(time => <option key={time} value={time}>{time}</option>)}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#c0d9ef]">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sections to Include */}
-            <div>
-              <label className="block text-sm font-medium text-[#c0d9ef] mb-2">Sections to Include</label>
-              <div className="flex flex-col space-y-4">
-                <label className="flex items-center space-x-3 font-sans cursor-pointer">
-                  <input checked={sections.iuu_activity} onChange={() => handleSectionToggle('iuu_activity')} type="checkbox" className="peer hidden" />
-                  <span className="w-5 h-5 border-2 border-[rgba(198,218,236,0.4)] rounded-sm flex items-center justify-center transition-colors peer-checked:bg-[#c6daec] peer-checked:border-[#4662ab] peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-[#4662ab] ring-offset-[#171717]">
-                    <svg className="w-3 h-3 text-[#171717] hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </span>
-                  <span>IUU Activity Summary</span>
-                </label>
-                <label className="flex items-center space-x-3 font-sans cursor-pointer">
-                  <input checked={sections.ai_voice_agent} onChange={() => handleSectionToggle('ai_voice_agent')} type="checkbox" className="peer hidden" />
-                  <span className="w-5 h-5 border-2 border-[rgba(198,218,236,0.4)] rounded-sm flex items-center justify-center transition-colors peer-checked:bg-[#c6daec] peer-checked:border-[#4662ab] peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-[#4662ab] ring-offset-[#171717]">
-                    <svg className="w-3 h-3 text-[#171717] hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </span>
-                  <span>AI Agent Performance</span>
-                </label>
-                <label className="flex items-center space-x-3 font-sans cursor-pointer">
-                  <input checked={sections.vessel_tracks} onChange={() => handleSectionToggle('vessel_tracks')} type="checkbox" className="peer hidden" />
-                  <span className="w-5 h-5 border-2 border-[rgba(198,218,236,0.4)] rounded-sm flex items-center justify-center transition-colors peer-checked:bg-[#c6daec] peer-checked:border-[#4662ab] peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-[#4662ab] ring-offset-[#171717]">
-                    <svg className="w-3 h-3 text-[#171717] hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </span>
-                  <span>Vessel Track Details</span>
-                </label>
-                <label className="flex items-center space-x-3 font-sans cursor-pointer">
-                  <input checked={sections.economic_impact} onChange={() => handleSectionToggle('economic_impact')} type="checkbox" className="peer hidden" />
-                  <span className="w-5 h-5 border-2 border-[rgba(198,218,236,0.4)] rounded-sm flex items-center justify-center transition-colors peer-checked:bg-[#c6daec] peer-checked:border-[#4662ab] peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-[#4662ab] ring-offset-[#171717]">
-                    <svg className="w-3 h-3 text-[#171717] hidden peer-checked:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </span>
-                  <span>Economic Impact Analysis</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Clearance Level */}
-            <div>
-              <label htmlFor="clearance" className="block text-sm font-medium text-[#c0d9ef] mb-2">Clearance Level</label>
-              <div className="relative w-full">
-                <select id="clearance" value={clearance} onChange={(e) => setClearance(e.target.value)} className="w-full bg-[#171717] border border-[rgba(198,218,236,0.25)] rounded-md p-2 text-[#e0f2fd] font-sans appearance-none pr-8">
-                  <option>Public Trust</option>
-                  <option>Confidential</option>
-                  <option>Top Secret</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Generate Button */}
-          <div className="mt-auto pt-6 border-t border-[rgba(198,218,236,0.18)]">
-            <button
-              disabled={isGenerating}
-              onClick={handleGenerate}
-              className="w-full bg-[#4662ab] text-[#e0f2fd] font-bold py-3 px-4 rounded-lg transition-colors hover:bg-[#c6daec] hover:text-[#171717] disabled:opacity-60 disabled:bg-[#171717] disabled:text-[#4662ab66]"
-            >
-              {isGenerating ? 'Generating…' : 'Generate Report'}
-            </button>
-            <div className="sr-only" aria-live="polite">{isGenerating ? 'Generating report' : 'Idle'}</div>
-            {error && (
-              <p className="mt-3 text-sm text-[#e0f2fd]">{error}</p>
-            )}
-            {/* No inline preview; user clicks the new report entry to read */}
-          </div>
+          )}
+        </section>
       </div>
 
       <Modal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)}>
@@ -323,7 +209,9 @@ const ReportsPage = () => {
             </p>
             
             <div className="font-sans">
-              <label htmlFor="email" className="block text-sm font-medium text-[#c0d9ef] mb-2">Recipient's Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-[#c0d9ef] mb-2">
+                Recipient&apos;s Email
+              </label>
               <input
                 type="email"
                 id="email"

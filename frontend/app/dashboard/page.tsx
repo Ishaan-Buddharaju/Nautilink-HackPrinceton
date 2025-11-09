@@ -35,6 +35,42 @@ interface HotspotData {
   size: number;
 }
 
+interface FishingZone {
+  id: string;
+  lat: number;
+  lng: number;
+  name: string;
+  vessel: {
+    name: string;
+    imo_number: string;
+    model: string;
+    flag_state: string;
+    year_built: number;
+  };
+  sustainability_score: {
+    total_score: number;
+    categories: {
+      vessel_efficiency: { score: number };
+      fishing_method: { score: number };
+      environmental_practices: { score: number };
+      compliance_and_transparency: { score: number };
+      social_responsibility: { score: number };
+    };
+  };
+  registered: boolean;
+}
+
+interface RiskPolygon {
+  id: string;
+  name: string;
+  risk: 'green' | 'yellow' | 'red';
+  color: string;
+  coordinates: number[][][];
+  altitude: number;
+  capColor: string;
+  sideColor: string;
+}
+
 // Utility function to compute grade from score with new scale
 const getSustainabilityGrade = (score: number) => {
   if (score >= 93) return 'A';
@@ -124,14 +160,15 @@ const getRiskZone = (lat: number, lng: number): 'green' | 'yellow' | 'red' | nul
 
 // Generate circular polygon data for risk zone overlays
 const generateRiskZonePolygons = () => {
-  const polygons = [];
+  const polygons: RiskPolygon[] = [];
   
   Object.entries(MARITIME_RISK_ZONES).forEach(([risk, zones]) => {
+    const riskKey = risk as 'green' | 'yellow' | 'red';
     zones.forEach((zone, index) => {
-      const color = risk === 'green' ? '#22c55e' : risk === 'yellow' ? '#eab308' : '#ef4444';
+      const color = riskKey === 'green' ? '#22c55e' : riskKey === 'yellow' ? '#eab308' : '#ef4444';
       
       // Create circular polygon from center point and radius
-      const coords = [];
+      const coords: [number, number][] = [];
       const numPoints = 32; // Number of points to approximate circle
       
       for (let i = 0; i <= numPoints; i++) {
@@ -142,9 +179,9 @@ const generateRiskZonePolygons = () => {
       }
       
       polygons.push({
-        id: `${risk}-zone-${index}`,
+        id: `${riskKey}-zone-${index}`,
         name: zone.name,
-        risk: risk,
+        risk: riskKey,
         color: color,
         coordinates: [coords], // GeoJSON format
         altitude: 0.01, // Slightly above sea level
@@ -540,17 +577,14 @@ const HomePage: React.FC = () => {
   const [isDataLoaded, setIsDataLoaded] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(false);
   const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
-  const [agentMessages, setAgentMessages] = useState<
-    { id: string; role: 'system' | 'user'; content: string; timestamp: Date }[]
-  >([
-    {
-      id: 'sys-seed',
-      role: 'system',
-      content: 'Agent online. Ask a question to begin.',
-      timestamp: new Date()
-    }
-  ]);
-  const [agentInput, setAgentInput] = useState('');
+  const [reportTarget, setReportTarget] = useState<
+    { type: 'zone'; data: FishingZone } | { type: 'vessel'; data: VesselData } | null
+  >(null);
+  const [reportVisible, setReportVisible] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const reportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reportErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const historyEntries = useMemo(
     () =>
       [
@@ -562,32 +596,31 @@ const HomePage: React.FC = () => {
       ),
     []
   );
-  const handleAgentSubmit = useCallback(async () => {
-    const trimmed = agentInput.trim();
-    if (!trimmed) return;
 
-    const now = new Date();
-    const userMessage = {
-      id: `user-${now.getTime()}`,
-      role: 'user' as const,
-      content: trimmed,
-      timestamp: now
-    };
+  const handleGenerateReport = useCallback(() => {
+    if (!reportTarget) {
+      setReportError('Select a vessel or fishing zone first to generate a report.');
+      if (reportErrorTimeoutRef.current) clearTimeout(reportErrorTimeoutRef.current);
+      reportErrorTimeoutRef.current = setTimeout(() => setReportError(null), 3500);
+      return;
+    }
 
-    setAgentMessages((prev) => [...prev, userMessage]);
-    setAgentInput('');
+    if (reportErrorTimeoutRef.current) {
+      clearTimeout(reportErrorTimeoutRef.current);
+      reportErrorTimeoutRef.current = null;
+    }
 
-    window.setTimeout(() => {
-      const response = {
-        id: `agent-${Date.now()}`,
-        role: 'system' as const,
-        content: 'Acknowledged. Compiling response...',
-        timestamp: new Date()
-      };
-      setAgentMessages((prev) => [...prev, response]);
-    }, 600);
-  }, [agentInput]);
+    if (reportTimeoutRef.current) clearTimeout(reportTimeoutRef.current);
 
+    setReportError(null);
+    setReportVisible(false);
+    setReportLoading(true);
+
+    reportTimeoutRef.current = setTimeout(() => {
+      setReportLoading(false);
+      setReportVisible(true);
+    }, 5000);
+  }, [reportTarget]);
 
 
   // Auth state
@@ -597,7 +630,6 @@ const HomePage: React.FC = () => {
   const [timeR, setTimeR] = useState<number>(1e15);
 
   // Filter state
-  const [showFilters, setShowFilters] = useState(false);
   const [riskZoneOpacity, setRiskZoneOpacity] = useState({ green: 1, yellow: 1, red: 1 }); // Opacity control for risk zones
   const [hoveredRiskZone, setHoveredRiskZone] = useState<string | null>(null); // Track hovered risk zone
   const [filters, setFilters] = useState({
@@ -922,7 +954,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <>
+        <React.Fragment>
           <div style={{
             position: 'absolute',
             inset: 0
@@ -1035,7 +1067,7 @@ const HomePage: React.FC = () => {
 
                 if (e.clientY > screenHeight / 2) {
                   y = e.clientY - popupHeight - 10;
-                } else {
+            } else {
                   y = e.clientY - 10;
                 }
 
@@ -1150,280 +1182,64 @@ const HomePage: React.FC = () => {
           </div>
 
           
-          {/* Risk Zone Legend - Permanent bottom left */}
+          {/* Risk Zone Legend - Centered below globe */}
           <div style={{
             position: 'absolute',
-            bottom: '20px',
-            left: '20px',
+            bottom: '40px',
+            left: '50%',
+            transform: 'translateX(-50%)',
             zIndex: 1000,
             background: 'rgba(23, 23, 23, 0.9)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
-            borderRadius: '8px',
-            padding: '12px',
+            borderRadius: '20px',
+            padding: '16px 28px',
             backdropFilter: 'blur(10px)',
-            minWidth: '200px'
+            minWidth: '420px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 18px 40px rgba(0,0,0,0.35)'
           }}>
             <div style={{ 
               color: '#e0f2fd', 
-              fontSize: '12px', 
+              fontSize: '13px', 
               fontWeight: '600', 
-              marginBottom: '8px',
-              textAlign: 'center'
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase'
             }}>
               MARITIME RISK ZONES
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ 
-                  width: '12px', 
-                  height: '12px', 
+                  width: '16px', 
+                  height: '16px', 
                   backgroundColor: 'rgba(34, 197, 94, 0.8)', 
                   borderRadius: '2px' 
                 }}></div>
-                <span style={{ color: '#e0f2fd', fontSize: '11px' }}>Green - Safe & High ROI</span>
+                <span style={{ color: '#e0f2fd', fontSize: '12px', fontWeight: 500 }}>Safe & High ROI</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ 
-                  width: '12px', 
-                  height: '12px', 
+                  width: '16px', 
+                  height: '16px', 
                   backgroundColor: 'rgba(234, 179, 8, 0.8)', 
                   borderRadius: '2px' 
                 }}></div>
-                <span style={{ color: '#e0f2fd', fontSize: '11px' }}>Yellow - Moderate Risk</span>
+                <span style={{ color: '#e0f2fd', fontSize: '12px', fontWeight: 500 }}>Moderate Risk</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ 
-                  width: '12px', 
-                  height: '12px', 
+                  width: '16px', 
+                  height: '16px', 
                   backgroundColor: 'rgba(239, 68, 68, 0.8)', 
                   borderRadius: '2px' 
                 }}></div>
-                <span style={{ color: '#e0f2fd', fontSize: '11px' }}>Red - High Risk</span>
+                <span style={{ color: '#e0f2fd', fontSize: '12px', fontWeight: 500 }}>High Risk</span>
               </div>
             </div>
           </div>
-
-          {/* Filter Toggle Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              zIndex: 1000,
-              padding: '10px 18px',
-              background: showFilters ? 'rgba(70, 98, 171, 0.95)' : 'rgba(23, 23, 23, 0.85)',
-              color: '#e0f2fd',
-              border: '1px solid rgba(198, 218, 236, 0.35)',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: '600',
-              letterSpacing: '0.5px',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
-              backdropFilter: 'blur(12px)',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            FILTERS {showFilters ? '▼' : '▶'}
-          </button>
-
-          {/* Filter Panel */}
-          {showFilters && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '65px',
-                right: '20px',
-                zIndex: 1000,
-                width: '300px',
-                maxHeight: '75vh',
-                overflowY: 'auto',
-                background: 'rgba(16, 23, 34, 0.92)',
-                border: '1px solid rgba(198, 218, 236, 0.3)',
-                borderRadius: '12px',
-                padding: '18px',
-                boxShadow: '-8px 8px 28px rgba(10, 14, 28, 0.35)',
-                backdropFilter: 'blur(16px)',
-              }}
-            >
-              <h3 style={{ 
-                margin: '0 0 14px 0', 
-                color: '#e0f2fd', 
-                fontSize: '14px', 
-                fontWeight: '600',
-                letterSpacing: '0.5px',
-                textTransform: 'uppercase',
-                borderBottom: '1px solid rgba(198, 218, 236, 0.15)',
-                paddingBottom: '10px'
-              }}>
-                Filter Data
-              </h3>
-
-              {/* Registration Status */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
-                  REGISTRATION STATUS
-                </label>
-                <select
-                  value={filters.registered}
-                  onChange={(e) => setFilters({ ...filters, registered: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    background: 'rgba(70, 98, 171, 0.15)',
-                    border: '1px solid rgba(198, 218, 236, 0.3)',
-                    borderRadius: '6px',
-                    color: '#e0f2fd',
-                    fontSize: '13px',
-                  }}
-                >
-                  <option value="all">All Vessels</option>
-                  <option value="registered">Registered Only</option>
-                  <option value="unregistered">Unregistered Only</option>
-                </select>
-              </div>
-
-              {/* Gear Type */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
-                  GEAR TYPE
-                </label>
-                <select
-                  value={filters.gearType}
-                  onChange={(e) => setFilters({ ...filters, gearType: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    background: 'rgba(70, 98, 171, 0.15)',
-                    border: '1px solid rgba(198, 218, 236, 0.3)',
-                    borderRadius: '6px',
-                    color: '#e0f2fd',
-                    fontSize: '13px',
-                  }}
-                >
-                  <option value="all">All Types</option>
-                  <option value="trawler">Trawler</option>
-                  <option value="factory_trawler">Factory Trawler</option>
-                  <option value="longliner">Longliner</option>
-                  <option value="purse_seiner">Purse Seiner</option>
-                </select>
-              </div>
-
-
-              {/* Year Built Range */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
-                  YEAR BUILT: {filters.minYear} - {filters.maxYear}
-                </label>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <input
-                    type="number"
-                    min="2010"
-                    max="2025"
-                    value={filters.minYear}
-                    onChange={(e) => setFilters({ ...filters, minYear: parseInt(e.target.value) || 2010 })}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      background: 'rgba(70, 98, 171, 0.15)',
-                      border: '1px solid rgba(198, 218, 236, 0.3)',
-                      borderRadius: '6px',
-                      color: '#e0f2fd',
-                      fontSize: '13px',
-                    }}
-                  />
-                  <span style={{ color: '#9fb7d8' }}>to</span>
-                  <input
-                    type="number"
-                    min="2010"
-                    max="2025"
-                    value={filters.maxYear}
-                    onChange={(e) => setFilters({ ...filters, maxYear: parseInt(e.target.value) || 2025 })}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      background: 'rgba(70, 98, 171, 0.15)',
-                      border: '1px solid rgba(198, 218, 236, 0.3)',
-                      borderRadius: '6px',
-                      color: '#e0f2fd',
-                      fontSize: '13px',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Sustainability Score */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
-                  MIN SUSTAINABILITY SCORE: {filters.minSustainability}
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={filters.minSustainability}
-                  onChange={(e) => setFilters({ ...filters, minSustainability: parseInt(e.target.value) })}
-                  style={{
-                    width: '100%',
-                    accentColor: '#4662ab',
-                  }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '11px', color: '#9fb7d8' }}>
-                  <span>0</span>
-                  <span>50</span>
-                  <span>100</span>
-                </div>
-              </div>
-
-              {/* Results Count */}
-              <div style={{
-                padding: '12px',
-                background: 'rgba(70, 98, 171, 0.2)',
-                border: '1px solid rgba(198, 218, 236, 0.3)',
-                borderRadius: '8px',
-                fontSize: '13px',
-                color: '#e0f2fd',
-                textAlign: 'center',
-              }}>
-                <div style={{ fontSize: '11px', color: '#9fb7d8', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Showing
-                </div>
-                <div style={{ fontSize: '20px', fontWeight: '700', color: '#e0f2fd' }}>
-                  {filteredFishingZones.length} <span style={{ fontSize: '14px', fontWeight: '400', color: '#9fb7d8' }}>/ {fishingZones.length}</span>
-                </div>
-                <div style={{ fontSize: '11px', color: '#9fb7d8', marginTop: '2px' }}>
-                  Fishing Zones
-                </div>
-              </div>
-
-              {/* Reset Button */}
-              <button
-                onClick={() => setFilters({ 
-                  registered: 'all', 
-                  gearType: 'all', 
-                  flag: 'all', 
-                  minSustainability: 0,
-                  minYear: 2010,
-                  maxYear: 2025
-                })}
-                style={{
-                  width: '100%',
-                  marginTop: '16px',
-                  padding: '10px',
-                  background: 'rgba(252, 3, 3, 0.2)',
-                  border: '1px solid rgba(252, 3, 3, 0.5)',
-                  borderRadius: '6px',
-                  color: '#fc0303',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                }}
-              >
-                Reset All Filters
-              </button>
-            </div>
-          )}
 
           {/* Vessel information popup */}
       {hoveredVessel && popupPosition && (
@@ -1518,15 +1334,15 @@ const HomePage: React.FC = () => {
 
           {/* Fishing Zone Detailed Popup */}
           {hoveredFishingZone && fishingZonePopupPosition && (
-            <div
+          <div
               data-popup="fishing-zone-info"
-              style={{
+            style={{
                 position: 'fixed',
                 left: fishingZonePopupPosition.x,
                 top: fishingZonePopupPosition.y,
                 transform: 'translate(-50%, -50%)',
                 backgroundColor: 'rgba(23, 23, 23, 0.95)',
-                color: '#e0f2fd',
+              color: '#e0f2fd',
                 padding: '20px',
                 paddingTop: '24px',
                 borderRadius: '12px',
@@ -1547,7 +1363,7 @@ const HomePage: React.FC = () => {
                   setHoveredFishingZone(null);
                   setFishingZonePopupPosition(null);
                 }}
-                style={{
+              style={{
                   position: 'absolute',
                   top: '-12px',
                   right: '-12px',
@@ -1598,11 +1414,11 @@ const HomePage: React.FC = () => {
                 <div style={{ color: '#c0d9ef', fontSize: '11px' }}>
                   IMO: {hoveredFishingZone.vessel.imo_number}
                 </div>
-              </div>
+            </div>
 
               {/* Compact Info Row */}
               <div style={{ 
-                display: 'flex', 
+                    display: 'flex',
                 gap: '16px',
                 marginBottom: '16px',
                 fontSize: '11px'
@@ -1622,7 +1438,7 @@ const HomePage: React.FC = () => {
                              hoveredFishingZone.sustainability_score.total_score >= 60 ? '#fb923c' : '#fc0303'
                     }}>
                       {getSustainabilityGrade(hoveredFishingZone.sustainability_score.total_score)}
-                    </div>
+                </div>
                     <div style={{ fontSize: '11px', color: '#c0d9ef' }}>
                       ({hoveredFishingZone.sustainability_score.total_score}%)
                     </div>
@@ -1635,8 +1451,8 @@ const HomePage: React.FC = () => {
                 <div style={{ flex: 1 }}>
                   <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px', fontWeight: '600' }}>MODEL</div>
                   <div style={{ fontWeight: '600', fontSize: '11px' }}>{hoveredFishingZone.vessel.model}</div>
-                </div>
-              </div>
+            </div>
+          </div>
 
 
               {/* Generate Report Button */}
@@ -1645,7 +1461,7 @@ const HomePage: React.FC = () => {
                   // Generate report functionality here
                   console.log('Generating report for:', hoveredFishingZone.vessel.name);
                 }}
-                style={{
+            style={{
                   width: '100%',
                   padding: '10px 16px',
                   backgroundColor: 'rgba(70, 98, 171, 0.8)',
@@ -1683,9 +1499,9 @@ const HomePage: React.FC = () => {
               borderLeft: '1px solid rgba(198, 218, 236, 0.18)',
               boxShadow: '-12px 0 28px rgba(10, 14, 28, 0.35)',
               color: '#e0f2fd',
-              display: 'grid',
-              gridTemplateRows: 'auto 1fr',
-              gap: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
               backdropFilter: 'blur(16px)',
               transform: `translateX(${isHistoryPanelVisible ? '0' : '110%'})`,
               transition: 'transform 620ms cubic-bezier(0.23, 1, 0.32, 1)',
@@ -1693,8 +1509,8 @@ const HomePage: React.FC = () => {
               pointerEvents: isHistoryPanelVisible ? 'auto' : 'none'
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <p style={{ margin: 0, color: '#94aacd', fontSize: '0.9rem' }}>
+            <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ margin: 0, color: '#94aacd', fontSize: '0.9rem', fontWeight: 500 }}>
                 Transaction History
               </p>
 
@@ -1706,7 +1522,7 @@ const HomePage: React.FC = () => {
                   backgroundColor: 'rgba(22, 30, 46, 0.75)',
                   display: 'grid',
                   gap: '12px',
-                  maxHeight: '220px',
+                  maxHeight: '240px',
                   overflowY: 'auto'
                 }}
               >
@@ -1732,129 +1548,198 @@ const HomePage: React.FC = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
-            <div
+            <section
               style={{
                 borderRadius: '20px',
                 border: '1px solid rgba(198, 218, 236, 0.18)',
-                backgroundColor: 'rgba(18, 24, 38, 0.9)',
-                padding: '18px',
+                background: 'rgba(16, 23, 34, 0.92)',
+                padding: '24px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '14px',
-                height: '100%'
+                gap: '18px',
+                boxShadow: '-8px 12px 28px rgba(10, 14, 28, 0.25)',
+                backdropFilter: 'blur(16px)',
               }}
             >
-              <div style={{ color: '#94aacd', fontSize: '0.9rem', fontWeight: 500 }}>Agent Chat</div>
-
-              <div
-                style={{
-                  flex: 1,
-                  minHeight: 0,
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  paddingRight: '4px'
-                }}
-              >
-                {agentMessages.length === 0 ? (
-                  <div
-                    style={{
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      backgroundColor: 'rgba(27, 36, 58, 0.75)',
-                      color: '#a4b8d6',
-                      fontSize: '0.85rem'
-                    }}
-                  >
-                    Start a conversation with the agent to receive guidance.
-                  </div>
-                ) : (
-                  agentMessages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      style={{
-                        alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                        maxWidth: '80%',
-                        padding: '10px 14px',
-                        borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                        background: msg.role === 'user' ? 'rgba(70, 98, 171, 0.45)' : 'rgba(27, 36, 58, 0.8)',
-                        border: '1px solid rgba(198, 218, 236, 0.15)',
-                        color: '#eaf3ff',
-                        fontSize: '0.9rem',
-                        lineHeight: 1.4
-                      }}
-                    >
-                      <div>{msg.content}</div>
-                      <div
-                        style={{
-                          fontSize: '0.65rem',
-                          marginTop: '6px',
-                          color: '#a8bbdc',
-                          textAlign: msg.role === 'user' ? 'right' : 'left'
-                        }}
-                      >
-                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                      </div>
-                    </div>
-                  ))
-                )}
+              <div>
+                <h3 style={{ 
+                  margin: 0, 
+                  color: '#e0f2fd', 
+                  fontSize: '16px', 
+                  fontWeight: '600',
+                  letterSpacing: '0.4px'
+                }}>
+                  Filter Fleet Insights
+                </h3>
               </div>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAgentSubmit();
-                }}
-                style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}
-              >
-                <input
-                  type="text"
-                  value={agentInput}
-                  onChange={(e) => setAgentInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAgentSubmit();
-                    }
-                  }}
-                  placeholder="Type a message..."
-                  style={{
-                    flex: 1,
-                    borderRadius: '999px',
+              {/* Registration Status */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
+                  Registration Status
+                </label>
+                <select
+                  value={filters.registered}
+                  onChange={(e) => setFilters({ ...filters, registered: e.target.value })}
+                style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'rgba(70, 98, 171, 0.15)',
                     border: '1px solid rgba(198, 218, 236, 0.25)',
-                    background: 'rgba(18, 24, 38, 0.95)',
-                    padding: '12px 18px',
+                    borderRadius: '999px',
                     color: '#e0f2fd',
-                    fontSize: '0.95rem',
-                    outline: 'none'
+                    fontSize: '13px',
+                  }}
+                >
+                  <option value="all">All Vessels</option>
+                  <option value="registered">Registered Only</option>
+                  <option value="unregistered">Unregistered Only</option>
+                </select>
+              </div>
+
+              {/* Gear Type */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
+                  Gear Type
+                </label>
+                <select
+                  value={filters.gearType}
+                  onChange={(e) => setFilters({ ...filters, gearType: e.target.value })}
+                    style={{
+                    width: '100%',
+                      padding: '12px 14px',
+                    background: 'rgba(70, 98, 171, 0.15)',
+                    border: '1px solid rgba(198, 218, 236, 0.25)',
+                    borderRadius: '999px',
+                    color: '#e0f2fd',
+                    fontSize: '13px',
+                  }}
+                >
+                  <option value="all">All Types</option>
+                  <option value="trawler">Trawler</option>
+                  <option value="factory_trawler">Factory Trawler</option>
+                  <option value="longliner">Longliner</option>
+                  <option value="purse_seiner">Purse Seiner</option>
+                </select>
+                  </div>
+
+              {/* Year Built Range */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
+                  Year Built
+                </label>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    min="2010"
+                    max="2025"
+                    value={filters.minYear}
+                    onChange={(e) => setFilters({ ...filters, minYear: parseInt(e.target.value) || 2010 })}
+                      style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: 'rgba(70, 98, 171, 0.15)',
+                      border: '1px solid rgba(198, 218, 236, 0.25)',
+                      borderRadius: '10px',
+                      color: '#e0f2fd',
+                      fontSize: '13px',
+                    }}
+                  />
+                  <span style={{ color: '#9fb7d8', fontSize: '12px', fontWeight: 600 }}>to</span>
+                  <input
+                    type="number"
+                    min="2010"
+                    max="2025"
+                    value={filters.maxYear}
+                    onChange={(e) => setFilters({ ...filters, maxYear: parseInt(e.target.value) || 2025 })}
+                        style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: 'rgba(70, 98, 171, 0.15)',
+                      border: '1px solid rgba(198, 218, 236, 0.25)',
+                      borderRadius: '10px',
+                      color: '#e0f2fd',
+                      fontSize: '13px',
+                    }}
+                  />
+                      </div>
+              </div>
+
+              {/* Sustainability Score */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#9fb7d8', fontSize: '13px', fontWeight: '600' }}>
+                  Minimum Sustainability Score
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={filters.minSustainability}
+                  onChange={(e) => setFilters({ ...filters, minSustainability: parseInt(e.target.value) })}
+                  style={{
+                    width: '100%',
+                    accentColor: '#4662ab',
                   }}
                 />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '11px', color: '#9fb7d8' }}>
+                  <span>0</span>
+                  <span>50</span>
+                  <span>100</span>
+                </div>
+              </div>
+
+              {/* Results Count */}
+              <div style={{
+                padding: '16px 18px',
+                background: 'rgba(70, 98, 171, 0.18)',
+                border: '1px solid rgba(198, 218, 236, 0.25)',
+                borderRadius: '16px',
+                textAlign: 'center',
+              }}>
+                <div style={{ fontSize: '11px', color: '#9fb7d8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                  Showing
+                </div>
+                <div style={{ fontSize: '22px', fontWeight: '700', color: '#e0f2fd' }}>
+                  {filteredFishingZones.length} <span style={{ fontSize: '14px', fontWeight: '400', color: '#9fb7d8' }}>/ {fishingZones.length}</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#9fb7d8', marginTop: '4px' }}>
+                  Fishing Zones
+                </div>
+              </div>
+
+              {/* Reset Button */}
                 <button
-                  type="submit"
+                onClick={() =>
+                  setFilters({
+                    registered: 'all',
+                    gearType: 'all',
+                    flag: 'all',
+                    minSustainability: 0,
+                    minYear: 2010,
+                    maxYear: 2025
+                  })
+                }
                   style={{
+                  width: '100%',
+                  padding: '11px',
+                  background: 'rgba(252, 3, 3, 0.18)',
+                  border: '1px solid rgba(252, 3, 3, 0.35)',
                     borderRadius: '999px',
-                    padding: '0 22px',
-                    border: 'none',
-                    background: agentInput.trim()
-                      ? 'linear-gradient(135deg, #4662ab, #5f7bda)'
-                      : 'rgba(70, 98, 171, 0.4)',
-                    color: '#f4f8ff',
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    cursor: agentInput.trim() ? 'pointer' : 'not-allowed'
-                  }}
-                  disabled={!agentInput.trim()}
-                >
-                  Send
+                  color: '#ff6b6b',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Reset All Filters
                 </button>
-              </form>
-            </div>
+            </section>
           </div>
 
-        </>
+        </React.Fragment>
       )}
     </div>
   );
