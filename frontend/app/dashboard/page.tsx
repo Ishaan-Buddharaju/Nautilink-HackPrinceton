@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'; // Added useCallback, useMemo
 import * as topojson from 'topojson-client';
 import { useAuth } from '../../hooks/useAuth';
@@ -113,6 +114,53 @@ const getTransactionEdgeColor = (txId: string): string => {
   return colorMap[txId] || 'rgba(0, 255, 0, 0.7)'; // Default green
 };
 
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'vessel';
+
+const hashString = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+};
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const formatISODate = (date: Date) => date.toISOString().slice(0, 10);
+
+const formatHumanDate = (date: Date) =>
+  date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+
+const toCardinal = (value: number, type: 'lat' | 'lng') => {
+  const absVal = Math.abs(value).toFixed(1);
+  if (type === 'lat') {
+    return `${absVal}° ${value >= 0 ? 'N' : 'S'}`;
+  }
+  return `${absVal}° ${value >= 0 ? 'E' : 'W'}`;
+};
+
+const toTitleCase = (value: string) =>
+  value
+    .toLowerCase()
+    .split(' ')
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
+
+const getSustainabilityLabel = (score: number) => {
+  if (score >= 85) return 'Excellent';
+  if (score >= 70) return 'Moderate';
+  return 'Needs Review';
+};
+
 // Maritime Risk/ROI Zone Classifications - Pinpoint-based with radii
 const MARITIME_RISK_ZONES = {
   green: [
@@ -187,7 +235,7 @@ const getRiskZone = (lat: number, lng: number): 'green' | 'yellow' | 'red' | nul
 
 // Generate circular polygon data for risk zone overlays
 const generateRiskZonePolygons = () => {
-  const polygons: RiskPolygon[] = [];
+  const polygons: any[] = [];
   
   Object.entries(MARITIME_RISK_ZONES).forEach(([risk, zones]) => {
     const riskKey = risk as 'green' | 'yellow' | 'red';
@@ -222,6 +270,7 @@ const generateRiskZonePolygons = () => {
 };
 
 const HomePage: React.FC = () => {
+  const router = useRouter();
   const GREEN = "#2eb700";
   const RED = "#fc0303";
   const DARK_RED = "#bf0202";
@@ -606,32 +655,129 @@ const HomePage: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionNodes, setTransactionNodes] = useState<TransactionNode[]>([]);
   const [transactionEdges, setTransactionEdges] = useState<any[]>([]);
+  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]); // Filter by transaction IDs
   const [isDataLoaded, setIsDataLoaded] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(false);
   const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
   const [reportTarget, setReportTarget] = useState<
     { type: 'zone'; data: any } | { type: 'vessel'; data: VesselData } | null
   >(null);
-  const [reportVisible, setReportVisible] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
+  const [latestReportMeta, setLatestReportMeta] = useState<{ id: string; title: string } | null>(null);
   const reportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reportErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const buildVesselTemplateReport = useCallback((target: any) => {
+    if (!target || !target.vessel) return null;
+
+    const vessel = target.vessel;
+    const now = new Date();
+    const slug = `report-${slugify(vessel.name || 'vessel')}`;
+    const score = target.sustainability_score?.total_score ?? 70;
+    const grade = getSustainabilityGrade(score);
+    const badgeColor = score >= 85 ? '#34d399' : score >= 70 ? '#f59e0b' : '#f87171';
+    const yearBuilt = vessel.year_built ?? now.getFullYear();
+    const yearsActive = Math.max(1, now.getFullYear() - yearBuilt);
+    const normalizedFlag = toTitleCase(vessel.flag_state ?? 'International');
+    const tonnageSeed = 3200 + (hashString(vessel.name || '') % 1800);
+    const crewSeed = 26 + (hashString(`${vessel.name}-crew`) % 18);
+
+    const categoriesEntry = target.sustainability_score?.categories ?? {};
+    const categoryEntries = Object.entries(categoriesEntry).map(([key, value]: any) => {
+      const val = value?.score ?? 0;
+      return {
+        label: toTitleCase(key.replace(/_/g, ' ')),
+        value: val,
+        color: val >= 80 ? '#34d399' : val >= 70 ? '#f59e0b' : '#f87171'
+      };
+    });
+
+    const summaryParagraphs = [
+      `${vessel.name} remains under continuous monitoring across the ${target.name} corridor with ${normalizedFlag} registry compliance. Current telemetry places the vessel at ${score}/100 operational readiness.`,
+      `The ${vessel.model ?? 'fleet flagship'} platform (built ${yearBuilt}) completed efficiency retrofits that improved net fuel performance by ${(target.sustainability_score?.categories?.vessel_efficiency?.score ?? 68) / 2 | 0}% and reinforced cold-chain integrity.`,
+      `Ledger analytics show no unresolved deviations over the last 90 days. Supply nodes trace back through ${normalizedFlag} cooperative hubs to maintain cargo transparency and crew welfare attestations.`
+    ];
+
+    const transactionHistory = [
+      {
+        date: formatISODate(now),
+        type: 'Catch Ledger Sync',
+        location: target.name,
+        notes: `${vessel.name} synchronized manifests with blockchain nodes after offshore patrol duties.`,
+        status: 'Cleared'
+      },
+      {
+        date: formatISODate(new Date(now.getTime() - 6 * 24 * 3600 * 1000)),
+        type: 'Inspection Audit',
+        location: `${normalizedFlag} Coastal Authority`,
+        notes: `Randomized welfare and gear inspection completed. No deficiencies recorded.`,
+        status: 'Passed'
+      },
+      {
+        date: formatISODate(new Date(now.getTime() - 14 * 24 * 3600 * 1000)),
+        type: 'Supply Chain Trace',
+        location: target.name,
+        notes: `Confirmed traceability across ${Math.max(3, 5 + categoryEntries.length)} network nodes with ${score >= 80 ? 'high' : 'moderate'} integrity.`,
+        status: 'Resolved'
+      }
+    ];
+
+    const templateData = {
+      layout: 'template-vessel',
+      lastUpdated: formatHumanDate(now),
+      vesselProfile: {
+        name: vessel.name,
+        imo: vessel.imo_number ?? 'N/A',
+        nationality: normalizedFlag,
+        homePort: `${normalizedFlag} Deepwater Terminal`,
+        owner: `${normalizedFlag} Maritime Cooperative`,
+        vesselModel: vessel.model ?? 'Unknown model',
+        builtYear: yearBuilt,
+        yearsAtSea: yearsActive,
+        tonnage: `${Math.round(tonnageSeed / 10) * 10} GT`,
+        crewCount: crewSeed,
+        region: target.name
+      },
+      coordinates: { lat: target.lat, lng: target.lng },
+      summaryParagraphs,
+      sustainabilitySnapshot: {
+        score,
+        grade,
+        badgeColor,
+        categories: categoryEntries
+      },
+      transactionHistory,
+      reservedNote:
+        'Future spotlight for crew interviews, ESG partner attestations, or satellite anomaly overlays. Add findings here when available.',
+      chatIntro: `ask me about ${vessel.name} or how to break down the ${target.name} insights`
+    };
+
+    const listEntry = {
+      id: slug,
+      title: vessel.name,
+      date: formatISODate(now),
+      clearance: 'Confidential',
+      sustainabilityScore: score,
+      sustainabilityLabel: getSustainabilityLabel(score)
+    };
+
+    return { slug, templateData, listEntry };
+  }, []);
   const historyEntries = useMemo(
     () =>
-      [
-        { id: 'txn-3', timestamp: '2025-11-08T06:42:00Z' },
-        { id: 'txn-2', timestamp: '2025-11-08T06:15:00Z' },
-        { id: 'txn-1', timestamp: '2025-11-08T05:52:30Z' }
-      ].sort(
+      transactions.map((tx, idx) => ({
+        id: tx.tx_id,
+        timestamp: new Date(Date.now() - idx * 3600000).toISOString(), // 1 hour apart
+        status: tx.status
+      })).sort(
         (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       ),
-    []
+    [transactions]
   );
 
   const handleGenerateReport = useCallback(() => {
-    if (!reportTarget) {
-      setReportError('Select a vessel or fishing zone first to generate a report.');
+    if (!reportTarget || reportTarget.type !== 'vessel') {
+      setReportError('Select a vessel marker first to generate a report.');
       if (reportErrorTimeoutRef.current) clearTimeout(reportErrorTimeoutRef.current);
       reportErrorTimeoutRef.current = setTimeout(() => setReportError(null), 3500);
       return;
@@ -645,15 +791,74 @@ const HomePage: React.FC = () => {
     if (reportTimeoutRef.current) clearTimeout(reportTimeoutRef.current);
 
     setReportError(null);
-    setReportVisible(false);
     setReportLoading(true);
 
-    reportTimeoutRef.current = setTimeout(() => {
-      setReportLoading(false);
-      setReportVisible(true);
-    }, 5000);
-  }, [reportTarget]);
+    const generated = buildVesselTemplateReport(reportTarget.data);
 
+    if (!generated) {
+      setReportLoading(false);
+      setReportError('Unable to generate a report for this selection.');
+      return;
+    }
+
+    reportTimeoutRef.current = setTimeout(() => {
+      try {
+        if (typeof window === 'undefined') {
+          throw new Error('Report generation requires a browser environment.');
+        }
+
+        const { slug, templateData, listEntry } = generated;
+
+        window.localStorage.setItem(`report_json_${slug}`, JSON.stringify(templateData));
+        window.localStorage.setItem(`report_title_${slug}`, templateData.vesselProfile.name);
+
+        const indexKey = 'custom_reports_index';
+        const storedIndex = window.localStorage.getItem(indexKey);
+        let parsedIndex: any[] = [];
+        if (storedIndex) {
+          try {
+            parsedIndex = JSON.parse(storedIndex);
+            if (!Array.isArray(parsedIndex)) parsedIndex = [];
+          } catch (err) {
+            parsedIndex = [];
+          }
+        }
+
+        const existingIndex = parsedIndex.findIndex((entry) => entry.id === listEntry.id);
+        if (existingIndex >= 0) {
+          parsedIndex[existingIndex] = listEntry;
+        } else {
+          parsedIndex.unshift(listEntry);
+        }
+
+        window.localStorage.setItem(indexKey, JSON.stringify(parsedIndex));
+
+        setLatestReportMeta({ id: slug, title: templateData.vesselProfile.name });
+        setReportLoading(false);
+        setReportTarget(null);
+        setHoveredFishingZone(null);
+        reportTimeoutRef.current = null;
+        router.push(`/database/${slug}`);
+      } catch (error) {
+        console.error('[Dashboard] Failed to persist generated report', error);
+        setReportError('Failed to save the generated report locally.');
+        if (reportErrorTimeoutRef.current) clearTimeout(reportErrorTimeoutRef.current);
+        reportErrorTimeoutRef.current = setTimeout(() => setReportError(null), 4000);
+        setReportLoading(false);
+        reportTimeoutRef.current = null;
+      }
+    }, 5000);
+  }, [reportTarget, buildVesselTemplateReport, router]);
+
+  const toggleTransactionFilter = useCallback((txId: string) => {
+    setSelectedTransactions(prev => {
+      if (prev.includes(txId)) {
+        return prev.filter(id => id !== txId); // Deselect
+      } else {
+        return [...prev, txId]; // Select
+      }
+    });
+  }, []);
 
   // Auth state
   const { user, hasAnyRole } = useAuth();
@@ -871,12 +1076,14 @@ const HomePage: React.FC = () => {
         setTransactions(data.transactions);
         
         // Flatten all nodes with transaction ID prefix
-        const allNodes: TransactionNode[] = [];
+        const allNodes: any[] = [];
         data.transactions.forEach((tx: Transaction) => {
           tx.nodes.forEach((node: TransactionNode) => {
             allNodes.push({
               ...node,
-              id: `${tx.tx_id}-${node.id}`
+              id: `${tx.tx_id}-${node.id}`,
+              originalId: node.id,
+              tx_id: tx.tx_id
             });
           });
         });
@@ -1095,7 +1302,27 @@ const HomePage: React.FC = () => {
 
           showGraticules={true}
 
-          htmlElementsData={[...filteredFishingZones, ...clusteredData, ...transactionNodes]}
+          htmlElementsData={(() => {
+            // When transactions are selected, hide boats and only show transaction nodes
+            if (selectedTransactions.length > 0) {
+              const filtered = transactionNodes.filter((node: any) => {
+                const included = selectedTransactions.includes(node.tx_id);
+                console.log(`Node ${node.id} (tx: ${node.tx_id}): ${included ? 'SHOW' : 'HIDE'}`);
+                return included;
+              });
+              
+              console.log(`Total nodes: ${transactionNodes.length}, Filtered: ${filtered.length}, Selected TXs: [${selectedTransactions.join(', ')}]`);
+              
+              return [...filtered];
+            }
+            
+            // When no transactions selected, show boats and all transaction nodes
+            return [
+              ...filteredFishingZones, 
+              ...clusteredData, 
+              ...transactionNodes
+            ];
+          })()}
           htmlElement={(d: any) => {
             const el = document.createElement('div');
             el.style.pointerEvents = 'auto';
@@ -1148,7 +1375,7 @@ const HomePage: React.FC = () => {
 
                 if (e.clientY > screenHeight / 2) {
                   y = e.clientY - popupHeight - 10;
-                } else {
+            } else {
                   y = e.clientY - 10;
                 }
 
@@ -1193,6 +1420,7 @@ const HomePage: React.FC = () => {
                 e.stopPropagation();
                 
                 setHoveredFishingZone(d);
+                setReportTarget({ type: 'vessel', data: d });
                 
                 const popupHeight = 420;
                 const popupWidth = 360;
@@ -1311,7 +1539,10 @@ const HomePage: React.FC = () => {
             }
           }}
 
-          arcsData={transactionEdges}
+          arcsData={selectedTransactions.length > 0 
+            ? transactionEdges.filter((edge: any) => selectedTransactions.includes(edge.tx_id))
+            : transactionEdges
+          }
           arcStartLat={(d: any) => d.startLat}
           arcStartLng={(d: any) => d.startLng}
           arcEndLat={(d: any) => d.endLat}
@@ -1334,30 +1565,6 @@ const HomePage: React.FC = () => {
           }}
           onZoom={() => { handleZoom(); }}
         />
-          </div>
-
-          
-          {/* Transaction Network Debug Panel */}
-          <div style={{
-            position: 'absolute',
-            bottom: '160px',
-            left: '20px',
-            zIndex: 1000,
-            background: 'rgba(0, 255, 0, 0.2)',
-            border: '2px solid #00ff00',
-            borderRadius: '8px',
-            padding: '12px',
-            backdropFilter: 'blur(10px)',
-            minWidth: '200px'
-          }}>
-            <div style={{ color: '#00ff00', fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>
-              TRANSACTION NETWORK
-            </div>
-            <div style={{ color: '#ffffff', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div>Nodes: {transactionNodes.length}</div>
-              <div>Edges: {transactionEdges.length}</div>
-              <div>Transactions: {transactions.length}</div>
-            </div>
           </div>
 
           {/* Risk Zone Legend - Permanent bottom left */}
@@ -1421,8 +1628,22 @@ const HomePage: React.FC = () => {
 
           {/* Vessel information popup */}
       {hoveredVessel && popupPosition && (
+        <>
+          {/* Backdrop to close popup */}
+          <div
+            onClick={() => {
+              setHoveredVessel(null);
+              setPopupPosition(null);
+            }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 999
+            }}
+          />
         <div
           data-popup="vessel-info"
+            onClick={(e) => e.stopPropagation()}
           style={{
             position: 'fixed',
             left: popupPosition.x,
@@ -1481,40 +1702,56 @@ const HomePage: React.FC = () => {
           }
 
 
-          <button
-            onClick={() => {
-              setHoveredVessel(null);
-              setPopupPosition(null);
-            }}
-            style={{
-              width: '100%',
-              padding: '10px 16px',
+            <button
+              onClick={() => {
+                setHoveredVessel(null);
+                setPopupPosition(null);
+              }}
+              style={{
+                width: '100%',
+                padding: '10px 16px',
               backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              color: 'white',
+                color: 'white',
               border: '1px solid rgba(255, 255, 255, 0.3)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '13px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px',
               fontWeight: '500',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-            }}
-            onMouseLeave={(e) => {
+              }}
+              onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-            }}
-          >
+              }}
+            >
             Close
-          </button>
+            </button>
         </div>
+        </>
       )}
 
           {/* Fishing Zone Detailed Popup */}
           {hoveredFishingZone && fishingZonePopupPosition && (
-          <div
-              data-popup="fishing-zone-info"
-            style={{
+            <>
+              {/* Backdrop to close popup */}
+              <div
+                onClick={() => {
+                  setHoveredFishingZone(null);
+                  setReportTarget(null);
+                  setFishingZonePopupPosition(null);
+                }}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 999
+                }}
+              />
+              <div
+                data-popup="fishing-zone-info"
+                onClick={(e) => e.stopPropagation()}
+                style={{
                 position: 'fixed',
                 left: fishingZonePopupPosition.x,
                 top: fishingZonePopupPosition.y,
@@ -1536,9 +1773,10 @@ const HomePage: React.FC = () => {
             >
               {/* Header with vessel name */}
               {/* Overlapping X Circle */}
-              <button
-                onClick={() => {
+          <button
+            onClick={() => {
                   setHoveredFishingZone(null);
+                  setReportTarget(null);
                   setFishingZonePopupPosition(null);
                 }}
               style={{
@@ -1635,38 +1873,58 @@ const HomePage: React.FC = () => {
 
               {/* Generate Report Button */}
               <button
-                onClick={() => {
-                  // Generate report functionality here
-                  console.log('Generating report for:', hoveredFishingZone.vessel.name);
-                }}
+                onClick={handleGenerateReport}
+                disabled={reportLoading}
             style={{
-                  width: '100%',
-                  padding: '10px 16px',
-                  backgroundColor: 'rgba(70, 98, 171, 0.8)',
-                  color: 'white',
+              width: '100%',
+              padding: '10px 16px',
+                  backgroundColor: reportLoading ? 'rgba(70, 98, 171, 0.35)' : 'rgba(70, 98, 171, 0.8)',
+                  color: reportLoading ? 'rgba(224, 242, 253, 0.7)' : '#ffffff',
                   border: '1px solid rgba(70, 98, 171, 1)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
+              borderRadius: '6px',
+                  cursor: reportLoading ? 'wait' : 'pointer',
+              fontSize: '13px',
                   fontWeight: '600',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+                  if (reportLoading) return;
                   e.currentTarget.style.backgroundColor = 'rgba(70, 98, 171, 1)';
-                }}
-                onMouseLeave={(e) => {
+            }}
+            onMouseLeave={(e) => {
+                  if (reportLoading) return;
                   e.currentTarget.style.backgroundColor = 'rgba(70, 98, 171, 0.8)';
-                }}
-              >
-                Generate Report
-              </button>
-            </div>
-          )}
+            }}
+          >
+                {reportLoading ? 'Generating…' : 'Generate Report'}
+          </button>
+              {reportError && (
+                <p style={{ marginTop: '10px', fontSize: '11px', color: '#f87171', textAlign: 'center' }}>
+                  {reportError}
+                </p>
+              )}
+        </div>
+            </>
+      )}
 
           {/* Transaction Node Popup */}
           {hoveredTransactionNode && transactionNodePopupPosition && (
-            <div
-              data-popup="transaction-node-info"
+            <>
+              {/* Backdrop to close popup */}
+          <div
+                onClick={() => {
+                  setHoveredTransactionNode(null);
+                  setTransactionNodePopupPosition(null);
+                }}
+            style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 999
+                }}
+              />
+              <div
+                data-popup="transaction-node-info"
+                onClick={(e) => e.stopPropagation()}
               style={{
                 position: 'fixed',
                 left: transactionNodePopupPosition.x,
@@ -1692,7 +1950,7 @@ const HomePage: React.FC = () => {
                   setHoveredTransactionNode(null);
                   setTransactionNodePopupPosition(null);
                 }}
-                style={{
+                  style={{
                   position: 'absolute',
                   top: '-12px',
                   right: '-12px',
@@ -1705,7 +1963,7 @@ const HomePage: React.FC = () => {
                   fontSize: '16px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
-                  display: 'flex',
+                    display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.2s ease',
@@ -1740,8 +1998,8 @@ const HomePage: React.FC = () => {
                 </div>
                 <div style={{ color: '#c0d9ef', fontSize: '11px' }}>
                   Supply Chain Node
-                </div>
-              </div>
+            </div>
+          </div>
 
               {/* Node Type */}
               <div style={{ 
@@ -1770,45 +2028,8 @@ const HomePage: React.FC = () => {
               <div style={{ marginBottom: '12px' }}>
                 <strong style={{ color: '#ffffff' }}>Altitude:</strong> {hoveredTransactionNode.alt.toFixed(3)}
               </div>
-
-              {/* Shape indicator */}
-              <div style={{ marginBottom: '12px' }}>
-                <strong style={{ color: '#ffffff' }}>Shape:</strong> {hoveredTransactionNode.shape_top}
-              </div>
-
-              {/* Size */}
-              <div style={{ marginBottom: '16px' }}>
-                <strong style={{ color: '#ffffff' }}>Size:</strong> {hoveredTransactionNode.size.toFixed(2)}
-              </div>
-
-              {/* Close button at bottom */}
-              <button
-                onClick={() => {
-                  setHoveredTransactionNode(null);
-                  setTransactionNodePopupPosition(null);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '10px 16px',
-                  backgroundColor: 'rgba(0, 255, 0, 0.15)',
-                  color: '#00ff00',
-                  border: '1px solid rgba(0, 255, 0, 0.4)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.25)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.15)';
-                }}
-              >
-                Close
-              </button>
             </div>
+            </>
           )}
 
 
@@ -1835,10 +2056,24 @@ const HomePage: React.FC = () => {
               pointerEvents: isHistoryPanelVisible ? 'auto' : 'none'
             }}
           >
-            <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <p style={{ margin: 0, color: '#94aacd', fontSize: '0.9rem', fontWeight: 500 }}>
+            <section style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: '0 0 auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <p style={{ margin: 0, color: '#94aacd', fontSize: '0.9rem', fontWeight: 500 }}>
                 Transaction History
               </p>
+                {selectedTransactions.length > 0 && (
+                  <span style={{ 
+                    fontSize: '0.75rem', 
+                    color: '#4662ab',
+                    backgroundColor: 'rgba(70, 98, 171, 0.2)',
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    fontWeight: 600
+                  }}>
+                    {selectedTransactions.length} selected
+                  </span>
+                )}
+              </div>
 
               <div
                 style={{
@@ -1848,45 +2083,93 @@ const HomePage: React.FC = () => {
                   backgroundColor: 'rgba(22, 30, 46, 0.75)',
                   display: 'grid',
                   gap: '12px',
-                  maxHeight: '240px',
+                  maxHeight: '180px',
                   overflowY: 'auto'
                 }}
               >
-                {historyEntries.map((entry, idx) => (
+                {historyEntries.map((entry, idx) => {
+                  const isSelected = selectedTransactions.includes(entry.id);
+                  return (
                   <div
                     key={entry.id}
+                      onClick={() => toggleTransactionFilter(entry.id)}
                     style={{
                       borderRadius: '14px',
                       padding: '12px 14px',
-                      backgroundColor: 'rgba(27, 36, 58, 0.85)',
-                      border: '1px solid rgba(198, 218, 236, 0.18)',
+                        backgroundColor: isSelected ? 'rgba(70, 98, 171, 0.45)' : 'rgba(27, 36, 58, 0.85)',
+                        border: isSelected ? '2px solid rgba(70, 98, 171, 0.8)' : '1px solid rgba(198, 218, 236, 0.18)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '6px'
-                    }}
-                  >
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e8f3ff' }}>
-                      {`Transaction #${idx + 1}`}
+                        gap: '6px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        transform: isSelected ? 'scale(1.02)' : 'scale(1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = 'rgba(27, 36, 58, 1)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = 'rgba(27, 36, 58, 0.85)';
+                        }
+                      }}
+                    >
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: isSelected ? '#ffffff' : '#e8f3ff' }}>
+                        {entry.id} {isSelected && '✓'}
                     </span>
-                    <span style={{ fontSize: '0.82rem', color: '#b7c9e4', lineHeight: 1.35 }}>
-                      {new Date(entry.timestamp).toISOString().replace('T', ', ').replace('Z', '').slice(0, -3)}
+                      <span style={{ fontSize: '0.75rem', color: '#b7c9e4', lineHeight: 1.35 }}>
+                        Status: <span style={{ 
+                          color: entry.status === 'complete' ? '#00ff00' : '#ff8800',
+                          fontWeight: 600
+                        }}>{entry.status}</span>
                     </span>
                   </div>
-                ))}
-              </div>
+                  );
+                })}
+            </div>
+
+              {selectedTransactions.length > 0 && (
+                <button
+                  onClick={() => setSelectedTransactions([])}
+              style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'rgba(252, 3, 3, 0.15)',
+                    border: '1px solid rgba(252, 3, 3, 0.3)',
+                    borderRadius: '8px',
+                    color: '#ff6b6b',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(252, 3, 3, 0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(252, 3, 3, 0.15)';
+                  }}
+                >
+                  Clear Selection
+                </button>
+              )}
             </section>
 
             <section
-              style={{
+                style={{
                 borderRadius: '20px',
                 border: '1px solid rgba(198, 218, 236, 0.18)',
                 background: 'rgba(16, 23, 34, 0.92)',
                 padding: '24px',
-                display: 'flex',
-                flexDirection: 'column',
+                  display: 'flex',
+                  flexDirection: 'column',
                 gap: '18px',
                 boxShadow: '-8px 12px 28px rgba(10, 14, 28, 0.25)',
                 backdropFilter: 'blur(16px)',
+                flex: '1 1 auto',
+                minHeight: 0,
+                overflowY: 'auto'
               }}
             >
               <div>
@@ -1909,9 +2192,9 @@ const HomePage: React.FC = () => {
                 <select
                   value={filters.registered}
                   onChange={(e) => setFilters({ ...filters, registered: e.target.value })}
-                style={{
+                    style={{
                     width: '100%',
-                    padding: '12px 14px',
+                      padding: '12px 14px',
                     background: 'rgba(70, 98, 171, 0.15)',
                     border: '1px solid rgba(198, 218, 236, 0.25)',
                     borderRadius: '999px',
@@ -1923,7 +2206,7 @@ const HomePage: React.FC = () => {
                   <option value="registered">Registered Only</option>
                   <option value="unregistered">Unregistered Only</option>
                 </select>
-              </div>
+                  </div>
 
               {/* Gear Type */}
               <div>
@@ -1933,7 +2216,7 @@ const HomePage: React.FC = () => {
                 <select
                   value={filters.gearType}
                   onChange={(e) => setFilters({ ...filters, gearType: e.target.value })}
-                    style={{
+                      style={{
                     width: '100%',
                       padding: '12px 14px',
                     background: 'rgba(70, 98, 171, 0.15)',
@@ -1949,7 +2232,7 @@ const HomePage: React.FC = () => {
                   <option value="longliner">Longliner</option>
                   <option value="purse_seiner">Purse Seiner</option>
                 </select>
-                  </div>
+              </div>
 
               {/* Year Built Range */}
               <div>
@@ -1957,7 +2240,7 @@ const HomePage: React.FC = () => {
                   Year Built
                 </label>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <input
+                <input
                     type="number"
                     min="2010"
                     max="2025"
@@ -1980,13 +2263,13 @@ const HomePage: React.FC = () => {
                     max="2025"
                     value={filters.maxYear}
                     onChange={(e) => setFilters({ ...filters, maxYear: parseInt(e.target.value) || 2025 })}
-                        style={{
-                      flex: 1,
+                  style={{
+                    flex: 1,
                       padding: '10px',
                       background: 'rgba(70, 98, 171, 0.15)',
-                      border: '1px solid rgba(198, 218, 236, 0.25)',
+                    border: '1px solid rgba(198, 218, 236, 0.25)',
                       borderRadius: '10px',
-                      color: '#e0f2fd',
+                    color: '#e0f2fd',
                       fontSize: '13px',
                     }}
                   />
