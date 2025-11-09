@@ -20,7 +20,14 @@ except ImportError:
 
 from config import settings
 from supabase import create_client
-from posts.solana_simple import build_create_crate_transaction, build_transfer_ownership_transaction, PROGRAM_ID, SOLANA_RPC_URL, load_program
+from posts.solana_simple import (
+    build_create_crate_transaction,
+    build_transfer_ownership_transaction,
+    PROGRAM_ID,
+    SOLANA_RPC_URL
+)
+# Keep load_program from the old module for legacy endpoints
+from posts.solana import load_program
 
 router = APIRouter(prefix="/web3", tags=["web3"])
 security = HTTPBearer()
@@ -29,10 +36,10 @@ security = HTTPBearer()
 supabase_auth: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
 
 # Initialize Supabase client for database/storage operations
-# Use service role key if available for admin operations, otherwise use anon key
+# Use anon key for now (service role key is optional)
 supabase_db: Client = create_client(
     settings.SUPABASE_URL,
-    settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_ANON_KEY
+    settings.SUPABASE_ANON_KEY
 )
 
 
@@ -1226,7 +1233,6 @@ async def transfer_ownership(
         print(f"Server authority wallet: {solana_wallet}")
         
         # Fund the authority wallet on devnet (only works on devnet/testnet)
-        from posts.solana import SOLANA_RPC_URL
         if "devnet" in SOLANA_RPC_URL or "testnet" in SOLANA_RPC_URL:
             print("Requesting airdrop for authority wallet...")
             client_temp = AsyncClient(SOLANA_RPC_URL)
