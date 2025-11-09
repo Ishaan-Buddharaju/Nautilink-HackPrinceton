@@ -152,12 +152,14 @@ def test_create_crate(auth_token, wallet_keypair):
             # Get the transaction
             tx_base64 = data.get("transaction")
             crate_pubkey = data.get("crate_pubkey")
+            crate_keypair_b64 = data.get("crate_keypair")
             
             print_result("API build transaction", True, f"Crate pubkey: {crate_pubkey}")
             
             # Sign and send transaction
             from solana.rpc.api import Client
             from solders.transaction import VersionedTransaction
+            from solders.keypair import Keypair as SoldersKeypair
             import base64
             
             client = Client(SOLANA_RPC)
@@ -166,11 +168,20 @@ def test_create_crate(auth_token, wallet_keypair):
             tx_bytes = base64.b64decode(tx_base64)
             tx = VersionedTransaction.from_bytes(tx_bytes)
             
-            # Sign transaction
-            tx.sign([wallet_keypair], tx.message.recent_blockhash)
+            # Decode crate keypair for signing
+            crate_keypair_bytes = base64.b64decode(crate_keypair_b64)
+            crate_keypair = SoldersKeypair.from_bytes(crate_keypair_bytes)
+            
+            # Sign the message with both keypairs
+            message_to_sign = bytes(tx.message)
+            sig1 = crate_keypair.sign_message(message_to_sign)
+            sig2 = wallet_keypair.sign_message(message_to_sign)
+            
+            # Create signed transaction
+            signed_tx = VersionedTransaction.populate(tx.message, [sig1, sig2])
             
             # Send transaction
-            result = client.send_raw_transaction(bytes(tx))
+            result = client.send_raw_transaction(bytes(signed_tx))
             signature = str(result.value)
             
             print_result("Submit transaction", True, f"Signature: {signature[:16]}...")
@@ -239,13 +250,15 @@ def test_transfer_ownership(auth_token, wallet_keypair, parent_crate_pubkey):
             
             # Get the transaction
             tx_base64 = data.get("transaction")
-            new_crate_pubkey = data.get("new_crate_pubkey")
+            new_crate_pubkey = data.get("crate_pubkey")
+            crate_keypair_b64 = data.get("crate_keypair")
             
             print_result("API build transfer transaction", True, f"New crate: {new_crate_pubkey}")
             
             # Sign and send transaction
             from solana.rpc.api import Client
             from solders.transaction import VersionedTransaction
+            from solders.keypair import Keypair as SoldersKeypair
             import base64
             
             client = Client(SOLANA_RPC)
@@ -254,11 +267,16 @@ def test_transfer_ownership(auth_token, wallet_keypair, parent_crate_pubkey):
             tx_bytes = base64.b64decode(tx_base64)
             tx = VersionedTransaction.from_bytes(tx_bytes)
             
-            # Sign transaction
-            tx.sign([wallet_keypair], tx.message.recent_blockhash)
+            # Decode crate keypair for signing
+            crate_keypair_bytes = base64.b64decode(crate_keypair_b64)
+            crate_keypair = SoldersKeypair.from_bytes(crate_keypair_bytes)
+            
+            # Sign with both keypairs
+            signers = [crate_keypair, wallet_keypair]
+            signed_tx = VersionedTransaction.populate(tx.message, signers)
             
             # Send transaction
-            result = client.send_raw_transaction(bytes(tx))
+            result = client.send_raw_transaction(bytes(signed_tx))
             signature = str(result.value)
             
             print_result("Submit transfer transaction", True, f"Signature: {signature[:16]}...")

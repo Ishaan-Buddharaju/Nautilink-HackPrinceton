@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    PROGRAM_ID: Optional[str] = None
     
     class Config:
         env_file = ".env"

@@ -8,7 +8,7 @@ import httpx
 
 from config import settings
 from supabase import create_client
-from posts.solana import build_create_crate_transaction, build_transfer_ownership_transaction
+from posts.solana_simple import build_create_crate_transaction, build_transfer_ownership_transaction
 
 router = APIRouter(prefix="/web3", tags=["web3"])
 security = HTTPBearer()
