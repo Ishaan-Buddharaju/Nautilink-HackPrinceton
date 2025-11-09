@@ -85,6 +85,34 @@ const getSustainabilityGrade = (score: number) => {
   return 'F';
 };
 
+// Get color by node type for transaction visualization
+const getNodeColorByType = (type: string): string => {
+  const typeUpper = type.toUpperCase();
+  if (typeUpper.includes('HARVEST')) return '#ff0000'; // Red
+  if (typeUpper.includes('LANDING') || typeUpper.includes('FISHERY')) return '#ff8800'; // Orange
+  if (typeUpper.includes('STORAGE') || typeUpper.includes('TRANSIT')) return '#808080'; // Gray
+  if (typeUpper.includes('PROCESSING')) return '#0088ff'; // Blue
+  if (typeUpper.includes('EXPORT')) return '#00ff00'; // Green
+  if (typeUpper.includes('IMPORT') || typeUpper.includes('WHOLESALE')) return '#ffd700'; // Gold
+  if (typeUpper.includes('RETAIL')) return '#ffffff'; // White
+  return '#ffffff'; // Default white
+};
+
+// Get distinct edge color for each transaction with opacity
+const getTransactionEdgeColor = (txId: string): string => {
+  const colorMap: { [key: string]: string } = {
+    'TX-SHAME-001': 'rgba(255, 0, 102, 0.7)',    // Pink/Red
+    'TX-X-101': 'rgba(0, 255, 255, 0.7)',        // Cyan
+    'TX-X-102': 'rgba(255, 0, 255, 0.7)',        // Magenta
+    'TX-X-103': 'rgba(255, 255, 0, 0.7)',        // Yellow
+    'TX-X-OPT-A': 'rgba(0, 255, 136, 0.7)',      // Teal
+    'TX-X-OPT-B': 'rgba(255, 136, 0, 0.7)',      // Orange
+    'TX-BACKUP-1': 'rgba(136, 0, 255, 0.7)',     // Purple
+    'TX-BACKUP-2': 'rgba(255, 68, 0, 0.7)'       // Red-Orange
+  };
+  return colorMap[txId] || 'rgba(0, 255, 0, 0.7)'; // Default green
+};
+
 // Maritime Risk/ROI Zone Classifications - Pinpoint-based with radii
 const MARITIME_RISK_ZONES = {
   green: [
@@ -1171,7 +1199,7 @@ const HomePage: React.FC = () => {
               circle.setAttribute('cx', '12');
               circle.setAttribute('cy', '9');
               circle.setAttribute('r', '4.5');
-              circle.setAttribute('fill', d.color || '#2eb700');
+              circle.setAttribute('fill', getNodeColorByType(d.type));
               
               svg.appendChild(path);
               svg.appendChild(circle);
@@ -1366,8 +1394,8 @@ const HomePage: React.FC = () => {
           arcStartLng={(d: any) => d.startLng}
           arcEndLat={(d: any) => d.endLat}
           arcEndLng={(d: any) => d.endLng}
-          arcColor={() => 'rgba(0, 255, 0, 0.4)'}
-          arcStroke={0.3}
+          arcColor={(d: any) => getTransactionEdgeColor(d.tx_id)}
+          arcStroke={0.5}
           arcDashLength={(d: any) => d.dashed ? 0.3 : 1}
           arcDashGap={(d: any) => d.dashed ? 0.15 : 0}
           arcDashAnimateTime={(d: any) => d.dashed ? 1500 : 0}
@@ -1998,7 +2026,7 @@ const HomePage: React.FC = () => {
               }}>
                 <div style={{ 
                   fontWeight: 'bold', 
-                  color: hoveredTransactionNode.color,
+                  color: getNodeColorByType(hoveredTransactionNode.type),
                   fontSize: '16px',
                   marginBottom: '4px'
                 }}>
@@ -2020,7 +2048,7 @@ const HomePage: React.FC = () => {
                   width: '12px',
                   height: '12px',
                   borderRadius: '50%',
-                  backgroundColor: hoveredTransactionNode.color
+                  backgroundColor: getNodeColorByType(hoveredTransactionNode.type)
                 }}></div>
                 <div>
                   <strong style={{ color: '#ffffff' }}>Type:</strong> {hoveredTransactionNode.type}
