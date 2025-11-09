@@ -14,14 +14,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../hooks/useAuth';
 
-interface Transaction {
+interface BlockchainTransaction {
   id: string;
   number: number;
   timestamp: Date;
-  hash: string;
-  blockNumber: string;
+  signature: string; // Solana transaction signature
+  slot: string; // Solana slot number
   status: string;
-  gasUsed: string;
+  operation: 'CREATE_CRATE' | 'TRANSFER_OWNERSHIP' | 'MIX_CRATES' | 'SPLIT_CRATE';
+  crateId: string;
+  weight: number;
+  programId: string; // Nautilink program ID
 }
 
 export default function DashboardScreen() {
@@ -29,80 +32,80 @@ export default function DashboardScreen() {
   const { user, isLoading } = useAuth();
 
   // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY RETURNS
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<BlockchainTransaction | null>(null);
   const [slideAnim] = useState(new Animated.Value(500));
-  const [transactions, setTransactions] = useState<Transaction[]>([
+  const [transactions, setTransactions] = useState<BlockchainTransaction[]>([
     {
       id: '1',
-      number: 1234,
-      timestamp: new Date(),
-      hash: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-      blockNumber: '15234567',
-      status: 'Confirmed',
-      gasUsed: '21000',
+      number: 1,
+      timestamp: new Date(Date.now() - 86400000 * 7), // 7 days ago
+      signature: '3K8mYzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
+      slot: '245891234',
+      status: 'Finalized',
+      operation: 'CREATE_CRATE',
+      crateId: 'TUNA_001',
+      weight: 2500,
+      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
     },
     {
       id: '2',
-      number: 1235,
-      timestamp: new Date(Date.now() - 3600000),
-      hash: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
-      blockNumber: '15234566',
-      status: 'Confirmed',
-      gasUsed: '45000',
+      number: 2,
+      timestamp: new Date(Date.now() - 86400000 * 6), // 6 days ago
+      signature: '4L9nZzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
+      slot: '245891235',
+      status: 'Finalized',
+      operation: 'TRANSFER_OWNERSHIP',
+      crateId: 'TUNA_001',
+      weight: 2500,
+      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
     },
     {
       id: '3',
-      number: 1236,
-      timestamp: new Date(Date.now() - 7200000),
-      hash: '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6',
-      blockNumber: '15234565',
-      status: 'Confirmed',
-      gasUsed: '32000',
+      number: 3,
+      timestamp: new Date(Date.now() - 86400000 * 4), // 4 days ago
+      signature: '5M0oAzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
+      slot: '245891236',
+      status: 'Finalized',
+      operation: 'SPLIT_CRATE',
+      crateId: 'TUNA_001A',
+      weight: 1200,
+      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
     },
     {
       id: '4',
-      number: 1237,
-      timestamp: new Date(Date.now() - 10800000),
-      hash: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-      blockNumber: '15234564',
-      status: 'Confirmed',
-      gasUsed: '28500',
+      number: 4,
+      timestamp: new Date(Date.now() - 86400000 * 3), // 3 days ago
+      signature: '6N1pBzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
+      slot: '245891237',
+      status: 'Finalized',
+      operation: 'TRANSFER_OWNERSHIP',
+      crateId: 'TUNA_001A',
+      weight: 1200,
+      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
     },
     {
       id: '5',
-      number: 1238,
-      timestamp: new Date(Date.now() - 14400000),
-      hash: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
-      blockNumber: '15234563',
-      status: 'Confirmed',
-      gasUsed: '35200',
+      number: 5,
+      timestamp: new Date(Date.now() - 86400000 * 2), // 2 days ago
+      signature: '7O2qCzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
+      slot: '245891238',
+      status: 'Finalized',
+      operation: 'SPLIT_CRATE',
+      crateId: 'TUNA_FILLET_12',
+      weight: 300,
+      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
     },
     {
       id: '6',
-      number: 1239,
-      timestamp: new Date(Date.now() - 18000000),
-      hash: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
-      blockNumber: '15234562',
-      status: 'Confirmed',
-      gasUsed: '41000',
-    },
-    {
-      id: '7',
-      number: 1240,
-      timestamp: new Date(Date.now() - 21600000),
-      hash: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
-      blockNumber: '15234561',
-      status: 'Confirmed',
-      gasUsed: '23400',
-    },
-    {
-      id: '8',
-      number: 1241,
-      timestamp: new Date(Date.now() - 25200000),
-      hash: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
-      blockNumber: '15234560',
-      status: 'Confirmed',
-      gasUsed: '38900',
+      number: 6,
+      timestamp: new Date(Date.now() - 86400000), // 1 day ago
+      signature: '8P3rDzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqzqz',
+      slot: '245891239',
+      status: 'Finalized',
+      operation: 'TRANSFER_OWNERSHIP',
+      crateId: 'TUNA_FILLET_12',
+      weight: 300,
+      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
     },
   ]);
 
@@ -134,7 +137,28 @@ export default function DashboardScreen() {
     router.push('/(main)/qr-scanner');
   };
 
-  const handleTransactionPress = (transaction: Transaction) => {
+  const addNewTransaction = () => {
+    const newTransactionNumber = transactions.length + 1;
+    const newTransaction: BlockchainTransaction = {
+      id: String(newTransactionNumber),
+      number: newTransactionNumber,
+      timestamp: new Date(),
+      signature: `${Math.random().toString(16).substr(2, 8)}${Date.now().toString(16)}`,
+      slot: String(245891239 + newTransactionNumber),
+      status: 'Finalized',
+      operation: 'CREATE_CRATE',
+      crateId: `ITEM_${String(newTransactionNumber).padStart(3, '0')}`,
+      weight: Math.floor(Math.random() * 2000) + 500,
+      programId: 'FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta',
+    };
+    
+    setTransactions(prev => [...prev, newTransaction]);
+  };
+
+  // For demo purposes, we'll add a manual button to simulate transaction completion
+  // In a real app, this would be triggered by successful QR + NFC scan completion
+
+  const handleTransactionPress = (transaction: BlockchainTransaction) => {
     setSelectedTransaction(transaction);
     Animated.spring(slideAnim, {
       toValue: 0,
@@ -167,53 +191,70 @@ export default function DashboardScreen() {
       </View>
 
       <View style={styles.content}>
-        {/* Network Nodes Visualization */}
+        {/* Transaction Chain Visualization */}
         <View style={styles.logoSection}>
-          <View style={styles.nodesContainer}>
-            {/* Central Node */}
-            <View style={[styles.node, styles.centralNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            
-            {/* Connected Nodes */}
-            <View style={[styles.node, styles.topLeftNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            <View style={[styles.node, styles.topRightNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            <View style={[styles.node, styles.bottomLeftNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            <View style={[styles.node, styles.bottomRightNode]}>
-              <View style={styles.nodeCore} />
-            </View>
-            
-            {/* Connection Lines */}
-            <View style={[styles.connectionLine, styles.lineTopLeft]} />
-            <View style={[styles.connectionLine, styles.lineTopRight]} />
-            <View style={[styles.connectionLine, styles.lineBottomLeft]} />
-            <View style={[styles.connectionLine, styles.lineBottomRight]} />
-          </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.chainContainer}
+            contentContainerStyle={styles.chainContent}
+          >
+            {transactions.map((transaction, index) => (
+              <View key={transaction.id} style={styles.chainNodeContainer}>
+                {/* Node */}
+                <TouchableOpacity
+                  style={[
+                    styles.chainNode,
+                    selectedTransaction?.id === transaction.id && styles.chainNodeHighlighted
+                  ]}
+                  onPress={() => handleTransactionPress(transaction)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.chainNodeText,
+                    selectedTransaction?.id === transaction.id && styles.chainNodeTextHighlighted
+                  ]}>
+                    {transaction.number}
+                  </Text>
+                </TouchableOpacity>
+                
+                {/* Connection Line to next node */}
+                {index < transactions.length - 1 && (
+                  <View style={styles.chainLine} />
+                )}
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Transaction Log Section */}
         <View style={styles.transactionSection}>
-          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <Text style={styles.sectionTitle}>Log</Text>
           <ScrollView style={styles.transactionList} showsVerticalScrollIndicator={false}>
             {transactions.map((transaction) => (
               <TouchableOpacity
                 key={transaction.id}
-                style={styles.transactionItem}
+                style={[
+                  styles.transactionItem,
+                  selectedTransaction?.id === transaction.id && styles.transactionItemHighlighted
+                ]}
                 onPress={() => handleTransactionPress(transaction)}
                 activeOpacity={0.7}
               >
-                <View style={styles.transactionIcon}>
-                  <Ionicons name="document-text-outline" size={20} color={Colors.accentPrimary} />
+                <View style={[
+                  styles.transactionIcon,
+                  selectedTransaction?.id === transaction.id && styles.transactionIconHighlighted
+                ]}>
+                  <Ionicons name="document-text-outline" size={20} color={
+                    selectedTransaction?.id === transaction.id ? Colors.background : Colors.accentPrimary
+                  } />
                 </View>
                 <View style={styles.transactionInfo}>
-                  <Text style={styles.transactionTitle}>Log #{transaction.number}</Text>
-                  <Text style={styles.transactionTime}>{transaction.timestamp.toLocaleTimeString()}</Text>
+                  <Text style={[
+                    styles.transactionTitle,
+                    selectedTransaction?.id === transaction.id && styles.transactionTitleHighlighted
+                  ]}>Transaction {transaction.number}</Text>
+                  <Text style={styles.transactionTime}>{transaction.weight}g • {transaction.timestamp.toLocaleTimeString()}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
               </TouchableOpacity>
@@ -266,14 +307,28 @@ export default function DashboardScreen() {
                   <Text style={styles.detailValue}>{selectedTransaction.number}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Hash</Text>
-                  <Text style={styles.detailValue} numberOfLines={1}>
-                    {selectedTransaction.hash}
+                  <Text style={styles.detailLabel}>Operation</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedTransaction.operation.replace('_', ' ')}
                   </Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Block Number</Text>
-                  <Text style={styles.detailValue}>{selectedTransaction.blockNumber}</Text>
+                  <Text style={styles.detailLabel}>Crate ID</Text>
+                  <Text style={styles.detailValue}>{selectedTransaction.crateId}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Weight</Text>
+                  <Text style={styles.detailValue}>{selectedTransaction.weight}g</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Signature</Text>
+                  <Text style={styles.detailValue} numberOfLines={1}>
+                    {selectedTransaction.signature}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Slot</Text>
+                  <Text style={styles.detailValue}>{selectedTransaction.slot}</Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Status</Text>
@@ -282,8 +337,10 @@ export default function DashboardScreen() {
                   </Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Gas Used</Text>
-                  <Text style={styles.detailValue}>{selectedTransaction.gasUsed}</Text>
+                  <Text style={styles.detailLabel}>Program ID</Text>
+                  <Text style={styles.detailValue} numberOfLines={1}>
+                    {selectedTransaction.programId}
+                  </Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Timestamp</Text>
@@ -349,22 +406,24 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   logoSection: {
-    alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 20,
     marginBottom: 20,
   },
-  nodesContainer: {
-    width: 200,
-    height: 200,
-    position: 'relative',
-    justifyContent: 'center',
+  chainContainer: {
+    height: 80,
+  },
+  chainContent: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  chainNodeContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  node: {
-    position: 'absolute',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  chainNode: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: Colors.surfaceGlass,
     borderWidth: 2,
     borderColor: Colors.accentPrimary,
@@ -372,70 +431,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: Colors.accentPrimary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  centralNode: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 3,
-  },
-  nodeCore: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  chainNodeHighlighted: {
     backgroundColor: Colors.accentPrimary,
+    borderColor: Colors.accentLight,
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    transform: [{ scale: 1.1 }],
   },
-  topLeftNode: {
-    top: 20,
-    left: 40,
+  chainNodeText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.accentPrimary,
   },
-  topRightNode: {
-    top: 20,
-    right: 40,
+  chainNodeTextHighlighted: {
+    color: Colors.background,
   },
-  bottomLeftNode: {
-    bottom: 20,
-    left: 40,
-  },
-  bottomRightNode: {
-    bottom: 20,
-    right: 40,
-  },
-  connectionLine: {
-    position: 'absolute',
+  chainLine: {
+    width: 30,
+    height: 3,
     backgroundColor: Colors.accentPrimary,
-    opacity: 0.4,
-  },
-  lineTopLeft: {
-    width: 80,
-    height: 2,
-    top: 90,
-    left: 50,
-    transform: [{ rotate: '-45deg' }],
-  },
-  lineTopRight: {
-    width: 80,
-    height: 2,
-    top: 90,
-    right: 50,
-    transform: [{ rotate: '45deg' }],
-  },
-  lineBottomLeft: {
-    width: 80,
-    height: 2,
-    bottom: 90,
-    left: 50,
-    transform: [{ rotate: '45deg' }],
-  },
-  lineBottomRight: {
-    width: 80,
-    height: 2,
-    bottom: 90,
-    right: 50,
-    transform: [{ rotate: '-45deg' }],
+    opacity: 0.6,
+    marginHorizontal: 5,
   },
   transactionSection: {
     flex: 1,
@@ -572,6 +592,19 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   statusConfirmed: {
+    color: Colors.accentPrimary,
+    fontWeight: '700',
+  },
+  transactionItemHighlighted: {
+    backgroundColor: Colors.accentPrimary + '20',
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.accentPrimary,
+  },
+  transactionIconHighlighted: {
+    backgroundColor: Colors.accentPrimary,
+    borderColor: Colors.accentLight,
+  },
+  transactionTitleHighlighted: {
     color: Colors.accentPrimary,
     fontWeight: '700',
   },

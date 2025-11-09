@@ -149,13 +149,22 @@ function HoverLogout({ name, isCollapsed = false }: { name: string; isCollapsed?
 
   return (
     <div className="relative whitespace-nowrap" onMouseEnter={onEnter} onMouseLeave={onLeave}>
-      <div className="flex items-center justify-left h-8">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer">
-          <FiUser className="w-4 h-4 text-white" />
-        </div>
+      <div className="flex items-center justify-left gap-3">
+        {/* Profile Picture */}
+        <img 
+          src="/pfp.png" 
+          alt="Profile" 
+          className="w-10 h-10 rounded-full cursor-pointer"
+          style={{
+            border: '2px solid rgba(70, 98, 171, 0.5)',
+            boxShadow: '0 2px 8px rgba(70, 98, 171, 0.3)',
+            objectFit: 'cover'
+          }}
+        />
+        {/* Name */}
         {
           !isCollapsed &&
-          <span className="text-white text-sm cursor-default p-4">
+          <span className="text-white text-sm cursor-default">
             {displayedName}
             {isTyping && <span className="animate-pulse">|</span>}
           </span>

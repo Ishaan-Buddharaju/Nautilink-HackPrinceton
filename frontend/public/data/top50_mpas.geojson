@@ -1,0 +1,2255 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              165,
+              -80.61865340224162
+            ],
+            [
+              180,
+              -80.61865340224162
+            ],
+            [
+              180,
+              -69.38134659775838
+            ],
+            [
+              165,
+              -69.38134659775838
+            ],
+            [
+              165,
+              -80.61865340224162
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Ross Sea Region",
+        "country": "ABNJ",
+        "sovereign": "ABNJ",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Protected Area (CCAMLR)",
+        "area_km2": 1555859.7082310312,
+        "wdpa_id": "",
+        "wdpa_pid": "555624810_A",
+        "join_key": "555624810_A",
+        "id": "327",
+        "mpa_zone_id": "9047.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -176.10490955192776,
+              19.467072933933448
+            ],
+            [
+              -163.89509044807224,
+              19.467072933933448
+            ],
+            [
+              -163.89509044807224,
+              30.532927066066552
+            ],
+            [
+              -176.10490955192776,
+              30.532927066066552
+            ],
+            [
+              -176.10490955192776,
+              19.467072933933448
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Papah\u0101naumoku\u0101kea",
+        "country": "USA",
+        "sovereign": "USA",
+        "protection_level": "high",
+        "stage": "implemented",
+        "designation": "National Marine Sanctuary",
+        "area_km2": 1508744.9860670078,
+        "wdpa_id": "",
+        "wdpa_pid": "",
+        "join_key": "",
+        "id": "6093",
+        "mpa_zone_id": "",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -175.32217017617756,
+              20.176475725396067
+            ],
+            [
+              -164.67782982382244,
+              20.176475725396067
+            ],
+            [
+              -164.67782982382244,
+              29.823524274603933
+            ],
+            [
+              -175.32217017617756,
+              29.823524274603933
+            ],
+            [
+              -175.32217017617756,
+              20.176475725396067
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Papah\u0101naumoku\u0101kea",
+        "country": "USA",
+        "sovereign": "USA",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine National Monument",
+        "area_km2": 1146660.5887024414,
+        "wdpa_id": "",
+        "wdpa_pid": "",
+        "join_key": "",
+        "id": "606",
+        "mpa_zone_id": "68808390.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -164.64403933054396,
+              -4.644039330543961
+            ],
+            [
+              -155.35596066945604,
+              -4.644039330543961
+            ],
+            [
+              -155.35596066945604,
+              4.644039330543961
+            ],
+            [
+              -164.64403933054396,
+              4.644039330543961
+            ],
+            [
+              -164.64403933054396,
+              -4.644039330543961
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Pacific Islands Heritage",
+        "country": "USA",
+        "sovereign": "USA",
+        "protection_level": "high",
+        "stage": "implemented",
+        "designation": "Marine National Monument",
+        "area_km2": 1062913.020648555,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "6321",
+        "mpa_zone_id": "6321.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -134.53539029493004,
+              -29.110459541545538
+            ],
+            [
+              -125.46460970506996,
+              -29.110459541545538
+            ],
+            [
+              -125.46460970506996,
+              -20.889540458454462
+            ],
+            [
+              -134.53539029493004,
+              -20.889540458454462
+            ],
+            [
+              -134.53539029493004,
+              -29.110459541545538
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Pitcairn Islands",
+        "country": "PCN",
+        "sovereign": "GBR",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine Reserve",
+        "area_km2": 832696.4337419765,
+        "wdpa_id": "",
+        "wdpa_pid": "555624172",
+        "join_key": "555624172",
+        "id": "405",
+        "mpa_zone_id": "9178.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -16.67570558606096,
+              -40.73418451555477
+            ],
+            [
+              -7.3242944139390405,
+              -40.73418451555477
+            ],
+            [
+              -7.3242944139390405,
+              -33.26581548444523
+            ],
+            [
+              -16.67570558606096,
+              -33.26581548444523
+            ],
+            [
+              -16.67570558606096,
+              -40.73418451555477
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Tristan da Cunha",
+        "country": "SHN",
+        "sovereign": "GBR",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine Protection Zone",
+        "area_km2": 687222.6998691651,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "281",
+        "mpa_zone_id": "68808197.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              130.86511017590627,
+              3.8884771692762268
+            ],
+            [
+              137.13488982409373,
+              3.8884771692762268
+            ],
+            [
+              137.13488982409373,
+              10.111522830723773
+            ],
+            [
+              130.86511017590627,
+              10.111522830723773
+            ],
+            [
+              130.86511017590627,
+              3.8884771692762268
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Palau",
+        "country": "PLW",
+        "sovereign": "PLW",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "National Marine Sanctuary Protection Zone",
+        "area_km2": 477146.7090882656,
+        "wdpa_id": "",
+        "wdpa_pid": "555622118",
+        "join_key": "555622118",
+        "id": "766",
+        "mpa_zone_id": "68807606.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -3.0875455586519314,
+              -3.0875455586519314
+            ],
+            [
+              3.0875455586519314,
+              -3.0875455586519314
+            ],
+            [
+              3.0875455586519314,
+              3.0875455586519314
+            ],
+            [
+              -3.0875455586519314,
+              3.0875455586519314
+            ],
+            [
+              -3.0875455586519314,
+              -3.0875455586519314
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "South Georgia and South Sandwich Islands",
+        "country": "SGS",
+        "sovereign": "GBR",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine Protected Area",
+        "area_km2": 469821.2955326094,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "762",
+        "mpa_zone_id": "68808365.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -3.074454528631125,
+              -3.074454528631125
+            ],
+            [
+              3.074454528631125,
+              -3.074454528631125
+            ],
+            [
+              3.074454528631125,
+              3.074454528631125
+            ],
+            [
+              -3.074454528631125,
+              3.074454528631125
+            ],
+            [
+              -3.074454528631125,
+              -3.074454528631125
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Cocos (Keeling) Island",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Marine Park",
+        "area_km2": 465845.70664660935,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "3879",
+        "mpa_zone_id": "68819567.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -3.0000519442596505,
+              -3.0000519442596505
+            ],
+            [
+              3.0000519442596505,
+              -3.0000519442596505
+            ],
+            [
+              3.0000519442596505,
+              3.0000519442596505
+            ],
+            [
+              -3.0000519442596505,
+              3.0000519442596505
+            ],
+            [
+              -3.0000519442596505,
+              -3.0000519442596505
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Ascension Exclusive Economic Zone",
+        "country": "SHN",
+        "sovereign": "GBR",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine Protected Area",
+        "area_km2": 443571.360258334,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "706",
+        "mpa_zone_id": "68819542.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              154.2214115333973,
+              -56.808783827443975
+            ],
+            [
+              163.7785884666027,
+              -56.808783827443975
+            ],
+            [
+              163.7785884666027,
+              -51.191216172556025
+            ],
+            [
+              154.2214115333973,
+              -51.191216172556025
+            ],
+            [
+              154.2214115333973,
+              -56.808783827443975
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Macquarie Island",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "high",
+        "stage": "implemented",
+        "designation": "Marine Park",
+        "area_km2": 388814.61458759377,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "4284",
+        "mpa_zone_id": "68821401.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -172.9908032783538,
+              22.289411699333215
+            ],
+            [
+              -167.0091967216462,
+              22.289411699333215
+            ],
+            [
+              -167.0091967216462,
+              27.710588300666785
+            ],
+            [
+              -172.9908032783538,
+              27.710588300666785
+            ],
+            [
+              -172.9908032783538,
+              22.289411699333215
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Papah\u0101naumoku\u0101kea",
+        "country": "USA",
+        "sovereign": "USA",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine National Monument",
+        "area_km2": 362103.78790761327,
+        "wdpa_id": "",
+        "wdpa_pid": "",
+        "join_key": "",
+        "id": "604",
+        "mpa_zone_id": "8338.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -172.99072232473458,
+              22.289485068228707
+            ],
+            [
+              -167.00927767526542,
+              22.289485068228707
+            ],
+            [
+              -167.00927767526542,
+              27.710514931771293
+            ],
+            [
+              -172.99072232473458,
+              27.710514931771293
+            ],
+            [
+              -172.99072232473458,
+              22.289485068228707
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Papah\u0101naumoku\u0101kea",
+        "country": "USA",
+        "sovereign": "USA",
+        "protection_level": "high",
+        "stage": "implemented",
+        "designation": "Particularly Sensitive Sea Area",
+        "area_km2": 362084.1856718828,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "3035",
+        "mpa_zone_id": "68819697.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              170.02099081262142,
+              -77.58275762894661
+            ],
+            [
+              180,
+              -77.58275762894661
+            ],
+            [
+              180,
+              -72.41724237105339
+            ],
+            [
+              170.02099081262142,
+              -72.41724237105339
+            ],
+            [
+              170.02099081262142,
+              -77.58275762894661
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Ross Sea Region",
+        "country": "ABNJ",
+        "sovereign": "ABNJ",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine Protected Area (CCAMLR)",
+        "area_km2": 328755.67242365965,
+        "wdpa_id": "",
+        "wdpa_pid": "555624810_D",
+        "join_key": "555624810_D",
+        "id": "289",
+        "mpa_zone_id": "68808296.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -82.74479105525923,
+              -28.4670018588022
+            ],
+            [
+              -77.25520894474077,
+              -28.4670018588022
+            ],
+            [
+              -77.25520894474077,
+              -23.5329981411978
+            ],
+            [
+              -82.74479105525923,
+              -23.5329981411978
+            ],
+            [
+              -82.74479105525923,
+              -28.4670018588022
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Nazca-Desventuradas",
+        "country": "CHL",
+        "sovereign": "CHL",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Marine Park",
+        "area_km2": 299947.262276,
+        "wdpa_id": "",
+        "wdpa_pid": "555624169",
+        "join_key": "555624169",
+        "id": "412",
+        "mpa_zone_id": "9175.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2.354379646291575,
+              -2.354379646291575
+            ],
+            [
+              2.354379646291575,
+              -2.354379646291575
+            ],
+            [
+              2.354379646291575,
+              2.354379646291575
+            ],
+            [
+              -2.354379646291575,
+              2.354379646291575
+            ],
+            [
+              -2.354379646291575,
+              -2.354379646291575
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Christmas Island",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Marine Park",
+        "area_km2": 273186.3138240898,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "3878",
+        "mpa_zone_id": "68819566.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2.037199531781683,
+              -2.037199531781683
+            ],
+            [
+              2.037199531781683,
+              -2.037199531781683
+            ],
+            [
+              2.037199531781683,
+              2.037199531781683
+            ],
+            [
+              -2.037199531781683,
+              2.037199531781683
+            ],
+            [
+              -2.037199531781683,
+              -2.037199531781683
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Mariana Trench",
+        "country": "MNP",
+        "sovereign": "USA",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "National Wildlife Refuge",
+        "area_km2": 204537.5663510547,
+        "wdpa_id": "",
+        "wdpa_pid": "",
+        "join_key": "",
+        "id": "743",
+        "mpa_zone_id": "8783.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2.037199531781673,
+              -2.037199531781673
+            ],
+            [
+              2.037199531781673,
+              -2.037199531781673
+            ],
+            [
+              2.037199531781673,
+              2.037199531781673
+            ],
+            [
+              -2.037199531781673,
+              2.037199531781673
+            ],
+            [
+              -2.037199531781673,
+              -2.037199531781673
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Marianas Trench - Trench Unit",
+        "country": "MNP",
+        "sovereign": "USA",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine National Monument",
+        "area_km2": 204537.56635105272,
+        "wdpa_id": "",
+        "wdpa_pid": "555512147",
+        "join_key": "555512147",
+        "id": "680",
+        "mpa_zone_id": "7497.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2.0248871136944806,
+              -2.0248871136944806
+            ],
+            [
+              2.0248871136944806,
+              -2.0248871136944806
+            ],
+            [
+              2.0248871136944806,
+              2.0248871136944806
+            ],
+            [
+              -2.0248871136944806,
+              2.0248871136944806
+            ],
+            [
+              -2.0248871136944806,
+              -2.0248871136944806
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Pacific Remote Islands",
+        "country": "UMI",
+        "sovereign": "USA",
+        "protection_level": "high",
+        "stage": "implemented",
+        "designation": "Marine National Monument",
+        "area_km2": 202072.6709988828,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "6324",
+        "mpa_zone_id": "8345.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -113.83429009294365,
+              17.265644644083988
+            ],
+            [
+              -110.16570990705635,
+              17.265644644083988
+            ],
+            [
+              -110.16570990705635,
+              20.734355355916012
+            ],
+            [
+              -113.83429009294365,
+              20.734355355916012
+            ],
+            [
+              -113.83429009294365,
+              17.265644644083988
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Revillagigedo",
+        "country": "MEX",
+        "sovereign": "MEX",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "National Park",
+        "area_km2": 148245.7052633023,
+        "wdpa_id": "",
+        "wdpa_pid": "555629385_A",
+        "join_key": "555629385_A",
+        "id": "72",
+        "mpa_zone_id": "68813451.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.67645659807353,
+              -1.67645659807353
+            ],
+            [
+              1.67645659807353,
+              -1.67645659807353
+            ],
+            [
+              1.67645659807353,
+              1.67645659807353
+            ],
+            [
+              -1.67645659807353,
+              1.67645659807353
+            ],
+            [
+              -1.67645659807353,
+              -1.67645659807353
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Heard Island and McDonald Islands - National Park Zone",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Marine Reserve",
+        "area_km2": 138513.0134459531,
+        "wdpa_id": "",
+        "wdpa_pid": "",
+        "join_key": "",
+        "id": "5976",
+        "mpa_zone_id": "",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.603056695114934,
+              -1.603056695114934
+            ],
+            [
+              1.603056695114934,
+              -1.603056695114934
+            ],
+            [
+              1.603056695114934,
+              1.603056695114934
+            ],
+            [
+              -1.603056695114934,
+              1.603056695114934
+            ],
+            [
+              -1.603056695114934,
+              -1.603056695114934
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Niue Moana Mahu",
+        "country": "NIU",
+        "sovereign": "NIU",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Marine Protected Area",
+        "area_km2": 126649.5681979297,
+        "wdpa_id": "",
+        "wdpa_pid": "555705568",
+        "join_key": "555705568",
+        "id": "1282",
+        "mpa_zone_id": "68808405.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.5625189481471597,
+              -1.5625189481471597
+            ],
+            [
+              1.5625189481471597,
+              -1.5625189481471597
+            ],
+            [
+              1.5625189481471597,
+              1.5625189481471597
+            ],
+            [
+              -1.5625189481471597,
+              1.5625189481471597
+            ],
+            [
+              -1.5625189481471597,
+              -1.5625189481471597
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Terres Australes Fran\u00e7aises",
+        "country": "ATF",
+        "sovereign": "FRA",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "National Nature Reserve",
+        "area_km2": 120325.18389420898,
+        "wdpa_id": "",
+        "wdpa_pid": "",
+        "join_key": "",
+        "id": "417",
+        "mpa_zone_id": "68808359.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              145.3992924513,
+              -19.522363344873966
+            ],
+            [
+              148.6007075487,
+              -19.522363344873966
+            ],
+            [
+              148.6007075487,
+              -16.477636655126034
+            ],
+            [
+              145.3992924513,
+              -16.477636655126034
+            ],
+            [
+              145.3992924513,
+              -19.522363344873966
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Great Barrier Reef",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Park",
+        "area_km2": 114220.11314066016,
+        "wdpa_id": "",
+        "wdpa_pid": "2628_B",
+        "join_key": "2628_B",
+        "id": "2362",
+        "mpa_zone_id": "68808376.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.467396601178126,
+              -1.467396601178126
+            ],
+            [
+              1.467396601178126,
+              -1.467396601178126
+            ],
+            [
+              1.467396601178126,
+              1.467396601178126
+            ],
+            [
+              -1.467396601178126,
+              1.467396601178126
+            ],
+            [
+              -1.467396601178126,
+              -1.467396601178126
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Natural Park of the Coral Sea",
+        "country": "NCL",
+        "sovereign": "FRA",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Natural Park",
+        "area_km2": 106120.91026328906,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "4277",
+        "mpa_zone_id": "68821399.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.3863118677081163,
+              -1.3863118677081163
+            ],
+            [
+              1.3863118677081163,
+              -1.3863118677081163
+            ],
+            [
+              1.3863118677081163,
+              1.3863118677081163
+            ],
+            [
+              -1.3863118677081163,
+              1.3863118677081163
+            ],
+            [
+              -1.3863118677081163,
+              -1.3863118677081163
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "South Orkney Islands Southern Shelf Marine Protected Area",
+        "country": "ABNJ",
+        "sovereign": "ABNJ",
+        "protection_level": "high",
+        "stage": "implemented",
+        "designation": "Marine Protected Area (CCAMLR)",
+        "area_km2": 94716.97754172167,
+        "wdpa_id": "",
+        "wdpa_pid": "478191",
+        "join_key": "478191",
+        "id": "286",
+        "mpa_zone_id": "7705283.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.3764506198882414,
+              -1.3764506198882414
+            ],
+            [
+              1.3764506198882414,
+              -1.3764506198882414
+            ],
+            [
+              1.3764506198882414,
+              1.3764506198882414
+            ],
+            [
+              -1.3764506198882414,
+              1.3764506198882414
+            ],
+            [
+              -1.3764506198882414,
+              -1.3764506198882414
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Gal\u00e1pagos",
+        "country": "ECU",
+        "sovereign": "ECU",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Reserve",
+        "area_km2": 93374.27017229884,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "428",
+        "mpa_zone_id": "68817264.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.3329244153471949,
+              -1.3329244153471949
+            ],
+            [
+              1.3329244153471949,
+              -1.3329244153471949
+            ],
+            [
+              1.3329244153471949,
+              1.3329244153471949
+            ],
+            [
+              -1.3329244153471949,
+              1.3329244153471949
+            ],
+            [
+              -1.3329244153471949,
+              -1.3329244153471949
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Russkaya Arktika",
+        "country": "RUS",
+        "sovereign": "RUS",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "National Park",
+        "area_km2": 87562.26660356055,
+        "wdpa_id": "",
+        "wdpa_pid": "555714472",
+        "join_key": "555714472",
+        "id": "317",
+        "mpa_zone_id": "68819350.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              175.24113660888884,
+              -76.23168447866074
+            ],
+            [
+              180,
+              -76.23168447866074
+            ],
+            [
+              180,
+              -73.76831552133926
+            ],
+            [
+              175.24113660888884,
+              -73.76831552133926
+            ],
+            [
+              175.24113660888884,
+              -76.23168447866074
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Ross Sea Region",
+        "country": "ABNJ",
+        "sovereign": "ABNJ",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Protected Area (CCAMLR)",
+        "area_km2": 74766.12734372754,
+        "wdpa_id": "",
+        "wdpa_pid": "555624810_B",
+        "join_key": "555624810_B",
+        "id": "328",
+        "mpa_zone_id": "68813307.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.1969022808406224,
+              -1.1969022808406224
+            ],
+            [
+              1.1969022808406224,
+              -1.1969022808406224
+            ],
+            [
+              1.1969022808406224,
+              1.1969022808406224
+            ],
+            [
+              -1.1969022808406224,
+              1.1969022808406224
+            ],
+            [
+              -1.1969022808406224,
+              -1.1969022808406224
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Heard Island and McDonald Islands - Sanctuary Zone",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Marine Reserve",
+        "area_km2": 70603.02974403906,
+        "wdpa_id": "",
+        "wdpa_pid": "",
+        "join_key": "",
+        "id": "6001",
+        "mpa_zone_id": "",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.1720610027846237,
+              -1.1720610027846237
+            ],
+            [
+              1.1720610027846237,
+              -1.1720610027846237
+            ],
+            [
+              1.1720610027846237,
+              1.1720610027846237
+            ],
+            [
+              -1.1720610027846237,
+              1.1720610027846237
+            ],
+            [
+              -1.1720610027846237,
+              -1.1720610027846237
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Monumento Natural Das Ilhas de Trindade, Martim Vaz e Do Monte Columbia",
+        "country": "BRA",
+        "sovereign": "BRA",
+        "protection_level": "high",
+        "stage": "implemented",
+        "designation": "Natural Monument",
+        "area_km2": 67702.76118454296,
+        "wdpa_id": "",
+        "wdpa_pid": "555635929",
+        "join_key": "555635929",
+        "id": "421",
+        "mpa_zone_id": "68808474.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              157.1681602984534,
+              -55.07672836113295
+            ],
+            [
+              160.8318397015466,
+              -55.07672836113295
+            ],
+            [
+              160.8318397015466,
+              -52.92327163886705
+            ],
+            [
+              157.1681602984534,
+              -52.92327163886705
+            ],
+            [
+              157.1681602984534,
+              -55.07672836113295
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Macquarie Island",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine Park",
+        "area_km2": 57137.107905416015,
+        "wdpa_id": "",
+        "wdpa_pid": "354086_A",
+        "join_key": "354086_A",
+        "id": "424",
+        "mpa_zone_id": "7705150.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.0734779104735912,
+              -1.0734779104735912
+            ],
+            [
+              1.0734779104735912,
+              -1.0734779104735912
+            ],
+            [
+              1.0734779104735912,
+              1.0734779104735912
+            ],
+            [
+              -1.0734779104735912,
+              1.0734779104735912
+            ],
+            [
+              -1.0734779104735912,
+              -1.0734779104735912
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Freycinet",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Park",
+        "area_km2": 56792.65515955664,
+        "wdpa_id": "",
+        "wdpa_pid": "354083_A",
+        "join_key": "354083_A",
+        "id": "425",
+        "mpa_zone_id": "5147.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.054992401297229,
+              -1.054992401297229
+            ],
+            [
+              1.054992401297229,
+              -1.054992401297229
+            ],
+            [
+              1.054992401297229,
+              1.054992401297229
+            ],
+            [
+              -1.054992401297229,
+              1.054992401297229
+            ],
+            [
+              -1.054992401297229,
+              -1.054992401297229
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Isla del Coco",
+        "country": "CRI",
+        "sovereign": "CRI",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "National Park",
+        "area_km2": 54853.533919519534,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "3291",
+        "mpa_zone_id": "68808203.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.054872663586562,
+              -1.054872663586562
+            ],
+            [
+              1.054872663586562,
+              -1.054872663586562
+            ],
+            [
+              1.054872663586562,
+              1.054872663586562
+            ],
+            [
+              -1.054872663586562,
+              1.054872663586562
+            ],
+            [
+              -1.054872663586562,
+              -1.054872663586562
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "South-west Corner",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Park",
+        "area_km2": 54841.08328226074,
+        "wdpa_id": "",
+        "wdpa_pid": "555556901_A",
+        "join_key": "555556901_A",
+        "id": "307",
+        "mpa_zone_id": "15013.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.979599677811568,
+              -0.979599677811568
+            ],
+            [
+              0.979599677811568,
+              -0.979599677811568
+            ],
+            [
+              0.979599677811568,
+              0.979599677811568
+            ],
+            [
+              -0.979599677811568,
+              0.979599677811568
+            ],
+            [
+              -0.979599677811568,
+              -0.979599677811568
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Malpelo",
+        "country": "COL",
+        "sovereign": "COL",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Santuario de Fauna y Flora",
+        "area_km2": 47293.69171982812,
+        "wdpa_id": "",
+        "wdpa_pid": "303552",
+        "join_key": "303552",
+        "id": "6869",
+        "mpa_zone_id": "3803.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.9786280423897564,
+              -0.9786280423897564
+            ],
+            [
+              0.9786280423897564,
+              -0.9786280423897564
+            ],
+            [
+              0.9786280423897564,
+              0.9786280423897564
+            ],
+            [
+              -0.9786280423897564,
+              0.9786280423897564
+            ],
+            [
+              -0.9786280423897564,
+              -0.9786280423897564
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Monumento Natural do Arquipelago de Sao Pedro e Sao Paulo",
+        "country": "BRA",
+        "sovereign": "BRA",
+        "protection_level": "high",
+        "stage": "implemented",
+        "designation": "Natural Monument",
+        "area_km2": 47199.91987030859,
+        "wdpa_id": "",
+        "wdpa_pid": "555635928",
+        "join_key": "555635928",
+        "id": "426",
+        "mpa_zone_id": "68808475.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.9575643094264927,
+              -0.9575643094264927
+            ],
+            [
+              0.9575643094264927,
+              -0.9575643094264927
+            ],
+            [
+              0.9575643094264927,
+              0.9575643094264927
+            ],
+            [
+              -0.9575643094264927,
+              0.9575643094264927
+            ],
+            [
+              -0.9575643094264927,
+              -0.9575643094264927
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Cordillera de Coiba",
+        "country": "PAN",
+        "sovereign": "PAN",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine Protected Area",
+        "area_km2": 45189.94887918359,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "2558",
+        "mpa_zone_id": "68819568.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.9537903913998818,
+              -0.9537903913998818
+            ],
+            [
+              0.9537903913998818,
+              -0.9537903913998818
+            ],
+            [
+              0.9537903913998818,
+              0.9537903913998818
+            ],
+            [
+              -0.9537903913998818,
+              0.9537903913998818
+            ],
+            [
+              -0.9537903913998818,
+              -0.9537903913998818
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Gal\u00e1pagos",
+        "country": "ECU",
+        "sovereign": "ECU",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine Reserve",
+        "area_km2": 44834.44880105664,
+        "wdpa_id": "",
+        "wdpa_pid": "11753",
+        "join_key": "11753",
+        "id": "430",
+        "mpa_zone_id": "901.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.9280600255468844,
+              -0.9280600255468844
+            ],
+            [
+              0.9280600255468844,
+              -0.9280600255468844
+            ],
+            [
+              0.9280600255468844,
+              0.9280600255468844
+            ],
+            [
+              -0.9280600255468844,
+              0.9280600255468844
+            ],
+            [
+              -0.9280600255468844,
+              -0.9280600255468844
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Marianas Trench - Islands Unit",
+        "country": "MNP",
+        "sovereign": "USA",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine National Monument",
+        "area_km2": 42448.08303661524,
+        "wdpa_id": "",
+        "wdpa_pid": "555512147",
+        "join_key": "555512147",
+        "id": "678",
+        "mpa_zone_id": "8344.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.9194120021519048,
+              -0.9194120021519048
+            ],
+            [
+              0.9194120021519048,
+              -0.9194120021519048
+            ],
+            [
+              0.9194120021519048,
+              0.9194120021519048
+            ],
+            [
+              -0.9194120021519048,
+              0.9194120021519048
+            ],
+            [
+              -0.9194120021519048,
+              -0.9194120021519048
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Norfolk",
+        "country": "NFK",
+        "sovereign": "AUS",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Park",
+        "area_km2": 41660.67348938281,
+        "wdpa_id": "",
+        "wdpa_pid": "555556895_A",
+        "join_key": "555556895_A",
+        "id": "432",
+        "mpa_zone_id": "15007.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.855264518841507,
+              -0.855264518841507
+            ],
+            [
+              0.855264518841507,
+              -0.855264518841507
+            ],
+            [
+              0.855264518841507,
+              0.855264518841507
+            ],
+            [
+              -0.855264518841507,
+              0.855264518841507
+            ],
+            [
+              -0.855264518841507,
+              -0.855264518841507
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Argo-Rowley Terrace",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Park",
+        "area_km2": 36050.13204307226,
+        "wdpa_id": "",
+        "wdpa_pid": "555556868_A",
+        "join_key": "555556868_A",
+        "id": "423",
+        "mpa_zone_id": "14980.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.8419151579392911,
+              -0.8419151579392911
+            ],
+            [
+              0.8419151579392911,
+              -0.8419151579392911
+            ],
+            [
+              0.8419151579392911,
+              0.8419151579392911
+            ],
+            [
+              -0.8419151579392911,
+              0.8419151579392911
+            ],
+            [
+              -0.8419151579392911,
+              -0.8419151579392911
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "American Samoa",
+        "country": "ASM",
+        "sovereign": "USA",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "National Marine Sanctuary",
+        "area_km2": 34933.54072704883,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "641",
+        "mpa_zone_id": "68819704.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.8403383822106888,
+              -0.8403383822106888
+            ],
+            [
+              0.8403383822106888,
+              -0.8403383822106888
+            ],
+            [
+              0.8403383822106888,
+              0.8403383822106888
+            ],
+            [
+              -0.8403383822106888,
+              0.8403383822106888
+            ],
+            [
+              -0.8403383822106888,
+              -0.8403383822106888
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Rose Atoll",
+        "country": "ASM",
+        "sovereign": "USA",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine National Monument",
+        "area_km2": 34802.81311564649,
+        "wdpa_id": "",
+        "wdpa_pid": "400012",
+        "join_key": "400012",
+        "id": "663",
+        "mpa_zone_id": "12323.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.7920521070061487,
+              -0.7920521070061487
+            ],
+            [
+              0.7920521070061487,
+              -0.7920521070061487
+            ],
+            [
+              0.7920521070061487,
+              0.7920521070061487
+            ],
+            [
+              -0.7920521070061487,
+              0.7920521070061487
+            ],
+            [
+              -0.7920521070061487,
+              -0.7920521070061487
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "South Georgia and South Sandwich Islands",
+        "country": "SGS",
+        "sovereign": "GBR",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Protected Area",
+        "area_km2": 30918.14688785156,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "764",
+        "mpa_zone_id": "68819800.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.7906301822854344,
+              -0.7906301822854344
+            ],
+            [
+              0.7906301822854344,
+              -0.7906301822854344
+            ],
+            [
+              0.7906301822854344,
+              0.7906301822854344
+            ],
+            [
+              -0.7906301822854344,
+              0.7906301822854344
+            ],
+            [
+              -0.7906301822854344,
+              -0.7906301822854344
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Natural Park of the Coral Sea",
+        "country": "NCL",
+        "sovereign": "FRA",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Natural Park",
+        "area_km2": 30807.23546007422,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "4276",
+        "mpa_zone_id": "68821398.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.7809546860064507,
+              -0.7809546860064507
+            ],
+            [
+              0.7809546860064507,
+              -0.7809546860064507
+            ],
+            [
+              0.7809546860064507,
+              0.7809546860064507
+            ],
+            [
+              -0.7809546860064507,
+              0.7809546860064507
+            ],
+            [
+              -0.7809546860064507,
+              -0.7809546860064507
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Reserva Marina Hermandad",
+        "country": "ECU",
+        "sovereign": "ECU",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Marine Reserve",
+        "area_km2": 30057.82968110937,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "3633",
+        "mpa_zone_id": "68819736.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.7237370971235674,
+              -0.7237370971235674
+            ],
+            [
+              0.7237370971235674,
+              -0.7237370971235674
+            ],
+            [
+              0.7237370971235674,
+              0.7237370971235674
+            ],
+            [
+              -0.7237370971235674,
+              0.7237370971235674
+            ],
+            [
+              -0.7237370971235674,
+              -0.7237370971235674
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Flinders - Marine National Park Zone",
+        "country": "AUS",
+        "sovereign": "AUS",
+        "protection_level": "high",
+        "stage": "actively managed",
+        "designation": "Marine Park",
+        "area_km2": 25814.73179144336,
+        "wdpa_id": "",
+        "wdpa_pid": "354081_A",
+        "join_key": "354081_A",
+        "id": "436",
+        "mpa_zone_id": "5145.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -0.7098574712154428,
+              -0.7098574712154428
+            ],
+            [
+              0.7098574712154428,
+              -0.7098574712154428
+            ],
+            [
+              0.7098574712154428,
+              0.7098574712154428
+            ],
+            [
+              -0.7098574712154428,
+              0.7098574712154428
+            ],
+            [
+              -0.7098574712154428,
+              -0.7098574712154428
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Namuncur\u00e1 - Banco Burdwood I",
+        "country": "ARG",
+        "sovereign": "ARG",
+        "protection_level": "full",
+        "stage": "actively managed",
+        "designation": "Marine National Park",
+        "area_km2": 24834.090769339844,
+        "wdpa_id": "",
+        "wdpa_pid": "555703455",
+        "join_key": "555703455",
+        "id": "3045",
+        "mpa_zone_id": "68820012.0",
+        "status": "published"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              36.97743423762733,
+              -47.69738817299422
+            ],
+            [
+              39.02256576237267,
+              -47.69738817299422
+            ],
+            [
+              39.02256576237267,
+              -46.30261182700578
+            ],
+            [
+              36.97743423762733,
+              -46.30261182700578
+            ],
+            [
+              36.97743423762733,
+              -47.69738817299422
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Prince Edward Islands",
+        "country": "ZAF",
+        "sovereign": "ZAF",
+        "protection_level": "full",
+        "stage": "implemented",
+        "designation": "Marine Protected Area",
+        "area_km2": 23969.28640270703,
+        "wdpa_id": "",
+        "wdpa_pid": "None",
+        "join_key": "None",
+        "id": "3327",
+        "mpa_zone_id": "68819804.0",
+        "status": "published"
+      }
+    }
+  ]
+}

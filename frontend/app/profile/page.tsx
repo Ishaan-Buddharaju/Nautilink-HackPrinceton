@@ -89,68 +89,86 @@ export default function Profile() {
             backgroundColor: 'rgba(23, 23, 23, 0.92)',
             border: '1px solid rgba(198, 218, 236, 0.35)',
             boxShadow: '0 8px 32px rgba(70, 98, 171, 0.25)',
-            backdropFilter: 'blur(10px)'
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            gap: '24px',
+            alignItems: 'flex-start'
           }}
         >
-          <h2 
-            className="text-xl font-semibold mb-4"
+          {/* Left side - User information */}
+          <div style={{ flex: 1 }}>
+            <h2 
+              className="text-xl font-semibold mb-4"
+              style={{ 
+                color: '#e0f2fd',
+                borderBottom: '1px solid rgba(70, 98, 171, 0.3)',
+                paddingBottom: '8px'
+              }}
+            >
+              User Information
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>NAME</label>
+                <p style={{ color: '#e0f2fd', marginTop: '4px' }}>{user.name || 'Not provided'}</p>
+              </div>
+              <div>
+                <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>EMAIL</label>
+                <p style={{ color: '#e0f2fd', marginTop: '4px' }}>{user.email || 'Not provided'}</p>
+              </div>
+              <div>
+                <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>USER ID</label>
+                <p className="font-mono text-sm" style={{ color: '#b7c9e4', marginTop: '4px' }}>{user.sub || 'Not provided'}</p>
+              </div>
+              <div>
+                <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>BADGE ID</label>
+                <p className="font-mono text-sm" style={{ color: '#b7c9e4', marginTop: '4px' }}>{user.sub ? `NTL-${user.sub.slice(-8).toUpperCase()}` : 'NTL-XXXXXXXX'}</p>
+              </div>
+              {user.roles && user.roles.length > 0 && (
+                <div>
+                  <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>ROLES</label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {user.roles.map((role, index) => (
+                      <span 
+                        key={index}
+                        className="px-3 py-1 text-xs rounded"
+                        style={{
+                          backgroundColor: 'rgba(70, 98, 171, 0.2)',
+                          border: '1px solid rgba(70, 98, 171, 0.4)',
+                          color: '#e0f2fd'
+                        }}
+                      >
+                        {role}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right side - Profile picture (prominent) */}
+          <div 
             style={{ 
-              color: '#e0f2fd',
-              borderBottom: '1px solid rgba(70, 98, 171, 0.3)',
-              paddingBottom: '8px'
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '180px'
             }}
           >
-            User Information
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>NAME</label>
-              <p style={{ color: '#e0f2fd', marginTop: '4px' }}>{user.name || 'Not provided'}</p>
-            </div>
-            <div>
-              <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>EMAIL</label>
-              <p style={{ color: '#e0f2fd', marginTop: '4px' }}>{user.email || 'Not provided'}</p>
-            </div>
-            <div>
-              <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>USER ID</label>
-              <p className="font-mono text-sm" style={{ color: '#b7c9e4', marginTop: '4px' }}>{user.sub || 'Not provided'}</p>
-            </div>
-            {user.roles && user.roles.length > 0 && (
-              <div>
-                <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>ROLES</label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {user.roles.map((role, index) => (
-                    <span 
-                      key={index}
-                      className="px-3 py-1 text-xs rounded"
-                      style={{
-                        backgroundColor: 'rgba(70, 98, 171, 0.2)',
-                        border: '1px solid rgba(70, 98, 171, 0.4)',
-                        color: '#e0f2fd'
-                      }}
-                    >
-                      {role}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {user.picture && (
-              <div>
-                <label className="text-sm" style={{ color: '#9fb7d8', fontWeight: '600' }}>PROFILE PICTURE</label>
-                <div className="mt-2">
-                  <img 
-                    src={user.picture} 
-                    alt="Profile" 
-                    className="w-16 h-16 rounded-full"
-                    style={{
-                      border: '2px solid rgba(70, 98, 171, 0.5)',
-                      boxShadow: '0 4px 16px rgba(70, 98, 171, 0.2)'
-                    }}
-                  />
-                </div>
-              </div>
-            )}
+            <img 
+              src="/pfp.png" 
+              alt="Profile" 
+              className="rounded-full"
+              style={{
+                width: '140px',
+                height: '140px',
+                border: '3px solid rgba(70, 98, 171, 0.6)',
+                boxShadow: '0 8px 24px rgba(70, 98, 171, 0.4)',
+                objectFit: 'cover'
+              }}
+            />
           </div>
         </div>
 

@@ -10,10 +10,6 @@ pub mod nautilink {
     pub fn create_crate(
         ctx: Context<CreateCrate>,
         crate_id: String,
-        crate_did: String,
-        owner_did: String,
-        device_did: String,
-        location: String,
         weight: u32,
         timestamp: i64,
         hash: String,
@@ -21,10 +17,6 @@ pub mod nautilink {
     ) -> Result<()> {
         let record = &mut ctx.accounts.crate_record;
         record.crate_id = crate_id;
-        record.crate_did = crate_did;
-        record.owner_did = owner_did;
-        record.device_did = device_did;
-        record.location = location;
         record.weight = weight;
         record.timestamp = timestamp;
         record.hash = hash;
@@ -33,40 +25,30 @@ pub mod nautilink {
         record.parent_crates = Vec::new();
         record.child_crates = Vec::new();
         record.parent_weights = Vec::new();
-        record.split_distribution = Vec::new();
         record.operation_type = OperationType::Created;
+        
         Ok(())
     }
 
-    /// Transfers ownership without changing weight
+    /// Transfers ownership without mixing/splitting - weight must remain the same
     pub fn transfer_ownership(
         ctx: Context<TransferOwnership>,
         crate_id: String,
-        crate_did: String,
-        owner_did: String,
-        device_did: String,
-        location: String,
         weight: u32,
         timestamp: i64,
         hash: String,
         ipfs_cid: String,
     ) -> Result<()> {
         let parent = &ctx.accounts.parent_crate;
-
-        require_keys_eq!(
-            ctx.accounts.authority.key(),
-            parent.authority,
-            ErrorCode::UnauthorizedUpdate
+        
+        // RULE: Weight must remain the same for simple transfers
+        require!(
+            weight == parent.weight,
+            ErrorCode::WeightMismatchOnTransfer
         );
-
-        require!(weight == parent.weight, ErrorCode::WeightMismatchOnTransfer);
 
         let record = &mut ctx.accounts.crate_record;
         record.crate_id = crate_id;
-        record.crate_did = crate_did;
-        record.owner_did = owner_did;
-        record.device_did = device_did;
-        record.location = location;
         record.weight = weight;
         record.timestamp = timestamp;
         record.hash = hash;
@@ -75,51 +57,42 @@ pub mod nautilink {
         record.parent_crates = vec![parent.key()];
         record.child_crates = Vec::new();
         record.parent_weights = vec![parent.weight];
-        record.split_distribution = Vec::new();
         record.operation_type = OperationType::Transferred;
 
         Ok(())
     }
 
-    /// Mixes multiple parent crates into one
+    /// Mixes multiple parent crates into one child crate
     pub fn mix_crates<'info>(
         ctx: Context<'_, '_, 'info, 'info, MixCrates<'info>>,
         crate_id: String,
-        crate_did: String,
-        owner_did: String,
-        device_did: String,
-        location: String,
         timestamp: i64,
         hash: String,
         ipfs_cid: String,
         parent_keys: Vec<Pubkey>,
     ) -> Result<()> {
-        require!(parent_keys.len() >= 2, ErrorCode::MixRequiresMultipleParents);
-        require!(parent_keys.len() <= CrateRecord::MAX_PARENTS, ErrorCode::TooManyParents);
+        require!(
+            parent_keys.len() >= 2,
+            ErrorCode::MixRequiresMultipleParents
+        );
+        require!(
+            parent_keys.len() <= CrateRecord::MAX_PARENTS,
+            ErrorCode::TooManyParents
+        );
 
+        // Calculate total weight and store parent weights
         let mut total_weight: u32 = 0;
         let mut parent_weights = Vec::new();
-
+        
         for parent_info in ctx.remaining_accounts.iter() {
             let parent: Account<CrateRecord> = Account::try_from(parent_info)?;
-            require_keys_eq!(
-                parent.authority,
-                ctx.accounts.authority.key(),
-                ErrorCode::UnauthorizedUpdate
-            );
-
-            total_weight = total_weight
-                .checked_add(parent.weight)
+            total_weight = total_weight.checked_add(parent.weight)
                 .ok_or(ErrorCode::WeightOverflow)?;
             parent_weights.push(parent.weight);
         }
 
         let record = &mut ctx.accounts.crate_record;
         record.crate_id = crate_id;
-        record.crate_did = crate_did;
-        record.owner_did = owner_did;
-        record.device_did = device_did;
-        record.location = location;
         record.weight = total_weight;
         record.timestamp = timestamp;
         record.hash = hash;
@@ -128,20 +101,15 @@ pub mod nautilink {
         record.parent_crates = parent_keys;
         record.child_crates = Vec::new();
         record.parent_weights = parent_weights;
-        record.split_distribution = Vec::new();
         record.operation_type = OperationType::Mixed;
 
         Ok(())
     }
 
-    /// Splits one crate into multiple child crates
+    /// Splits one parent crate into multiple child crates
     pub fn split_crate(
         ctx: Context<SplitCrate>,
         crate_id: String,
-        crate_did: String,
-        owner_did: String,
-        device_did: String,
-        location: String,
         weight: u32,
         timestamp: i64,
         hash: String,
@@ -151,29 +119,29 @@ pub mod nautilink {
     ) -> Result<()> {
         let parent = &ctx.accounts.parent_crate;
 
-        require_keys_eq!(
-            ctx.accounts.authority.key(),
-            parent.authority,
-            ErrorCode::UnauthorizedUpdate
+        require!(
+            child_keys.len() >= 2,
+            ErrorCode::SplitRequiresMultipleChildren
         );
-
-        require!(child_keys.len() >= 2, ErrorCode::SplitRequiresMultipleChildren);
-        require!(child_keys.len() <= CrateRecord::MAX_CHILDREN, ErrorCode::TooManyChildren);
+        require!(
+            child_keys.len() <= CrateRecord::MAX_CHILDREN,
+            ErrorCode::TooManyChildren
+        );
         require!(
             child_keys.len() == child_weights.len(),
             ErrorCode::ChildKeyWeightMismatch
         );
 
+        // Verify split weights sum to parent weight
         let total_child_weight: u32 = child_weights.iter().sum();
-        require!(total_child_weight == parent.weight, ErrorCode::SplitWeightMismatch);
+        require!(
+            total_child_weight == parent.weight,
+            ErrorCode::SplitWeightMismatch
+        );
 
         let record = &mut ctx.accounts.crate_record;
         record.crate_id = crate_id;
-        record.crate_did = crate_did;
-        record.owner_did = owner_did;
-        record.device_did = device_did;
-        record.location = location;
-        record.weight = weight;
+        record.weight = weight; // This specific child's weight
         record.timestamp = timestamp;
         record.hash = hash;
         record.ipfs_cid = ipfs_cid;
@@ -181,31 +149,46 @@ pub mod nautilink {
         record.parent_crates = vec![parent.key()];
         record.child_crates = child_keys.clone();
         record.parent_weights = vec![parent.weight];
-        record.split_distribution = child_weights;
         record.operation_type = OperationType::Split;
+        
+        // Store how the parent was distributed among children
+        record.split_distribution = child_weights;
 
         Ok(())
     }
 
+    /// Updates parent to record its children after split
     pub fn update_parent_children(
         ctx: Context<UpdateParent>,
         child_keys: Vec<Pubkey>,
     ) -> Result<()> {
         let parent = &mut ctx.accounts.parent_crate;
-        require_keys_eq!(ctx.accounts.authority.key(), parent.authority, ErrorCode::UnauthorizedUpdate);
+        
+        require!(
+            ctx.accounts.authority.key() == parent.authority,
+            ErrorCode::UnauthorizedUpdate
+        );
+        
         parent.child_crates = child_keys;
         Ok(())
     }
 
+    /// Updates child to record its parent after mix
     pub fn update_child_parent(
         ctx: Context<UpdateChild>,
         parent_key: Pubkey,
     ) -> Result<()> {
         let child = &mut ctx.accounts.child_crate;
-        require_keys_eq!(ctx.accounts.authority.key(), child.authority, ErrorCode::UnauthorizedUpdate);
+        
+        require!(
+            ctx.accounts.authority.key() == child.authority,
+            ErrorCode::UnauthorizedUpdate
+        );
+        
         if !child.parent_crates.contains(&parent_key) {
             child.parent_crates.push(parent_key);
         }
+        
         Ok(())
     }
 }
@@ -217,7 +200,11 @@ pub mod nautilink {
 #[derive(Accounts)]
 #[instruction(crate_id: String)]
 pub struct CreateCrate<'info> {
-    #[account(init, payer = authority, space = 8 + CrateRecord::MAX_SIZE)]
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + CrateRecord::MAX_SIZE
+    )]
     pub crate_record: Account<'info, CrateRecord>,
     #[account(mut)]
     pub authority: Signer<'info>,
@@ -227,10 +214,15 @@ pub struct CreateCrate<'info> {
 #[derive(Accounts)]
 #[instruction(crate_id: String)]
 pub struct TransferOwnership<'info> {
-    #[account(init, payer = authority, space = 8 + CrateRecord::MAX_SIZE)]
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + CrateRecord::MAX_SIZE
+    )]
     pub crate_record: Account<'info, CrateRecord>,
     #[account(mut)]
     pub authority: Signer<'info>,
+    /// The parent crate being transferred
     pub parent_crate: Account<'info, CrateRecord>,
     pub system_program: Program<'info, System>,
 }
@@ -238,20 +230,30 @@ pub struct TransferOwnership<'info> {
 #[derive(Accounts)]
 #[instruction(crate_id: String)]
 pub struct MixCrates<'info> {
-    #[account(init, payer = authority, space = 8 + CrateRecord::MAX_SIZE)]
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + CrateRecord::MAX_SIZE
+    )]
     pub crate_record: Account<'info, CrateRecord>,
     #[account(mut)]
     pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
+    // Parent crates passed via remaining_accounts
 }
 
 #[derive(Accounts)]
 #[instruction(crate_id: String)]
 pub struct SplitCrate<'info> {
-    #[account(init, payer = authority, space = 8 + CrateRecord::MAX_SIZE)]
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + CrateRecord::MAX_SIZE
+    )]
     pub crate_record: Account<'info, CrateRecord>,
     #[account(mut)]
     pub authority: Signer<'info>,
+    /// The parent crate being split
     pub parent_crate: Account<'info, CrateRecord>,
     pub system_program: Program<'info, System>,
 }
@@ -271,79 +273,82 @@ pub struct UpdateChild<'info> {
 }
 
 // ===================
-// DATA STRUCTURE
+// DATA STRUCTURES
 // ===================
 
 #[account]
 pub struct CrateRecord {
-    pub authority: Pubkey,
-    pub crate_id: String,
-    pub crate_did: String,  // DID for crate
-    pub owner_did: String,  // DID for owner
-    pub device_did: String, // DID for NFC or scanner device
-    pub location: String,   // Location string (lat,long)
-    pub weight: u32,
-    pub timestamp: i64,
-    pub hash: String,
-    pub ipfs_cid: String,
-
-    pub parent_crates: Vec<Pubkey>,
-    pub child_crates: Vec<Pubkey>,
-    pub parent_weights: Vec<u32>,
-    pub split_distribution: Vec<u32>,
-    pub operation_type: OperationType,
+    pub authority: Pubkey,           // Current owner
+    pub crate_id: String,            // Unique identifier
+    pub weight: u32,                 // Weight in grams
+    pub timestamp: i64,              // Creation/operation timestamp
+    pub hash: String,                // SHA256 hash
+    pub ipfs_cid: String,            // IPFS content ID
+    
+    // Lineage tracking
+    pub parent_crates: Vec<Pubkey>,  // Parent crate accounts
+    pub child_crates: Vec<Pubkey>,   // Child crate accounts
+    pub parent_weights: Vec<u32>,    // Original weight of each parent
+    pub split_distribution: Vec<u32>, // How weight was distributed in split
+    
+    pub operation_type: OperationType, // What operation created this record
 }
 
 impl CrateRecord {
     pub const MAX_PARENTS: usize = 10;
     pub const MAX_CHILDREN: usize = 10;
-    pub const MAX_SIZE: usize =
-        32 + // authority
-        4 + 64 + // crate_id
-        4 + 64 + // crate_did
-        4 + 64 + // owner_did
-        4 + 64 + // device_did
-        4 + 64 + // location
-        4 + 8 +  // weight + timestamp
-        4 + 64 + // hash
-        4 + 64 + // ipfs_cid
-        4 + (Self::MAX_PARENTS * 32) +
-        4 + (Self::MAX_CHILDREN * 32) +
-        4 + (Self::MAX_PARENTS * 4) +
-        4 + (Self::MAX_CHILDREN * 4) +
-        1;
+    pub const MAX_SIZE: usize = 
+        32 +                                    // authority
+        4 + 64 +                                // crate_id
+        4 +                                     // weight
+        8 +                                     // timestamp
+        4 + 64 +                                // hash
+        4 + 64 +                                // ipfs_cid
+        4 + (Self::MAX_PARENTS * 32) +          // parent_crates
+        4 + (Self::MAX_CHILDREN * 32) +         // child_crates
+        4 + (Self::MAX_PARENTS * 4) +           // parent_weights
+        4 + (Self::MAX_CHILDREN * 4) +          // split_distribution
+        1;                                      // operation_type
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
 pub enum OperationType {
-    Created,
-    Transferred,
-    Mixed,
-    Split,
+    Created,      // Initial creation
+    Transferred,  // Simple ownership transfer
+    Mixed,        // Result of mixing multiple crates
+    Split,        // Result of splitting a crate
 }
 
 // ===================
-// ERRORS
+// ERROR CODES
 // ===================
 
 #[error_code]
 pub enum ErrorCode {
     #[msg("Weight must remain the same during transfer")]
     WeightMismatchOnTransfer,
-    #[msg("Mix requires at least 2 parents")]
+    
+    #[msg("Mix operation requires at least 2 parent crates")]
     MixRequiresMultipleParents,
-    #[msg("Split requires at least 2 children")]
+    
+    #[msg("Split operation requires at least 2 child crates")]
     SplitRequiresMultipleChildren,
-    #[msg("Too many parents (max 10)")]
+    
+    #[msg("Too many parent crates (max 10)")]
     TooManyParents,
-    #[msg("Too many children (max 10)")]
+    
+    #[msg("Too many child crates (max 10)")]
     TooManyChildren,
-    #[msg("Child key/weight mismatch")]
+    
+    #[msg("Child keys and weights arrays must have same length")]
     ChildKeyWeightMismatch,
-    #[msg("Split weights do not sum to parent weight")]
+    
+    #[msg("Sum of split weights must equal parent weight")]
     SplitWeightMismatch,
-    #[msg("Weight overflow")]
+    
+    #[msg("Weight calculation overflow")]
     WeightOverflow,
-    #[msg("Unauthorized update attempt")]
+    
+    #[msg("Unauthorized to update this record")]
     UnauthorizedUpdate,
 }

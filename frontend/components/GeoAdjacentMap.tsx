@@ -3,6 +3,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import * as turf from '@turf/bbox';
+import { centerOfMass } from '@turf/center-of-mass';
 
 export interface MapLocation {
   id?: string | number;
@@ -24,6 +26,7 @@ export interface GeoAdjacentMapProps {
   width?: string;
   height?: string;
   showControls?: boolean;
+  showMPAs?: boolean; // Toggle MPA polygons
 }
 
 /**
@@ -46,6 +49,7 @@ const GeoAdjacentMap: React.FC<GeoAdjacentMapProps> = ({
   width = '100%',
   height = '100%',
   showControls = true,
+  showMPAs = false,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -70,6 +74,11 @@ const GeoAdjacentMap: React.FC<GeoAdjacentMapProps> = ({
 
     map.on('load', () => {
       setIsMapLoaded(true);
+      
+      // Load MPA polygons if enabled
+      if (showMPAs) {
+        loadMPAPolygons(map);
+      }
     });
 
     mapRef.current = map;
@@ -79,7 +88,100 @@ const GeoAdjacentMap: React.FC<GeoAdjacentMapProps> = ({
       mapRef.current = null;
       markersRef.current.clear();
     };
-  }, []);
+  }, [showMPAs]);
+
+  // Load MPA polygon data and add layers
+  const loadMPAPolygons = async (map: maplibregl.Map) => {
+    try {
+      // Add MPA source
+      map.addSource('mpas', {
+        type: 'geojson',
+        data: '/data/top50_mpas.geojson',
+      });
+
+      // Add fill layer for MPA polygons
+      map.addLayer({
+        id: 'mpa-fill',
+        type: 'fill',
+        source: 'mpas',
+        paint: {
+          'fill-color': '#00d4ff', // Bright cyan/blue
+          'fill-opacity': 0.35,
+        },
+      });
+
+      // Add outline layer for MPA polygons
+      map.addLayer({
+        id: 'mpa-outline',
+        type: 'line',
+        source: 'mpas',
+        paint: {
+          'line-color': '#00d4ff', // Bright cyan/blue
+          'line-width': 2,
+        },
+      });
+
+      // Fit map to show all MPAs
+      map.once('idle', () => {
+        const features = map.querySourceFeatures('mpas');
+        if (features.length > 0) {
+          const fc = {
+            type: 'FeatureCollection',
+            features: features.map((f: any) => ({
+              type: 'Feature',
+              geometry: f.geometry,
+              properties: {},
+            })),
+          };
+          const bbox = turf.default(fc as any);
+          map.fitBounds(
+            [
+              [bbox[0], bbox[1]],
+              [bbox[2], bbox[3]],
+            ],
+            { padding: 40, duration: 800 }
+          );
+        }
+      });
+
+      // Click interaction for MPA polygons
+      map.on('click', 'mpa-fill', (e) => {
+        const f = e.features?.[0];
+        if (!f) return;
+
+        const props = f.properties || {};
+        const center = centerOfMass(f as any).geometry.coordinates;
+
+        map.flyTo({
+          center: center as [number, number],
+          zoom: Math.max(map.getZoom(), 5),
+          duration: 800,
+        });
+
+        if (onLocationClick) {
+          onLocationClick({
+            id: props.wdpa_id || props.id || props.name,
+            name: props.name,
+            lat: center[1],
+            lng: center[0],
+            registered: true,
+            ...props,
+          });
+        }
+      });
+
+      // Cursor pointer on hover
+      map.on('mouseenter', 'mpa-fill', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', 'mpa-fill', () => {
+        map.getCanvas().style.cursor = '';
+      });
+    } catch (error) {
+      console.error('Error loading MPA polygons:', error);
+    }
+  };
 
   // Update markers when locations change
   useEffect(() => {

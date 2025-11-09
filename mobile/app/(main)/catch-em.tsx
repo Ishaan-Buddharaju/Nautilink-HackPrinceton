@@ -8,16 +8,9 @@ import { Colors } from '../../constants/Colors';
 
 const { width, height } = Dimensions.get('window');
 
-// NFC Manager - same as nfc-tap.tsx
-let NfcManager: any = null;
-let NfcTech: any = null;
-try {
-  const nfcModule = require('react-native-nfc-manager');
-  NfcManager = nfcModule.default;
-  NfcTech = nfcModule.NfcTech;
-} catch (e) {
-  console.log('NFC Manager not available - using fallback mode');
-}
+// Import unified NFC module
+import { nfcManager, initNFC, readNFC, isNFCAvailable, simulateNFC, cleanupNFC } from '../../utils/nfcManager';
+import MiniGlobe, { FishLocation } from '../../components/MiniGlobe';
 
 interface Catch {
   id: string;
@@ -50,44 +43,36 @@ export default function CatchEmScreen() {
   const [nfcOpacity] = useState(new Animated.Value(0.3));
   const cameraRef = useRef<CameraView>(null);
 
-  // Mock data for caught fish
+  // Convert catches to FishLocation format for MiniGlobe
+  const convertCatchesToFishLocations = (catches: Catch[]): FishLocation[] => {
+    return catches.map(catchItem => ({
+      id: catchItem.id,
+      lat: catchItem.location.lat,
+      lng: catchItem.location.lng,
+      name: catchItem.location.name,
+      vessel: {
+        name: `Catch: ${catchItem.species}`,
+        imo_number: catchItem.nfcTagId,
+        model: `${catchItem.weight}kg ${catchItem.species}`,
+        flag_state: 'Consumer',
+        year_built: new Date(catchItem.timestamp).getFullYear()
+      },
+      sustainability_score: {
+        total_score: catchItem.sustainabilityScore || 75,
+        categories: {
+          vessel_efficiency: { score: 75 },
+          fishing_method: { score: 80 },
+          environmental_practices: { score: catchItem.sustainabilityScore || 75 },
+          compliance_and_transparency: { score: 85 },
+          social_responsibility: { score: 70 }
+        }
+      },
+      registered: true
+    }));
+  };
+
+  // Initialize NFC on component mount - no mock data, only verified catches
   useEffect(() => {
-    const mockCatches: Catch[] = [
-      {
-        id: '1',
-        species: 'Yellowfin Tuna',
-        weight: 12.5,
-        location: { name: 'Pacific Ocean', lat: 20.5937, lng: -156.3319 },
-        timestamp: new Date(Date.now() - 86400000),
-        nfcTagId: 'NFC-8472',
-        points: 85,
-        imageUri: 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44',
-        sustainabilityScore: 85,
-      },
-      {
-        id: '2',
-        species: 'Mahi Mahi',
-        weight: 8.3,
-        location: { name: 'Gulf Stream', lat: 35.2271, lng: -75.5449 },
-        timestamp: new Date(Date.now() - 172800000),
-        nfcTagId: 'NFC-6291',
-        points: 72,
-        imageUri: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
-        sustainabilityScore: 72,
-      },
-      {
-        id: '3',
-        species: 'Red Snapper',
-        weight: 5.7,
-        location: { name: 'Caribbean Sea', lat: 18.2208, lng: -66.5901 },
-        timestamp: new Date(Date.now() - 259200000),
-        nfcTagId: 'NFC-4183',
-        points: 91,
-        imageUri: 'https://images.unsplash.com/photo-1535591273668-578e31182c4f',
-        sustainabilityScore: 91,
-      },
-    ];
-    setCatches(mockCatches);
     initNfc();
   }, []);
 
@@ -98,44 +83,39 @@ export default function CatchEmScreen() {
     }
   }, [status]);
 
-  // NFC Functions from nfc-tap.tsx
+  // NFC Functions using unified module
   const initNfc = async () => {
-    if (!NfcManager) {
-      console.log('Running in Expo Go - NFC not available');
-      setNfcSupported(false);
-      return;
-    }
-
     try {
-      const supported = await NfcManager.isSupported();
-      setNfcSupported(supported);
+      const result = await initNFC();
+      setNfcSupported(result.success);
+      
+      if (!result.success) {
+        console.log('NFC init failed:', result.error);
+      }
     } catch (error) {
       console.error('NFC init error:', error);
+      setNfcSupported(false);
     }
   };
 
   const startNfcScan = async () => {
     if (!nfcSupported) {
-      // Simulate NFC in development
-      setTimeout(() => {
-        const mockTagId = `NFC-${Math.floor(Math.random() * 10000)}`;
-        handleNfcDetected(mockTagId);
-      }, 1000);
+      Alert.alert('NFC Not Available', 'NFC is required for catch verification. Please ensure NFC is enabled on your device.');
       return;
     }
 
     try {
-      await NfcManager.start();
-      await NfcManager.requestTechnology(NfcTech.Ndef);
-      const tag = await NfcManager.getTag();
-      console.log('NFC Tag detected:', tag);
-      handleNfcDetected(tag.id);
+      const result = await readNFC();
+      if (result.success) {
+        console.log('NFC Tag detected:', result.data);
+        handleNfcDetected(result.data.id);
+      } else {
+        console.warn('NFC read failed:', result.error);
+        Alert.alert('NFC Read Failed', result.error || 'Could not read NFC tag. Please try again.');
+      }
     } catch (error) {
       console.warn('NFC read cancelled or failed:', error);
-    } finally {
-      if (NfcManager) {
-        await NfcManager.cancelTechnologyRequest();
-      }
+      Alert.alert('NFC Error', 'NFC operation failed. Please try again.');
     }
   };
 
@@ -143,57 +123,89 @@ export default function CatchEmScreen() {
     setNfcTagId(tagId);
     setStatus('submitted');
     
-    // Simulate verification and add to log
+    // Simulate blockchain verification process
     setTimeout(() => {
-      setStatus('verified');
-      const tokens = Math.floor(sustainabilityScore / 10);
-      setBlueTokens(prev => prev + tokens);
+      // Step 1: Verify NFC tag authenticity
+      console.log('Step 1: Verifying NFC tag authenticity...');
       
-      // Add new catch to log
-      const newCatch: Catch = {
-        id: String(Date.now()),
-        species: 'Caught Fish',
-        weight: Math.random() * 10 + 5,
-        location: { name: 'Current Location', lat: 25.7617, lng: -80.1918 },
-        timestamp: new Date(),
-        nfcTagId: tagId,
-        points: tokens,
-        imageUri: capturedImage || '',
-        sustainabilityScore,
-      };
-      setCatches(prev => [newCatch, ...prev]);
-    }, 2000);
+      setTimeout(() => {
+        // Step 2: Record transaction on blockchain
+        console.log('Step 2: Recording transaction on blockchain...');
+        
+        setTimeout(() => {
+          // Step 3: Confirm blockchain nodes consensus
+          console.log('Step 3: Confirming blockchain consensus...');
+          
+          // Only after full blockchain verification, add to logs
+          setStatus('verified');
+          const tokens = Math.floor(sustainabilityScore / 10);
+          setBlueTokens(prev => prev + tokens);
+          
+          // Generate blockchain transaction hash
+          const blockchainHash = `0x${Math.random().toString(16).substr(2, 8)}${Date.now().toString(16)}`;
+          
+          // Add verified catch to log with blockchain proof
+          const newCatch: Catch = {
+            id: blockchainHash, // Use blockchain hash as ID
+            species: 'Verified Catch',
+            weight: Math.random() * 10 + 5,
+            location: { name: 'Current Location', lat: 25.7617, lng: -80.1918 },
+            timestamp: new Date(),
+            nfcTagId: tagId,
+            points: tokens,
+            imageUri: capturedImage || '',
+            sustainabilityScore,
+          };
+          
+          setCatches(prev => [newCatch, ...prev]);
+          console.log('✅ Catch verified and recorded on blockchain:', blockchainHash);
+        }, 1000);
+      }, 1000);
+    }, 1000);
   };
 
-  // Camera Functions from qr-scanner.tsx
+  // Camera Functions with error handling
   const handleTakePhoto = async () => {
     if (!cameraPermission?.granted) {
       Alert.alert('Permission required', 'Camera permission is needed to take photos');
       return;
     }
 
-    try {
-      if (cameraRef.current) {
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: false,
-          skipProcessing: true,
-        });
+    // Prevent taking photo if camera is not ready or being unmounted
+    if (status !== 'camera' || !cameraRef.current) {
+      console.warn('Camera not ready for photo capture');
+      return;
+    }
 
-        if (photo.uri) {
-          setCapturedImage(photo.uri);
-          // Simulate AI analysis
-          setTimeout(() => {
+    try {
+      setIsLoading(true);
+      
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+        skipProcessing: true,
+      });
+
+      if (photo?.uri && status === 'camera') {
+        setCapturedImage(photo.uri);
+        // Simulate AI analysis
+        setTimeout(() => {
+          if (status === 'camera') { // Only proceed if still in camera mode
             setStatus('nfc');
             // Mock sustainability score (60-100)
             const score = Math.floor(Math.random() * 40) + 60;
             setSustainabilityScore(score);
-          }, 1500);
-        }
+          }
+        }, 1500);
       }
     } catch (error) {
       console.error('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo');
+      // Only show alert if still in camera mode
+      if (status === 'camera') {
+        Alert.alert('Error', 'Failed to take photo. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -233,78 +245,34 @@ export default function CatchEmScreen() {
   // Render Log List View
   const renderListView = () => (
     <View style={styles.content}>
-      {/* Globe Widget - Sophisticated visualization */}
-      <View style={styles.mapContainer}>
-        <Text style={styles.sectionTitle}>🌊 Global Fish Tracker</Text>
-        <View style={styles.globeContainer}>
-          {/* 3D-style Globe with shadow */}
-          <View style={styles.globeWrapper}>
-            <View style={styles.globeShadow} />
-            <View style={styles.globe}>
-              {/* Continents representation (simplified) */}
-              <View style={styles.continent1} />
-              <View style={styles.continent2} />
-              <View style={styles.continent3} />
-              
-              {/* Globe grid lines - latitude/longitude */}
-              <View style={styles.globeGrid}>
-                <View style={[styles.horizontalLine, { top: '15%' }]} />
-                <View style={[styles.horizontalLine, { top: '35%' }]} />
-                <View style={[styles.horizontalLine, { top: '50%' }]} />
-                <View style={[styles.horizontalLine, { top: '65%' }]} />
-                <View style={[styles.horizontalLine, { top: '85%' }]} />
-                <View style={[styles.verticalLine, { left: '25%' }]} />
-                <View style={[styles.verticalLine, { left: '50%' }]} />
-                <View style={[styles.verticalLine, { left: '75%' }]} />
-              </View>
-              
-              {/* Fish markers positioned around globe */}
-              {catches.map((catchItem, index) => {
-                // Distribute markers in a spherical pattern
-                const phi = (index * 137.5) % 360; // Golden angle
-                const theta = Math.acos(1 - 2 * (index + 0.5) / catches.length);
-                const radius = 55;
-                const x = radius * Math.sin(theta) * Math.cos(phi * Math.PI / 180) + 70;
-                const y = radius * Math.sin(theta) * Math.sin(phi * Math.PI / 180) + 70;
-                
-                return (
-                  <View
-                    key={catchItem.id}
-                    style={[
-                      styles.fishMarker,
-                      { 
-                        left: x, 
-                        top: y,
-                        zIndex: 10,
-                      }
-                    ]}
-                  >
-                    <View style={styles.markerPulse} />
-                    <Ionicons name="location" size={24} color="#00d4ff" />
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-          
-          {/* Stats cards below globe */}
-          <View style={styles.globeStats}>
-            <View style={styles.globeStatCard}>
-              <Ionicons name="fish" size={20} color="#00d4ff" />
-              <Text style={styles.globeStatNumber}>{catches.length}</Text>
-              <Text style={styles.globeStatLabel}>Catches</Text>
-            </View>
-            <View style={styles.globeStatCard}>
-              <Ionicons name="trophy" size={20} color="#FFD700" />
-              <Text style={styles.globeStatNumber}>{catches.reduce((sum, c) => sum + c.points, 0)}</Text>
-              <Text style={styles.globeStatLabel}>Points</Text>
-            </View>
-            <View style={styles.globeStatCard}>
-              <Ionicons name="earth" size={20} color="#4CAF50" />
-              <Text style={styles.globeStatNumber}>{catches.length}</Text>
-              <Text style={styles.globeStatLabel}>Locations</Text>
-            </View>
-          </View>
+      {/* High-Quality MiniGlobe */}
+      <MiniGlobe 
+        fishData={convertCatchesToFishLocations(catches)} 
+        onLocationSelect={(location) => {
+          // Find the corresponding catch and show details
+          const correspondingCatch = catches.find(c => c.id === location.id);
+          if (correspondingCatch) {
+            handleCatchPress(correspondingCatch);
+          }
+        }}
+      />
+
+      {/* Stats cards */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Ionicons name="fish" size={20} color="#00d4ff" />
+          <Text style={styles.statNumber}>{catches.length}</Text>
+          <Text style={styles.statLabel}>Catches</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="trophy" size={20} color="#FFD700" />
+          <Text style={styles.statNumber}>{catches.reduce((sum, c) => sum + c.points, 0)}</Text>
+          <Text style={styles.statLabel}>Points</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="earth" size={20} color="#4CAF50" />
+          <Text style={styles.statNumber}>{catches.length}</Text>
+          <Text style={styles.statLabel}>Locations</Text>
         </View>
       </View>
 
@@ -312,28 +280,42 @@ export default function CatchEmScreen() {
       <View style={styles.logSection}>
         <Text style={styles.sectionTitle}>Your Catches</Text>
         <ScrollView style={styles.logList} showsVerticalScrollIndicator={false}>
-          {catches.map((catchItem) => (
-            <TouchableOpacity
-              key={catchItem.id}
-              style={styles.logItem}
-              onPress={() => handleCatchPress(catchItem)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.logIcon}>
-                <Ionicons name="fish" size={20} color="#00d4ff" />
-              </View>
-              <View style={styles.logInfo}>
-                <Text style={styles.logTitle}>{catchItem.species}</Text>
-                <Text style={styles.logDetail}>
-                  {catchItem.weight}kg • {catchItem.location.name}
-                </Text>
-              </View>
-              <View style={styles.pointsBadge}>
-                <Ionicons name="trophy" size={14} color="#FFD700" />
-                <Text style={styles.pointsText}>{catchItem.points}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {catches.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="cube-outline" size={60} color={Colors.textMuted} />
+              <Text style={styles.emptyStateTitle}>No Verified Catches Yet</Text>
+              <Text style={styles.emptyStateText}>
+                Catches will appear here after completing the full verification process:
+                {'\n'}📷 Photo → 📱 NFC Scan → ⛓️ Blockchain Recording
+              </Text>
+            </View>
+          ) : (
+            catches.map((catchItem) => (
+              <TouchableOpacity
+                key={catchItem.id}
+                style={styles.logItem}
+                onPress={() => handleCatchPress(catchItem)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.logIcon}>
+                  <Ionicons name="fish" size={20} color="#00d4ff" />
+                </View>
+                <View style={styles.logInfo}>
+                  <Text style={styles.logTitle}>{catchItem.species}</Text>
+                  <Text style={styles.logDetail}>
+                    {catchItem.weight.toFixed(1)}kg • {catchItem.location.name}
+                  </Text>
+                  <Text style={styles.blockchainId}>
+                    ⛓️ {catchItem.id}
+                  </Text>
+                </View>
+                <View style={styles.pointsBadge}>
+                  <Ionicons name="trophy" size={14} color="#FFD700" />
+                  <Text style={styles.pointsText}>{catchItem.points}</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
         </ScrollView>
       </View>
 
@@ -349,52 +331,58 @@ export default function CatchEmScreen() {
     </View>
   );
 
-  // Render Camera View (consistent with qr-scanner.tsx)
+  // Render Camera View with overlay positioned absolutely
   const renderCameraView = () => (
     <View style={styles.cameraContainer}>
       <CameraView
         ref={cameraRef}
         style={styles.camera}
         facing="back"
-      >
-        <View style={styles.cameraOverlay}>
-          {/* Header with close button */}
-          <View style={styles.cameraHeader}>
-            <TouchableOpacity onPress={backToList} style={styles.closeButton}>
-              <Ionicons name="close" size={32} color="#FFF" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Center frame */}
-          <View style={styles.centerContainer}>
-            <View style={styles.scanFrame}>
-              <View style={[styles.corner, styles.topLeft]} />
-              <View style={[styles.corner, styles.topRight]} />
-              <View style={[styles.corner, styles.bottomLeft]} />
-              <View style={[styles.corner, styles.bottomRight]} />
-            </View>
-            <Text style={styles.instructionText}>
-              Frame your catch within the guide
-            </Text>
-          </View>
-
-          {/* Footer with capture button */}
-          <View style={styles.cameraFooter}>
-            <TouchableOpacity 
-              style={styles.captureButtonWrapper}
-              onPress={handleTakePhoto}
-            >
-              <View style={styles.captureButtonInner}>
-                <Ionicons name="camera" size={32} color={Colors.background} />
-              </View>
-            </TouchableOpacity>
-          </View>
+      />
+      
+      {/* Overlay positioned absolutely over camera */}
+      <View style={styles.cameraOverlay}>
+        {/* Header with close button */}
+        <View style={styles.cameraHeader}>
+          <TouchableOpacity onPress={backToList} style={styles.closeButton}>
+            <Ionicons name="close" size={32} color="#FFF" />
+          </TouchableOpacity>
         </View>
-      </CameraView>
+
+        {/* Center frame */}
+        <View style={styles.centerContainer}>
+          <View style={styles.scanFrame}>
+            <View style={[styles.corner, styles.topLeft]} />
+            <View style={[styles.corner, styles.topRight]} />
+            <View style={[styles.corner, styles.bottomLeft]} />
+            <View style={[styles.corner, styles.bottomRight]} />
+          </View>
+          <Text style={styles.instructionText}>
+            Frame your catch within the guide
+          </Text>
+        </View>
+
+        {/* Footer with capture button */}
+        <View style={styles.cameraFooter}>
+          <TouchableOpacity 
+            style={styles.captureButtonWrapper}
+            onPress={handleTakePhoto}
+            disabled={isLoading}
+          >
+            <View style={styles.captureButtonInner}>
+              <Ionicons 
+                name={isLoading ? "hourglass" : "camera"} 
+                size={32} 
+                color={Colors.background} 
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 
-  // Start NFC pulsing animation when entering NFC state
+  // Start NFC pulsing animation and scanning when entering NFC state
   useEffect(() => {
     if (status === 'nfc') {
       // Reset animation values
@@ -430,6 +418,9 @@ export default function CatchEmScreen() {
           ]),
         ])
       ).start();
+
+      // Automatically start NFC scanning
+      startNfcScan();
     }
   }, [status]);
 
@@ -472,36 +463,34 @@ export default function CatchEmScreen() {
 
           <Text style={styles.nfcTitle}>Hold Near NFC Tag</Text>
           <Text style={styles.nfcSubtitle}>
-            {nfcSupported
-              ? 'Position your device near the NFC tag'
-              : 'Tap button to simulate NFC'}
+            Position your device near the NFC tag to verify your catch
           </Text>
 
           <Text style={styles.sustainabilityScore}>
             🌱 Sustainability Score: {sustainabilityScore}/100
           </Text>
-
-          {/* Simulate button for Expo Go */}
-          {!nfcSupported && (
-            <TouchableOpacity
-              style={styles.simulateButton}
-              onPress={startNfcScan}
-            >
-              <Text style={styles.simulateButtonText}>Simulate NFC Tap</Text>
-            </TouchableOpacity>
-          )}
         </View>
       </View>
     );
   };
 
-  // Render Submitting View
+  // Render Blockchain Verification View
   const renderSubmittedView = () => (
     <View style={styles.content}>
       <View style={styles.verificationContainer}>
-        <Ionicons name="checkmark-circle" size={80} color="#4CAF50" />
-        <Text style={styles.verificationText}>Verifying your catch...</Text>
-        <Text style={styles.nfcTagId}>Tag ID: {nfcTagId}</Text>
+        <Ionicons name="cube-outline" size={80} color="#4662ab" />
+        <Text style={styles.verificationText}>Recording on Blockchain...</Text>
+        <Text style={styles.nfcTagId}>NFC Tag: {nfcTagId}</Text>
+        
+        <View style={styles.blockchainSteps}>
+          <Text style={styles.stepText}>🔐 Verifying NFC authenticity</Text>
+          <Text style={styles.stepText}>⛓️ Recording transaction</Text>
+          <Text style={styles.stepText}>🌐 Confirming node consensus</Text>
+        </View>
+        
+        <Text style={styles.blockchainNote}>
+          Your catch will appear in logs after blockchain confirmation
+        </Text>
       </View>
     </View>
   );
@@ -511,12 +500,12 @@ export default function CatchEmScreen() {
     <View style={styles.content}>
       <View style={styles.successContainer}>
         <Ionicons name="checkmark-circle" size={100} color="#4CAF50" />
-        <Text style={styles.successTitle}>Catch Verified!</Text>
+        <Text style={styles.successTitle}>Blockchain Verified! ⛓️</Text>
         <Text style={styles.successSubtitle}>
-          You've earned {Math.floor(sustainabilityScore / 10)} Blue Tokens 🏆
+          Transaction recorded on blockchain • {Math.floor(sustainabilityScore / 10)} Blue Tokens earned 🏆
         </Text>
         
-        <View style={styles.statsContainer}>
+        <View style={styles.verificationStatsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{sustainabilityScore}</Text>
             <Text style={styles.statLabel}>Sustainability</Text>
@@ -843,6 +832,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textMuted,
   },
+  blockchainId: {
+    fontSize: 12,
+    color: Colors.accentPrimary,
+    fontFamily: 'monospace',
+    marginTop: 2,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.foreground,
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
   pointsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -879,8 +894,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cameraOverlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'transparent',
+    zIndex: 1,
   },
   cameraHeader: {
     paddingTop: 60,
@@ -1049,25 +1069,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
-  simulateButton: {
-    marginTop: 30,
-    backgroundColor: Colors.accentPrimary,
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    shadowColor: Colors.accentPrimary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  simulateButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.background,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
   capturedImage: {
     width: '100%',
     height: '100%',
@@ -1089,6 +1090,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textMuted,
     fontFamily: 'monospace',
+  },
+  blockchainSteps: {
+    marginTop: 30,
+    alignItems: 'center',
+    gap: 12,
+  },
+  stepText: {
+    fontSize: 16,
+    color: Colors.foreground,
+    textAlign: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: Colors.surfacePrimary,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    minWidth: 250,
+  },
+  blockchainNote: {
+    marginTop: 20,
+    fontSize: 14,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingHorizontal: 20,
   },
   successContainer: {
     flex: 1,
@@ -1224,5 +1250,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#FFD700',
+  },
+  verificationStatsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  statCard: {
+    backgroundColor: Colors.surfaceGlass,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginTop: 8,
   },
 });

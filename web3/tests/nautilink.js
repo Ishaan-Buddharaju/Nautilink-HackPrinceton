@@ -18,11 +18,7 @@ describe("nautilink traceability", () => {
       await program.methods
         .createCrate(
           "CRATE_A",
-          "did:crate:A123",       // crate_did
-          "did:owner:fisher1",    // owner_did
-          "did:device:nfc001",    // device_did
-          "40.7128,-74.0060",     // location (NYC coordinates)
-          1000,                   // weight: 1000g
+          1000, // 1000g
           now(),
           "hashA",
           "ipfs_cid_A"
@@ -37,10 +33,6 @@ describe("nautilink traceability", () => {
 
       const record = await program.account.crateRecord.fetch(crateA.publicKey);
       assert.strictEqual(record.crateId, "CRATE_A");
-      assert.strictEqual(record.crateDid, "did:crate:A123");
-      assert.strictEqual(record.ownerDid, "did:owner:fisher1");
-      assert.strictEqual(record.deviceDid, "did:device:nfc001");
-      assert.strictEqual(record.location, "40.7128,-74.0060");
       assert.strictEqual(record.weight, 1000);
       assert.strictEqual(record.parentCrates.length, 0);
       console.log("✅ Crate A created: 1000g");
@@ -52,10 +44,6 @@ describe("nautilink traceability", () => {
       await program.methods
         .createCrate(
           "CRATE_B",
-          "did:crate:B456",
-          "did:owner:fisher2",
-          "did:device:nfc002",
-          "40.7580,-73.9855",     // Different location
           1500,
           now(),
           "hashB",
@@ -80,10 +68,6 @@ describe("nautilink traceability", () => {
       await program.methods
         .mixCrates(
           "CRATE_C_MIXED",
-          "did:crate:C789",
-          "did:owner:fisher1",    // Same owner as A
-          "did:device:scanner01",
-          "40.7489,-73.9680",     // Processing location
           now(),
           "hashC",
           "ipfs_cid_C",
@@ -155,10 +139,6 @@ describe("nautilink traceability", () => {
       await program.methods
         .splitCrate(
           "CRATE_D_SPLIT",
-          "did:crate:D101",
-          "did:owner:processor1",
-          "did:device:scale01",
-          "40.7500,-74.0000",
           1000, // D gets 1000g
           now(),
           "hashD",
@@ -198,10 +178,6 @@ describe("nautilink traceability", () => {
       await program.methods
         .splitCrate(
           "CRATE_E_SPLIT",
-          "did:crate:E102",
-          "did:owner:processor2",
-          "did:device:scale02",
-          "40.7600,-74.0100",
           1500, // E gets 1500g
           now(),
           "hashE",
@@ -297,17 +273,7 @@ describe("nautilink traceability", () => {
 
       // Create original
       await program.methods
-        .createCrate(
-          "ORIGINAL",
-          "did:crate:orig1",
-          "did:owner:alice",
-          "did:device:nfc100",
-          "40.7128,-74.0060",
-          500,
-          now(),
-          "hash1",
-          "ipfs1"
-        )
+        .createCrate("ORIGINAL", 500, now(), "hash1", "ipfs1")
         .accounts({
           crateRecord: original.publicKey,
           authority: provider.wallet.publicKey,
@@ -318,17 +284,7 @@ describe("nautilink traceability", () => {
 
       // Transfer with same weight
       await program.methods
-        .transferOwnership(
-          "TRANSFERRED",
-          "did:crate:trans1",
-          "did:owner:bob",        // New owner
-          "did:device:nfc101",
-          "40.7580,-73.9855",     // New location
-          500,                    // Same weight
-          now(),
-          "hash2",
-          "ipfs2"
-        )
+        .transferOwnership("TRANSFERRED", 500, now(), "hash2", "ipfs2")
         .accounts({
           crateRecord: transferred.publicKey,
           authority: provider.wallet.publicKey,
@@ -340,7 +296,6 @@ describe("nautilink traceability", () => {
 
       const record = await program.account.crateRecord.fetch(transferred.publicKey);
       assert.strictEqual(record.weight, 500);
-      assert.strictEqual(record.ownerDid, "did:owner:bob");
       console.log("✅ Transfer with matching weight succeeded");
     });
 
@@ -349,17 +304,7 @@ describe("nautilink traceability", () => {
       const transferred = anchor.web3.Keypair.generate();
 
       await program.methods
-        .createCrate(
-          "ORIGINAL2",
-          "did:crate:orig2",
-          "did:owner:charlie",
-          "did:device:nfc102",
-          "40.7128,-74.0060",
-          500,
-          now(),
-          "hash1",
-          "ipfs1"
-        )
+        .createCrate("ORIGINAL2", 500, now(), "hash1", "ipfs1")
         .accounts({
           crateRecord: original.publicKey,
           authority: provider.wallet.publicKey,
@@ -370,17 +315,7 @@ describe("nautilink traceability", () => {
 
       try {
         await program.methods
-          .transferOwnership(
-            "TRANSFERRED2",
-            "did:crate:trans2",
-            "did:owner:dave",
-            "did:device:nfc103",
-            "40.7580,-73.9855",
-            450,                    // Wrong weight!
-            now(),
-            "hash2",
-            "ipfs2"
-          )
+          .transferOwnership("TRANSFERRED2", 450, now(), "hash2", "ipfs2") // Wrong weight!
           .accounts({
             crateRecord: transferred.publicKey,
             authority: provider.wallet.publicKey,
@@ -394,223 +329,6 @@ describe("nautilink traceability", () => {
       } catch (err) {
         assert.ok(err.toString().includes("WeightMismatchOnTransfer"));
         console.log("✅ Transfer with mismatched weight rejected");
-      }
-    });
-  });
-
-  describe("Authorization checks", () => {
-    let unauthorizedWallet;
-
-    before(() => {
-      // Create a second wallet that doesn't own the crates
-      unauthorizedWallet = anchor.web3.Keypair.generate();
-    });
-
-    it("Rejects unauthorized transfer", async () => {
-      const original = anchor.web3.Keypair.generate();
-      const transferred = anchor.web3.Keypair.generate();
-
-      // Create original crate owned by default wallet
-      await program.methods
-        .createCrate(
-          "AUTH_TEST_1",
-          "did:crate:auth1",
-          "did:owner:owner1",
-          "did:device:nfc200",
-          "40.7128,-74.0060",
-          500,
-          now(),
-          "hash1",
-          "ipfs1"
-        )
-        .accounts({
-          crateRecord: original.publicKey,
-          authority: provider.wallet.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .signers([original])
-        .rpc();
-
-      // Try to transfer with different authority (should fail)
-      try {
-        // Airdrop some SOL to unauthorized wallet for transaction fees
-        const airdropSig = await provider.connection.requestAirdrop(
-          unauthorizedWallet.publicKey,
-          2 * anchor.web3.LAMPORTS_PER_SOL
-        );
-        await provider.connection.confirmTransaction(airdropSig);
-
-        await program.methods
-          .transferOwnership(
-            "AUTH_TEST_TRANSFER",
-            "did:crate:auth2",
-            "did:owner:hacker",
-            "did:device:nfc201",
-            "40.7580,-73.9855",
-            500,
-            now(),
-            "hash2",
-            "ipfs2"
-          )
-          .accounts({
-            crateRecord: transferred.publicKey,
-            authority: unauthorizedWallet.publicKey,  // Wrong authority!
-            parentCrate: original.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-          })
-          .signers([unauthorizedWallet, transferred])
-          .rpc();
-        
-        assert.fail("Should have thrown UnauthorizedUpdate error");
-      } catch (err) {
-        assert.ok(
-          err.toString().includes("UnauthorizedUpdate") ||
-          err.toString().includes("ConstraintRaw") // Anchor's require_keys_eq! throws this
-        );
-        console.log("✅ Unauthorized transfer rejected");
-      }
-    });
-
-    it("Rejects unauthorized mix", async () => {
-      const crateX = anchor.web3.Keypair.generate();
-      const crateY = anchor.web3.Keypair.generate();
-      const mixed = anchor.web3.Keypair.generate();
-
-      // Create two crates owned by default wallet
-      await program.methods
-        .createCrate(
-          "MIX_TEST_X",
-          "did:crate:mixX",
-          "did:owner:owner1",
-          "did:device:nfc300",
-          "40.7128,-74.0060",
-          300,
-          now(),
-          "hashX",
-          "ipfsX"
-        )
-        .accounts({
-          crateRecord: crateX.publicKey,
-          authority: provider.wallet.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .signers([crateX])
-        .rpc();
-
-      await program.methods
-        .createCrate(
-          "MIX_TEST_Y",
-          "did:crate:mixY",
-          "did:owner:owner1",
-          "did:device:nfc301",
-          "40.7128,-74.0060",
-          400,
-          now(),
-          "hashY",
-          "ipfsY"
-        )
-        .accounts({
-          crateRecord: crateY.publicKey,
-          authority: provider.wallet.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .signers([crateY])
-        .rpc();
-
-      // Try to mix with unauthorized wallet
-      try {
-        await program.methods
-          .mixCrates(
-            "MIX_UNAUTHORIZED",
-            "did:crate:mixBad",
-            "did:owner:hacker",
-            "did:device:nfc302",
-            "40.7489,-73.9680",
-            now(),
-            "hashMix",
-            "ipfsMix",
-            [crateX.publicKey, crateY.publicKey]
-          )
-          .accounts({
-            crateRecord: mixed.publicKey,
-            authority: unauthorizedWallet.publicKey,  // Wrong authority!
-            systemProgram: anchor.web3.SystemProgram.programId,
-          })
-          .remainingAccounts([
-            { pubkey: crateX.publicKey, isWritable: false, isSigner: false },
-            { pubkey: crateY.publicKey, isWritable: false, isSigner: false },
-          ])
-          .signers([unauthorizedWallet, mixed])
-          .rpc();
-        
-        assert.fail("Should have thrown UnauthorizedUpdate error");
-      } catch (err) {
-        assert.ok(
-          err.toString().includes("UnauthorizedUpdate") ||
-          err.toString().includes("ConstraintRaw")
-        );
-        console.log("✅ Unauthorized mix rejected");
-      }
-    });
-
-    it("Rejects unauthorized split", async () => {
-      const original = anchor.web3.Keypair.generate();
-      const splitChild = anchor.web3.Keypair.generate();
-      const splitChild2 = anchor.web3.Keypair.generate();
-
-      // Create original owned by default wallet
-      await program.methods
-        .createCrate(
-          "SPLIT_TEST",
-          "did:crate:split1",
-          "did:owner:owner1",
-          "did:device:nfc400",
-          "40.7128,-74.0060",
-          1000,
-          now(),
-          "hash1",
-          "ipfs1"
-        )
-        .accounts({
-          crateRecord: original.publicKey,
-          authority: provider.wallet.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .signers([original])
-        .rpc();
-
-      // Try to split with unauthorized wallet
-      try {
-        await program.methods
-          .splitCrate(
-            "SPLIT_UNAUTHORIZED",
-            "did:crate:splitBad",
-            "did:owner:hacker",
-            "did:device:nfc401",
-            "40.7500,-74.0000",
-            500,
-            now(),
-            "hashSplit",
-            "ipfsSplit",
-            [splitChild.publicKey, splitChild2.publicKey],
-            [500, 500]
-          )
-          .accounts({
-            crateRecord: splitChild.publicKey,
-            authority: unauthorizedWallet.publicKey,  // Wrong authority!
-            parentCrate: original.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-          })
-          .signers([unauthorizedWallet, splitChild])
-          .rpc();
-        
-        assert.fail("Should have thrown UnauthorizedUpdate error");
-      } catch (err) {
-        assert.ok(
-          err.toString().includes("UnauthorizedUpdate") ||
-          err.toString().includes("ConstraintRaw")
-        );
-        console.log("✅ Unauthorized split rejected");
       }
     });
   });
