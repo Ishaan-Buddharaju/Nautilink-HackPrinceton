@@ -570,6 +570,8 @@ const HomePage: React.FC = () => {
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
   const [hoveredFishingZone, setHoveredFishingZone] = useState<any | null>(null);
   const [fishingZonePopupPosition, setFishingZonePopupPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hoveredTransactionNode, setHoveredTransactionNode] = useState<TransactionNode | null>(null);
+  const [transactionNodePopupPosition, setTransactionNodePopupPosition] = useState<{ x: number; y: number } | null>(null);
 
   const [hotspotData, setHotspotData] = useState<HotspotData[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -1174,6 +1176,37 @@ const HomePage: React.FC = () => {
               svg.appendChild(path);
               svg.appendChild(circle);
               el.appendChild(svg);
+              
+              // Add click handler to show detailed info
+              el.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                setHoveredTransactionNode(d);
+                
+                const popupHeight = 280;
+                const popupWidth = 340;
+                const screenHeight = window.innerHeight;
+                const screenWidth = window.innerWidth;
+
+                let x = e.clientX + 15;
+                let y = e.clientY - 10;
+
+                if (x + popupWidth > screenWidth) {
+                  x = e.clientX - popupWidth - 15;
+                }
+
+                if (e.clientY > screenHeight / 2) {
+                  y = e.clientY - popupHeight - 10;
+                } else {
+                  y = e.clientY - 10;
+                }
+
+                y = Math.max(10, Math.min(y, screenHeight - popupHeight - 10));
+                x = Math.max(10, Math.min(x, screenWidth - popupWidth - 10));
+
+                setTransactionNodePopupPosition({ x, y });
+              });
               
               // Add hover tooltip
               el.title = `${d.name} (${d.type})`;
@@ -1892,6 +1925,154 @@ const HomePage: React.FC = () => {
                 }}
               >
                 Generate Report
+              </button>
+            </div>
+          )}
+
+          {/* Transaction Node Popup */}
+          {hoveredTransactionNode && transactionNodePopupPosition && (
+            <div
+              data-popup="transaction-node-info"
+              style={{
+                position: 'fixed',
+                left: transactionNodePopupPosition.x,
+                top: transactionNodePopupPosition.y,
+                backgroundColor: 'rgba(23, 23, 23, 0.95)',
+                color: '#e0f2fd',
+                padding: '20px',
+                paddingTop: '24px',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontFamily: 'Arial, sans-serif',
+                zIndex: 1000,
+                boxShadow: '0 8px 32px rgba(0, 255, 0, 0.25)',
+                border: '2px solid rgba(0, 255, 0, 0.4)',
+                maxWidth: '340px',
+                minWidth: '300px',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => {
+                  setHoveredTransactionNode(null);
+                  setTransactionNodePopupPosition(null);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  right: '-12px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  border: '2px solid rgba(0, 255, 0, 0.6)',
+                  color: '#ffffff',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  zIndex: 1001,
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                ×
+              </button>
+
+              {/* Header */}
+              <div style={{ 
+                marginBottom: '16px',
+                paddingBottom: '12px',
+                borderBottom: '2px solid rgba(0, 255, 0, 0.3)'
+              }}>
+                <div style={{ 
+                  fontWeight: 'bold', 
+                  color: hoveredTransactionNode.color,
+                  fontSize: '16px',
+                  marginBottom: '4px'
+                }}>
+                  {hoveredTransactionNode.name}
+                </div>
+                <div style={{ color: '#c0d9ef', fontSize: '11px' }}>
+                  Supply Chain Node
+                </div>
+              </div>
+
+              {/* Node Type */}
+              <div style={{ 
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <div style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  backgroundColor: hoveredTransactionNode.color
+                }}></div>
+                <div>
+                  <strong style={{ color: '#ffffff' }}>Type:</strong> {hoveredTransactionNode.type}
+                </div>
+              </div>
+
+              {/* Location */}
+              <div style={{ marginBottom: '12px' }}>
+                <strong style={{ color: '#ffffff' }}>Location:</strong> {hoveredTransactionNode.lat.toFixed(4)}°, {hoveredTransactionNode.lng.toFixed(4)}°
+              </div>
+
+              {/* Altitude */}
+              <div style={{ marginBottom: '12px' }}>
+                <strong style={{ color: '#ffffff' }}>Altitude:</strong> {hoveredTransactionNode.alt.toFixed(3)}
+              </div>
+
+              {/* Shape indicator */}
+              <div style={{ marginBottom: '12px' }}>
+                <strong style={{ color: '#ffffff' }}>Shape:</strong> {hoveredTransactionNode.shape_top}
+              </div>
+
+              {/* Size */}
+              <div style={{ marginBottom: '16px' }}>
+                <strong style={{ color: '#ffffff' }}>Size:</strong> {hoveredTransactionNode.size.toFixed(2)}
+              </div>
+
+              {/* Close button at bottom */}
+              <button
+                onClick={() => {
+                  setHoveredTransactionNode(null);
+                  setTransactionNodePopupPosition(null);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  backgroundColor: 'rgba(0, 255, 0, 0.15)',
+                  color: '#00ff00',
+                  border: '1px solid rgba(0, 255, 0, 0.4)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.25)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.15)';
+                }}
+              >
+                Close
               </button>
             </div>
           )}
