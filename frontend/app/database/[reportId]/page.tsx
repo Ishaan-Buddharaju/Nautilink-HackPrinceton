@@ -40,8 +40,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
       {
         id: 'assistant-welcome',
         role: 'assistant',
-        content:
-          'Gemini 2.5 Flash is online. Ask me about this report template or how to generate a new analysis.',
+        content: 'ask me about the report or about how to break down each insight',
       },
     ]);
     const [chatInput, setChatInput] = useState('');
@@ -94,7 +93,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
       <div className="flex-1 p-8 text-[#e0f2fd] min-h-screen">
         <div className="flex gap-8 h-full">
           <div className="flex-1 max-w-3xl">
-            <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
+            <Link href="/database" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5"/>
                 <path d="m12 19-7-7 7-7"/>
@@ -107,8 +106,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
 
           <aside className="w-96 ml-auto flex flex-col bg-[#171717] border border-[rgba(198,218,236,0.18)] rounded-lg shadow-lg h-[calc(100vh-4rem)] sticky top-8">
             <header className="px-4 py-3 border-b border-[rgba(198,218,236,0.18)]">
-              <h2 className="text-lg font-semibold text-[#e0f2fd]">Gemini 2.5 Flash Assistant</h2>
-              <p className="text-xs text-[#9fb7d8] mt-1">Ask anything about report generation or this template.</p>
+              <h2 className="text-lg font-semibold text-[#e0f2fd]">Research Assistant</h2>
             </header>
 
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -212,7 +210,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
     return (
       <div className="flex-1 p-8 text-[#e0f2fd]">
         <div className="max-w-4xl">
-          <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
+          <Link href="/database" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             <span>Database</span>
           </Link>
@@ -403,7 +401,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
   return (
     <div className="flex-1 p-8 text-[#e0f2fd]">
       <div className="max-w-4xl">
-        <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
+        <Link href="/database" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
           <span>Database</span>
         </Link>

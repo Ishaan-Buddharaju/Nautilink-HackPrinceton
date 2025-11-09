@@ -70,7 +70,7 @@ const Sidebar = () => {
     const items: NavItem[] = [
       { href: '/', label: 'Landing', icon: FiHome },
       { href: '/dashboard', label: 'Dashboard', icon: FiBarChart },
-      { href: '/reports', label: 'Reports', icon: FiFileText },
+      { href: '/database', label: 'Database', icon: FiFileText },
       { href: '/profile', label: 'Profile', icon: FiUser },
     ];
 

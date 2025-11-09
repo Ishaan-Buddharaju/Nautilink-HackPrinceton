@@ -35,40 +35,39 @@ interface HotspotData {
   size: number;
 }
 
-interface FishingZone {
+interface TransactionNode {
   id: string;
+  type: string;
+  zone_id?: string;
   lat: number;
   lng: number;
+  alt: number;
   name: string;
-  vessel: {
-    name: string;
-    imo_number: string;
-    model: string;
-    flag_state: string;
-    year_built: number;
-  };
-  sustainability_score: {
-    total_score: number;
-    categories: {
-      vessel_efficiency: { score: number };
-      fishing_method: { score: number };
-      environmental_practices: { score: number };
-      compliance_and_transparency: { score: number };
-      social_responsibility: { score: number };
-    };
-  };
-  registered: boolean;
+  shape_top: string;
+  color: string;
+  size: number;
 }
 
-interface RiskPolygon {
-  id: string;
-  name: string;
-  risk: 'green' | 'yellow' | 'red';
+interface TransactionEdge {
+  source: string;
+  target: string;
+  lift: number;
   color: string;
-  coordinates: number[][][];
-  altitude: number;
-  capColor: string;
-  sideColor: string;
+  thickness: number;
+  dashed: boolean;
+  particles: number;
+  integrity: number;
+  incomplete?: boolean;
+  fade_at?: number;
+}
+
+interface Transaction {
+  tx_id: string;
+  status: string;
+  compliance: string;
+  color_scheme: string;
+  nodes: TransactionNode[];
+  edges: TransactionEdge[];
 }
 
 // Utility function to compute grade from score with new scale
@@ -84,6 +83,34 @@ const getSustainabilityGrade = (score: number) => {
   if (score >= 67) return 'D+';
   if (score >= 65) return 'D';
   return 'F';
+};
+
+// Get color by node type for transaction visualization
+const getNodeColorByType = (type: string): string => {
+  const typeUpper = type.toUpperCase();
+  if (typeUpper.includes('HARVEST')) return '#ff0000'; // Red
+  if (typeUpper.includes('LANDING') || typeUpper.includes('FISHERY')) return '#ff8800'; // Orange
+  if (typeUpper.includes('STORAGE') || typeUpper.includes('TRANSIT')) return '#808080'; // Gray
+  if (typeUpper.includes('PROCESSING')) return '#0088ff'; // Blue
+  if (typeUpper.includes('EXPORT')) return '#00ff00'; // Green
+  if (typeUpper.includes('IMPORT') || typeUpper.includes('WHOLESALE')) return '#ffd700'; // Gold
+  if (typeUpper.includes('RETAIL')) return '#ffffff'; // White
+  return '#ffffff'; // Default white
+};
+
+// Get distinct edge color for each transaction with opacity
+const getTransactionEdgeColor = (txId: string): string => {
+  const colorMap: { [key: string]: string } = {
+    'TX-SHAME-001': 'rgba(255, 0, 102, 0.7)',    // Pink/Red
+    'TX-X-101': 'rgba(0, 255, 255, 0.7)',        // Cyan
+    'TX-X-102': 'rgba(255, 0, 255, 0.7)',        // Magenta
+    'TX-X-103': 'rgba(255, 255, 0, 0.7)',        // Yellow
+    'TX-X-OPT-A': 'rgba(0, 255, 136, 0.7)',      // Teal
+    'TX-X-OPT-B': 'rgba(255, 136, 0, 0.7)',      // Orange
+    'TX-BACKUP-1': 'rgba(136, 0, 255, 0.7)',     // Purple
+    'TX-BACKUP-2': 'rgba(255, 68, 0, 0.7)'       // Red-Orange
+  };
+  return colorMap[txId] || 'rgba(0, 255, 0, 0.7)'; // Default green
 };
 
 // Maritime Risk/ROI Zone Classifications - Pinpoint-based with radii
@@ -572,13 +599,18 @@ const HomePage: React.FC = () => {
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
   const [hoveredFishingZone, setHoveredFishingZone] = useState<any | null>(null);
   const [fishingZonePopupPosition, setFishingZonePopupPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hoveredTransactionNode, setHoveredTransactionNode] = useState<TransactionNode | null>(null);
+  const [transactionNodePopupPosition, setTransactionNodePopupPosition] = useState<{ x: number; y: number } | null>(null);
 
   const [hotspotData, setHotspotData] = useState<HotspotData[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionNodes, setTransactionNodes] = useState<TransactionNode[]>([]);
+  const [transactionEdges, setTransactionEdges] = useState<any[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(false);
   const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
   const [reportTarget, setReportTarget] = useState<
-    { type: 'zone'; data: FishingZone } | { type: 'vessel'; data: VesselData } | null
+    { type: 'zone'; data: any } | { type: 'vessel'; data: VesselData } | null
   >(null);
   const [reportVisible, setReportVisible] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
@@ -831,6 +863,52 @@ const HomePage: React.FC = () => {
         setLandData(featureCollection as unknown as { features: any[] });
       });
 
+    // Load transaction network data
+    fetch('/transaction-network-final.json')
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('🔥 TRANSACTION DATA LOADED:', data);
+        setTransactions(data.transactions);
+        
+        // Flatten all nodes with transaction ID prefix
+        const allNodes: TransactionNode[] = [];
+        data.transactions.forEach((tx: Transaction) => {
+          tx.nodes.forEach((node: TransactionNode) => {
+            allNodes.push({
+              ...node,
+              id: `${tx.tx_id}-${node.id}`
+            });
+          });
+        });
+        console.log('🔥 TRANSACTION NODES:', allNodes.length, allNodes);
+        setTransactionNodes(allNodes);
+        
+        // Process edges for rendering
+        const allEdges: any[] = [];
+        data.transactions.forEach((tx: Transaction) => {
+          tx.edges.forEach((edge: TransactionEdge) => {
+            const sourceNode = tx.nodes.find((n: TransactionNode) => n.id === edge.source);
+            const targetNode = tx.nodes.find((n: TransactionNode) => n.id === edge.target);
+            
+            if (sourceNode && targetNode) {
+              allEdges.push({
+                ...edge,
+                startLat: sourceNode.lat,
+                startLng: sourceNode.lng,
+                endLat: targetNode.lat,
+                endLng: targetNode.lng,
+                tx_id: tx.tx_id,
+                sourceNode,
+                targetNode
+              });
+            }
+          });
+        });
+        console.log('🔥 TRANSACTION EDGES:', allEdges.length, allEdges);
+        setTransactionEdges(allEdges);
+      })
+      .catch((error) => console.log('❌ Error loading transaction network:', error));
+
     fetchData();
   }, [fetchData]);
 
@@ -1017,11 +1095,74 @@ const HomePage: React.FC = () => {
 
           showGraticules={true}
 
-          htmlElementsData={[...filteredFishingZones, ...clusteredData]}
+          htmlElementsData={[...filteredFishingZones, ...clusteredData, ...transactionNodes]}
           htmlElement={(d: any) => {
             const el = document.createElement('div');
             el.style.pointerEvents = 'auto';
             el.style.cursor = 'pointer';
+
+            // Render transaction nodes as WHITE PINS like boats
+            if (d.shape_top) {
+              console.log('🎯 Rendering transaction node:', d.name, d.shape_top);
+              const svgNS = 'http://www.w3.org/2000/svg';
+              const svg = document.createElementNS(svgNS, 'svg');
+              svg.setAttribute('viewBox', '0 0 24 36');
+              svg.setAttribute('width', '24px');
+              svg.setAttribute('height', '36px');
+
+              // White pin shape (same as boats)
+              const path = document.createElementNS(svgNS, 'path');
+              path.setAttribute('d', 'M12 0C7 0 3 4 3 9c0 7.5 9 17 9 17s9-9.5 9-17C21 4 17 0 12 0z');
+              path.setAttribute('fill', '#ffffff');
+              path.setAttribute('opacity', '0.9');
+              
+              // Colored center circle to distinguish node type
+              const circle = document.createElementNS(svgNS, 'circle');
+              circle.setAttribute('cx', '12');
+              circle.setAttribute('cy', '9');
+              circle.setAttribute('r', '4.5');
+              circle.setAttribute('fill', getNodeColorByType(d.type));
+              
+              svg.appendChild(path);
+              svg.appendChild(circle);
+              el.appendChild(svg);
+              
+              // Add click handler to show detailed info
+              el.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                setHoveredTransactionNode(d);
+                
+                const popupHeight = 280;
+                const popupWidth = 340;
+                const screenHeight = window.innerHeight;
+                const screenWidth = window.innerWidth;
+
+                let x = e.clientX + 15;
+                let y = e.clientY - 10;
+
+                if (x + popupWidth > screenWidth) {
+                  x = e.clientX - popupWidth - 15;
+                }
+
+                if (e.clientY > screenHeight / 2) {
+                  y = e.clientY - popupHeight - 10;
+                } else {
+                  y = e.clientY - 10;
+                }
+
+                y = Math.max(10, Math.min(y, screenHeight - popupHeight - 10));
+                x = Math.max(10, Math.min(x, screenWidth - popupWidth - 10));
+
+                setTransactionNodePopupPosition({ x, y });
+              });
+              
+              // Add hover tooltip
+              el.title = `${d.name} (${d.type})`;
+              
+              return el;
+            }
 
             // Render white pins for fishing zones
             if (d.id && typeof d.id === 'string' && d.id.startsWith('fishing-zone-')) {
@@ -1170,6 +1311,20 @@ const HomePage: React.FC = () => {
             }
           }}
 
+          arcsData={transactionEdges}
+          arcStartLat={(d: any) => d.startLat}
+          arcStartLng={(d: any) => d.startLng}
+          arcEndLat={(d: any) => d.endLat}
+          arcEndLng={(d: any) => d.endLng}
+          arcColor={(d: any) => getTransactionEdgeColor(d.tx_id)}
+          arcStroke={0.5}
+          arcDashLength={(d: any) => d.dashed ? 0.3 : 1}
+          arcDashGap={(d: any) => d.dashed ? 0.15 : 0}
+          arcDashAnimateTime={(d: any) => d.dashed ? 1500 : 0}
+          arcAltitude={0.12}
+          arcAltitudeAutoScale={0.3}
+          arcsTransitionDuration={0}
+
           onGlobeReady={() => { 
             clusterMarkers(vesselData); // Use filtered data on ready
             // Disable autorotation for dashboard
@@ -1182,7 +1337,30 @@ const HomePage: React.FC = () => {
           </div>
 
           
-          {/* Risk Zone Legend - Centered below globe */}
+          {/* Transaction Network Debug Panel */}
+          <div style={{
+            position: 'absolute',
+            bottom: '160px',
+            left: '20px',
+            zIndex: 1000,
+            background: 'rgba(0, 255, 0, 0.2)',
+            border: '2px solid #00ff00',
+            borderRadius: '8px',
+            padding: '12px',
+            backdropFilter: 'blur(10px)',
+            minWidth: '200px'
+          }}>
+            <div style={{ color: '#00ff00', fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>
+              TRANSACTION NETWORK
+            </div>
+            <div style={{ color: '#ffffff', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div>Nodes: {transactionNodes.length}</div>
+              <div>Edges: {transactionEdges.length}</div>
+              <div>Transactions: {transactions.length}</div>
+            </div>
+          </div>
+
+          {/* Risk Zone Legend - Permanent bottom left */}
           <div style={{
             position: 'absolute',
             bottom: '40px',
@@ -1481,6 +1659,154 @@ const HomePage: React.FC = () => {
                 }}
               >
                 Generate Report
+              </button>
+            </div>
+          )}
+
+          {/* Transaction Node Popup */}
+          {hoveredTransactionNode && transactionNodePopupPosition && (
+            <div
+              data-popup="transaction-node-info"
+              style={{
+                position: 'fixed',
+                left: transactionNodePopupPosition.x,
+                top: transactionNodePopupPosition.y,
+                backgroundColor: 'rgba(23, 23, 23, 0.95)',
+                color: '#e0f2fd',
+                padding: '20px',
+                paddingTop: '24px',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontFamily: 'Arial, sans-serif',
+                zIndex: 1000,
+                boxShadow: '0 8px 32px rgba(0, 255, 0, 0.25)',
+                border: '2px solid rgba(0, 255, 0, 0.4)',
+                maxWidth: '340px',
+                minWidth: '300px',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => {
+                  setHoveredTransactionNode(null);
+                  setTransactionNodePopupPosition(null);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  right: '-12px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  border: '2px solid rgba(0, 255, 0, 0.6)',
+                  color: '#ffffff',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  zIndex: 1001,
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                ×
+              </button>
+
+              {/* Header */}
+              <div style={{ 
+                marginBottom: '16px',
+                paddingBottom: '12px',
+                borderBottom: '2px solid rgba(0, 255, 0, 0.3)'
+              }}>
+                <div style={{ 
+                  fontWeight: 'bold', 
+                  color: getNodeColorByType(hoveredTransactionNode.type),
+                  fontSize: '16px',
+                  marginBottom: '4px'
+                }}>
+                  {hoveredTransactionNode.name}
+                </div>
+                <div style={{ color: '#c0d9ef', fontSize: '11px' }}>
+                  Supply Chain Node
+                </div>
+              </div>
+
+              {/* Node Type */}
+              <div style={{ 
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <div style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  backgroundColor: getNodeColorByType(hoveredTransactionNode.type)
+                }}></div>
+                <div>
+                  <strong style={{ color: '#ffffff' }}>Type:</strong> {hoveredTransactionNode.type}
+                </div>
+              </div>
+
+              {/* Location */}
+              <div style={{ marginBottom: '12px' }}>
+                <strong style={{ color: '#ffffff' }}>Location:</strong> {hoveredTransactionNode.lat.toFixed(4)}°, {hoveredTransactionNode.lng.toFixed(4)}°
+              </div>
+
+              {/* Altitude */}
+              <div style={{ marginBottom: '12px' }}>
+                <strong style={{ color: '#ffffff' }}>Altitude:</strong> {hoveredTransactionNode.alt.toFixed(3)}
+              </div>
+
+              {/* Shape indicator */}
+              <div style={{ marginBottom: '12px' }}>
+                <strong style={{ color: '#ffffff' }}>Shape:</strong> {hoveredTransactionNode.shape_top}
+              </div>
+
+              {/* Size */}
+              <div style={{ marginBottom: '16px' }}>
+                <strong style={{ color: '#ffffff' }}>Size:</strong> {hoveredTransactionNode.size.toFixed(2)}
+              </div>
+
+              {/* Close button at bottom */}
+              <button
+                onClick={() => {
+                  setHoveredTransactionNode(null);
+                  setTransactionNodePopupPosition(null);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  backgroundColor: 'rgba(0, 255, 0, 0.15)',
+                  color: '#00ff00',
+                  border: '1px solid rgba(0, 255, 0, 0.4)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.25)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.15)';
+                }}
+              >
+                Close
               </button>
             </div>
           )}

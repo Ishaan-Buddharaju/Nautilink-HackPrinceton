@@ -1,0 +1,186 @@
+{
+  "version": "1.0",
+  "description": "Fish trace transaction network - 8 transactions with blockchain anchoring",
+  "shape_legend": {
+    "circle": "HARVEST",
+    "flat": "LANDING/FISHERY",
+    "square": "PROCESSING",
+    "triangle": "STORAGE/IMPORT",
+    "hex": "EXPORT",
+    "pin": "RETAIL"
+  },
+  "transactions": [
+    {
+      "tx_id": "TX-SHAME-001",
+      "status": "incomplete",
+      "compliance": "NON_COMPLIANT",
+      "color_scheme": "red",
+      "nodes": [
+        {"id": "N0", "type": "HARVEST", "zone_id": "fishing-zone-38", "lat": 18, "lng": 110, "alt": 0.05, "name": "South China Sea (Unregistered)", "shape_top": "circle", "color": "#fc0303", "size": 1.2},
+        {"id": "N1", "type": "STORAGE/TRANSIT", "lat": 18.5, "lng": 112, "alt": 0.08, "name": "Mid-Storage A", "shape_top": "triangle", "color": "#ff6b00", "size": 0.8},
+        {"id": "N2", "type": "STORAGE/TRANSIT", "lat": 19, "lng": 114, "alt": 0.06, "name": "Mid-Storage B", "shape_top": "triangle", "color": "#ff8c00", "size": 0.8},
+        {"id": "N3", "type": "LANDING", "lat": 19.5, "lng": 115, "alt": 0.04, "name": "Hainan Port", "shape_top": "flat", "color": "#ffa500", "size": 0.9},
+        {"id": "N4", "type": "PROCESSING", "lat": 20, "lng": 116, "alt": 0.03, "name": "Generic Plant", "shape_top": "square", "color": "#ffb84d", "size": 0.85}
+      ],
+      "edges": [
+        {"source": "N0", "target": "N1", "lift": 0.12, "color": "#fc0303", "thickness": 0.018, "dashed": true, "particles": 10, "integrity": 0.15},
+        {"source": "N1", "target": "N2", "lift": 0.10, "color": "#ff6b00", "thickness": 0.016, "dashed": true, "particles": 8, "integrity": 0.25},
+        {"source": "N2", "target": "N3", "lift": 0.08, "color": "#ff8c00", "thickness": 0.014, "dashed": true, "particles": 6, "integrity": 0.30},
+        {"source": "N3", "target": "N4", "lift": 0.06, "color": "#ffa500", "thickness": 0.012, "dashed": true, "particles": 3, "integrity": 0.10, "incomplete": true, "fade_at": 0.65}
+      ]
+    },
+    {
+      "tx_id": "TX-X-101",
+      "status": "complete",
+      "compliance": "COMPLIANT",
+      "color_scheme": "green",
+      "nodes": [
+        {"id": "N0", "type": "HARVEST", "zone_id": "fishing-zone-20", "lat": 65, "lng": 12, "alt": 0.05, "name": "Norwegian Sea", "shape_top": "circle", "color": "#2eb700", "size": 1.0},
+        {"id": "N1", "type": "LANDING", "lat": 69, "lng": 18, "alt": 0.04, "name": "Tromsø Port", "shape_top": "flat", "color": "#3bc905", "size": 0.85},
+        {"id": "N2", "type": "PROCESSING", "lat": 70, "lng": 19, "alt": 0.035, "name": "Ice Plant 12", "shape_top": "square", "color": "#48db0a", "size": 0.8},
+        {"id": "N3", "type": "EXPORT", "lat": 59, "lng": 10, "alt": 0.04, "name": "Oslo Export Hub", "shape_top": "hex", "color": "#55ed0f", "size": 0.75},
+        {"id": "N4", "type": "IMPORT/WHOLESALE", "lat": 47, "lng": -52, "alt": 0.045, "name": "US Seafood Warehouse", "shape_top": "triangle", "color": "#62ff14", "size": 0.7},
+        {"id": "N5", "type": "RETAIL", "lat": 40, "lng": -74, "alt": 0.02, "name": "Retail Shelf NYC", "shape_top": "pin", "color": "#70ff28", "size": 0.65}
+      ],
+      "edges": [
+        {"source": "N0", "target": "N1", "lift": 0.08, "color": "#2eb700", "thickness": 0.012, "dashed": false, "particles": 5, "integrity": 0.98},
+        {"source": "N1", "target": "N2", "lift": 0.06, "color": "#3bc905", "thickness": 0.011, "dashed": false, "particles": 4, "integrity": 0.96},
+        {"source": "N2", "target": "N3", "lift": 0.12, "color": "#48db0a", "thickness": 0.01, "dashed": false, "particles": 4, "integrity": 0.95},
+        {"source": "N3", "target": "N4", "lift": 0.22, "color": "#55ed0f", "thickness": 0.009, "dashed": false, "particles": 6, "integrity": 0.94},
+        {"source": "N4", "target": "N5", "lift": 0.10, "color": "#62ff14", "thickness": 0.008, "dashed": false, "particles": 3, "integrity": 0.93}
+      ]
+    },
+    {
+      "tx_id": "TX-X-102",
+      "status": "complete",
+      "compliance": "COMPLIANT",
+      "color_scheme": "green",
+      "nodes": [
+        {"id": "N0", "type": "HARVEST", "zone_id": "fishing-zone-25", "lat": 42, "lng": -67, "alt": 0.05, "name": "Georges Bank", "shape_top": "circle", "color": "#2eb700", "size": 1.0},
+        {"id": "N1", "type": "LANDING", "lat": 42.3, "lng": -70, "alt": 0.04, "name": "Boston Port", "shape_top": "flat", "color": "#3bc905", "size": 0.85},
+        {"id": "N2", "type": "PROCESSING", "lat": 42.4, "lng": -71, "alt": 0.035, "name": "Atlantic Plant GL07", "shape_top": "square", "color": "#48db0a", "size": 0.8},
+        {"id": "N3", "type": "EXPORT", "lat": 42.5, "lng": -72, "alt": 0.04, "name": "Boston Export Hub", "shape_top": "hex", "color": "#55ed0f", "size": 0.75},
+        {"id": "N4", "type": "IMPORT/WHOLESALE", "lat": 45, "lng": -63, "alt": 0.045, "name": "Halifax Cold Storage", "shape_top": "triangle", "color": "#62ff14", "size": 0.7},
+        {"id": "N5", "type": "RETAIL", "lat": 43, "lng": -79, "alt": 0.02, "name": "Retail Shelf Toronto", "shape_top": "pin", "color": "#70ff28", "size": 0.65}
+      ],
+      "edges": [
+        {"source": "N0", "target": "N1", "lift": 0.07, "color": "#2eb700", "thickness": 0.012, "dashed": false, "particles": 5, "integrity": 0.95},
+        {"source": "N1", "target": "N2", "lift": 0.05, "color": "#3bc905", "thickness": 0.011, "dashed": false, "particles": 4, "integrity": 0.94},
+        {"source": "N2", "target": "N3", "lift": 0.06, "color": "#48db0a", "thickness": 0.01, "dashed": false, "particles": 4, "integrity": 0.93},
+        {"source": "N3", "target": "N4", "lift": 0.12, "color": "#55ed0f", "thickness": 0.009, "dashed": false, "particles": 5, "integrity": 0.92},
+        {"source": "N4", "target": "N5", "lift": 0.14, "color": "#62ff14", "thickness": 0.008, "dashed": false, "particles": 3, "integrity": 0.91}
+      ]
+    },
+    {
+      "tx_id": "TX-X-103",
+      "status": "complete",
+      "compliance": "COMPLIANT",
+      "color_scheme": "green",
+      "nodes": [
+        {"id": "N0", "type": "HARVEST", "zone_id": "fishing-zone-33", "lat": 48, "lng": -135, "alt": 0.05, "name": "Gulf of Alaska", "shape_top": "circle", "color": "#2eb700", "size": 1.0},
+        {"id": "N1", "type": "LANDING", "lat": 57, "lng": -135, "alt": 0.04, "name": "Sitka Port", "shape_top": "flat", "color": "#3bc905", "size": 0.85},
+        {"id": "N2", "type": "PROCESSING", "lat": 58, "lng": -134, "alt": 0.035, "name": "Sitka Processing AK21", "shape_top": "square", "color": "#48db0a", "size": 0.8},
+        {"id": "N3", "type": "EXPORT", "lat": 60, "lng": -149, "alt": 0.04, "name": "Anchorage Export Terminal", "shape_top": "hex", "color": "#55ed0f", "size": 0.75},
+        {"id": "N4", "type": "IMPORT/WHOLESALE", "lat": 35, "lng": 140, "alt": 0.05, "name": "Hokkaido Cold Chain", "shape_top": "triangle", "color": "#62ff14", "size": 0.7},
+        {"id": "N5", "type": "RETAIL", "lat": 35.7, "lng": 139.7, "alt": 0.02, "name": "Tokyo Retail Shelf", "shape_top": "pin", "color": "#70ff28", "size": 0.65}
+      ],
+      "edges": [
+        {"source": "N0", "target": "N1", "lift": 0.10, "color": "#2eb700", "thickness": 0.012, "dashed": false, "particles": 5, "integrity": 0.96},
+        {"source": "N1", "target": "N2", "lift": 0.05, "color": "#3bc905", "thickness": 0.011, "dashed": false, "particles": 4, "integrity": 0.95},
+        {"source": "N2", "target": "N3", "lift": 0.08, "color": "#48db0a", "thickness": 0.01, "dashed": false, "particles": 4, "integrity": 0.94},
+        {"source": "N3", "target": "N4", "lift": 0.25, "color": "#55ed0f", "thickness": 0.009, "dashed": false, "particles": 8, "integrity": 0.93},
+        {"source": "N4", "target": "N5", "lift": 0.06, "color": "#62ff14", "thickness": 0.008, "dashed": false, "particles": 3, "integrity": 0.92}
+      ]
+    },
+    {
+      "tx_id": "TX-X-OPT-A",
+      "status": "complete",
+      "compliance": "COMPLIANT",
+      "color_scheme": "green",
+      "nodes": [
+        {"id": "N0", "type": "HARVEST", "zone_id": "fishing-zone-16", "lat": 40, "lng": 15, "alt": 0.05, "name": "Mediterranean Sea", "shape_top": "circle", "color": "#2eb700", "size": 1.0},
+        {"id": "N1", "type": "LANDING", "lat": 40.8, "lng": 14.3, "alt": 0.04, "name": "Naples Port", "shape_top": "flat", "color": "#3bc905", "size": 0.85},
+        {"id": "N2", "type": "PROCESSING", "lat": 41, "lng": 13.8, "alt": 0.035, "name": "Med Plant 05 (Curing)", "shape_top": "square", "color": "#48db0a", "size": 0.8},
+        {"id": "N3", "type": "EXPORT", "lat": 43.6, "lng": 7.2, "alt": 0.04, "name": "Italian Export Point", "shape_top": "hex", "color": "#55ed0f", "size": 0.75},
+        {"id": "N4", "type": "IMPORT/WHOLESALE", "lat": 48.8, "lng": 2.3, "alt": 0.045, "name": "Paris Seafood Market", "shape_top": "triangle", "color": "#62ff14", "size": 0.7},
+        {"id": "N5", "type": "RETAIL", "lat": 43.3, "lng": 5.4, "alt": 0.02, "name": "Marseille Retail Shelf", "shape_top": "pin", "color": "#70ff28", "size": 0.65}
+      ],
+      "edges": [
+        {"source": "N0", "target": "N1", "lift": 0.06, "color": "#2eb700", "thickness": 0.012, "dashed": false, "particles": 5, "integrity": 0.94},
+        {"source": "N1", "target": "N2", "lift": 0.05, "color": "#3bc905", "thickness": 0.011, "dashed": false, "particles": 4, "integrity": 0.93},
+        {"source": "N2", "target": "N3", "lift": 0.10, "color": "#48db0a", "thickness": 0.01, "dashed": false, "particles": 4, "integrity": 0.92},
+        {"source": "N3", "target": "N4", "lift": 0.12, "color": "#55ed0f", "thickness": 0.009, "dashed": false, "particles": 5, "integrity": 0.91},
+        {"source": "N4", "target": "N5", "lift": 0.10, "color": "#62ff14", "thickness": 0.008, "dashed": false, "particles": 3, "integrity": 0.90}
+      ]
+    },
+    {
+      "tx_id": "TX-X-OPT-B",
+      "status": "complete",
+      "compliance": "COMPLIANT",
+      "color_scheme": "green",
+      "nodes": [
+        {"id": "N0", "type": "HARVEST", "zone_id": "fishing-zone-15", "lat": -28, "lng": 16, "alt": 0.05, "name": "Benguela Current", "shape_top": "circle", "color": "#2eb700", "size": 1.0},
+        {"id": "N1", "type": "LANDING", "lat": -22.9, "lng": 14.5, "alt": 0.04, "name": "Walvis Bay Port", "shape_top": "flat", "color": "#3bc905", "size": 0.85},
+        {"id": "N2", "type": "PROCESSING", "lat": -23, "lng": 15, "alt": 0.035, "name": "Namibian Plant ATL-02", "shape_top": "square", "color": "#48db0a", "size": 0.8},
+        {"id": "N3", "type": "EXPORT", "lat": -26, "lng": 28, "alt": 0.04, "name": "Windhoek Export Hub", "shape_top": "hex", "color": "#55ed0f", "size": 0.75},
+        {"id": "N4", "type": "IMPORT/WHOLESALE", "lat": 52, "lng": 5, "alt": 0.05, "name": "Rotterdam Cold Storage", "shape_top": "triangle", "color": "#62ff14", "size": 0.7},
+        {"id": "N5", "type": "RETAIL", "lat": 52.5, "lng": 13.4, "alt": 0.02, "name": "Berlin Retail Shelf", "shape_top": "pin", "color": "#70ff28", "size": 0.65}
+      ],
+      "edges": [
+        {"source": "N0", "target": "N1", "lift": 0.08, "color": "#2eb700", "thickness": 0.012, "dashed": false, "particles": 5, "integrity": 0.95},
+        {"source": "N1", "target": "N2", "lift": 0.04, "color": "#3bc905", "thickness": 0.011, "dashed": false, "particles": 4, "integrity": 0.94},
+        {"source": "N2", "target": "N3", "lift": 0.10, "color": "#48db0a", "thickness": 0.01, "dashed": false, "particles": 4, "integrity": 0.93},
+        {"source": "N3", "target": "N4", "lift": 0.28, "color": "#55ed0f", "thickness": 0.009, "dashed": false, "particles": 10, "integrity": 0.92},
+        {"source": "N4", "target": "N5", "lift": 0.08, "color": "#62ff14", "thickness": 0.008, "dashed": false, "particles": 3, "integrity": 0.91}
+      ]
+    },
+    {
+      "tx_id": "TX-BACKUP-1",
+      "status": "complete",
+      "compliance": "COMPLIANT",
+      "color_scheme": "green",
+      "nodes": [
+        {"id": "N0", "type": "HARVEST", "zone_id": "fishing-zone-6", "lat": -42, "lng": 148, "alt": 0.05, "name": "Tasmania Coast", "shape_top": "circle", "color": "#2eb700", "size": 1.0},
+        {"id": "N1", "type": "LANDING", "lat": -43, "lng": 147, "alt": 0.04, "name": "Hobart Port", "shape_top": "flat", "color": "#3bc905", "size": 0.85},
+        {"id": "N2", "type": "PROCESSING", "lat": -42.9, "lng": 147.2, "alt": 0.035, "name": "Tasman Plant 03", "shape_top": "square", "color": "#48db0a", "size": 0.8},
+        {"id": "N3", "type": "EXPORT", "lat": -37.8, "lng": 144.9, "alt": 0.04, "name": "Melbourne Export", "shape_top": "hex", "color": "#55ed0f", "size": 0.75},
+        {"id": "N4", "type": "IMPORT/WHOLESALE", "lat": 1.3, "lng": 103.8, "alt": 0.045, "name": "Singapore Cold Hub", "shape_top": "triangle", "color": "#62ff14", "size": 0.7},
+        {"id": "N5", "type": "RETAIL", "lat": 1.28, "lng": 103.85, "alt": 0.02, "name": "Singapore Retail Shelf", "shape_top": "pin", "color": "#70ff28", "size": 0.65}
+      ],
+      "edges": [
+        {"source": "N0", "target": "N1", "lift": 0.05, "color": "#2eb700", "thickness": 0.012, "dashed": false, "particles": 5, "integrity": 0.96},
+        {"source": "N1", "target": "N2", "lift": 0.04, "color": "#3bc905", "thickness": 0.011, "dashed": false, "particles": 4, "integrity": 0.95},
+        {"source": "N2", "target": "N3", "lift": 0.08, "color": "#48db0a", "thickness": 0.01, "dashed": false, "particles": 4, "integrity": 0.94},
+        {"source": "N3", "target": "N4", "lift": 0.30, "color": "#55ed0f", "thickness": 0.009, "dashed": false, "particles": 12, "integrity": 0.93},
+        {"source": "N4", "target": "N5", "lift": 0.03, "color": "#62ff14", "thickness": 0.008, "dashed": false, "particles": 2, "integrity": 0.92}
+      ]
+    },
+    {
+      "tx_id": "TX-BACKUP-2",
+      "status": "incomplete",
+      "compliance": "CONDITIONAL",
+      "color_scheme": "orange",
+      "nodes": [
+        {"id": "N0", "type": "HARVEST", "zone_id": "fishing-zone-14", "lat": 14, "lng": -17, "alt": 0.05, "name": "West Africa (Senegal)", "shape_top": "circle", "color": "#f59e0b", "size": 1.0},
+        {"id": "N1", "type": "LANDING", "lat": 14.7, "lng": -17.5, "alt": 0.04, "name": "Dakar Port", "shape_top": "flat", "color": "#fb923c", "size": 0.85},
+        {"id": "N2", "type": "PROCESSING", "lat": 14.5, "lng": -16.8, "alt": 0.035, "name": "Senegal Plant ATL-01", "shape_top": "square", "color": "#fbbf24", "size": 0.8},
+        {"id": "N3", "type": "EXPORT", "lat": 6.4, "lng": 3.3, "alt": 0.04, "name": "Lagos Export Hub", "shape_top": "hex", "color": "#fcd34d", "size": 0.75}
+      ],
+      "edges": [
+        {"source": "N0", "target": "N1", "lift": 0.06, "color": "#f59e0b", "thickness": 0.012, "dashed": true, "particles": 5, "integrity": 0.72},
+        {"source": "N1", "target": "N2", "lift": 0.05, "color": "#fb923c", "thickness": 0.011, "dashed": true, "particles": 4, "integrity": 0.68},
+        {"source": "N2", "target": "N3", "lift": 0.12, "color": "#fbbf24", "thickness": 0.01, "dashed": true, "particles": 3, "integrity": 0.45, "incomplete": true, "fade_at": 0.70}
+      ]
+    }
+  ],
+  "rendering_config": {
+    "curve_type": "catmull-rom",
+    "curve_tension": 0.5,
+    "curve_segments": 64,
+    "particle_animation": true,
+    "particle_trail_length": 0.15,
+    "edge_opacity": 0.85,
+    "incomplete_edge_fade": true,
+    "globe_radius": 100
+  }
+}

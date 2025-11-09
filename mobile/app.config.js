@@ -24,6 +24,9 @@ module.exports = {
           'This app uses the camera to capture photos of your fishing catch for documentation and compliance tracking.',
         NSPhotoLibraryUsageDescription:
           'This app needs access to your photo library to select photos of your catch.',
+        NFCReaderUsageDescription:
+          'This app uses NFC to verify and authenticate fishing catch data.',
+        ITSAppUsesNonExemptEncryption: false,
       },
     },
     android: {
@@ -32,7 +35,13 @@ module.exports = {
         backgroundColor: '#171717',
       },
       package: 'com.nautilink.app',
-      permissions: ['CAMERA', 'READ_EXTERNAL_STORAGE', 'WRITE_EXTERNAL_STORAGE'],
+      permissions: [
+        'CAMERA', 
+        'READ_EXTERNAL_STORAGE', 
+        'WRITE_EXTERNAL_STORAGE',
+        'NFC',
+        'android.permission.NFC'
+      ],
     },
     web: {
       favicon: './assets/favicon.png',
@@ -56,6 +65,9 @@ module.exports = {
       apiUrl: process.env.API_BASE_URL || 'http://localhost:8000',
       supabaseUrl: process.env.SUPABASE_URL || '',
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+      eas: {
+        projectId: '7ceda4f9-8a62-4e6e-aca5-c845671d45bd',
+      },
     },
   },
 };
