@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic';
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'; // Added useCallback, useMemo
 import * as topojson from 'topojson-client';
-import AgentPanel, { type AgentPoint } from '../../components/AgentPanel';
 import { useAuth } from '../../hooks/useAuth';
 import ReactCountryFlag from 'react-country-flag';
 
@@ -36,17 +35,126 @@ interface HotspotData {
   size: number;
 }
 
-// Utility function to compute grade from score
+// Utility function to compute grade from score with new scale
 const getSustainabilityGrade = (score: number) => {
-  if (score >= 90) return 'A+';
-  if (score >= 85) return 'A';
-  if (score >= 80) return 'A-';
-  if (score >= 75) return 'B+';
-  if (score >= 70) return 'B';
-  if (score >= 65) return 'B-';
-  if (score >= 60) return 'C+';
-  if (score >= 55) return 'C';
+  if (score >= 93) return 'A';
+  if (score >= 90) return 'A-';
+  if (score >= 87) return 'B+';
+  if (score >= 83) return 'B';
+  if (score >= 80) return 'B-';
+  if (score >= 77) return 'C+';
+  if (score >= 73) return 'C';
+  if (score >= 70) return 'C-';
+  if (score >= 67) return 'D+';
+  if (score >= 65) return 'D';
   return 'F';
+};
+
+// Maritime Risk/ROI Zone Classifications - Pinpoint-based with radii
+const MARITIME_RISK_ZONES = {
+  green: [
+    // Southeast Asia - Malacca Strait, Singapore
+    { name: 'Malacca Strait', lat: 3.5, lng: 102.5, radius: 2.5 },
+    { name: 'Singapore Waters', lat: 1.3, lng: 103.8, radius: 1.0 },
+    // Persian Gulf - UAE, Qatar
+    { name: 'Persian Gulf Hub', lat: 26.5, lng: 52.0, radius: 3.0 },
+    // North Sea - UK-Norway
+    { name: 'North Sea Central', lat: 56.5, lng: 2.0, radius: 4.0 },
+    // US Gulf Coast
+    { name: 'US Gulf Coast', lat: 28.0, lng: -89.0, radius: 3.5 },
+    // Mediterranean - Greece, Italy, Spain
+    { name: 'Western Mediterranean', lat: 39.5, lng: 2.0, radius: 4.5 },
+    { name: 'Eastern Mediterranean', lat: 36.0, lng: 23.0, radius: 3.0 },
+    // Pacific - Safe shipping lanes
+    { name: 'Japan-Korea Waters', lat: 35.0, lng: 129.0, radius: 2.5 },
+    { name: 'Hawaii Hub', lat: 21.3, lng: -157.8, radius: 2.0 },
+    { name: 'Australia-NZ Corridor', lat: -35.0, lng: 174.0, radius: 3.5 },
+  ],
+  yellow: [
+    // West Africa - Nigeria, Ghana
+    { name: 'West Africa Coast', lat: 2.5, lng: -5.0, radius: 4.0 },
+    // South China Sea
+    { name: 'South China Sea', lat: 12.0, lng: 115.0, radius: 6.0 },
+    // Caribbean
+    { name: 'Caribbean Hub', lat: 17.5, lng: -75.0, radius: 4.5 },
+    // Baltic Sea
+    { name: 'Baltic Sea', lat: 60.0, lng: 20.0, radius: 3.5 },
+    // Pacific - Moderate risk areas
+    { name: 'Central Pacific', lat: 10.0, lng: -140.0, radius: 5.0 },
+    { name: 'North Pacific Storm Zone', lat: 45.0, lng: -150.0, radius: 4.0 },
+    { name: 'Bering Sea', lat: 58.0, lng: -175.0, radius: 3.5 },
+  ],
+  red: [
+    // Horn of Africa - Somalia region
+    { name: 'Horn of Africa', lat: 5.0, lng: 47.5, radius: 4.5 },
+    // Yemen/Red Sea corridor
+    { name: 'Red Sea Corridor', lat: 21.0, lng: 38.5, radius: 3.5 },
+    // Arctic routes
+    { name: 'Arctic Routes', lat: 77.5, lng: 0.0, radius: 8.0 },
+    // Eastern Mediterranean conflict zones
+    { name: 'Eastern Med Conflict', lat: 33.5, lng: 34.0, radius: 2.0 },
+  ]
+};
+
+// Function to calculate distance between two coordinates (Haversine formula)
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
+// Function to determine risk zone for a coordinate using circular zones
+const getRiskZone = (lat: number, lng: number): 'green' | 'yellow' | 'red' | null => {
+  for (const [risk, zones] of Object.entries(MARITIME_RISK_ZONES)) {
+    for (const zone of zones) {
+      const distance = calculateDistance(lat, lng, zone.lat, zone.lng);
+      const radiusInKm = zone.radius * 111; // Convert degrees to approximate km (1 degree ≈ 111 km)
+      if (distance <= radiusInKm) {
+        return risk as 'green' | 'yellow' | 'red';
+      }
+    }
+  }
+  return null; // No specific risk zone
+};
+
+// Generate circular polygon data for risk zone overlays
+const generateRiskZonePolygons = () => {
+  const polygons = [];
+  
+  Object.entries(MARITIME_RISK_ZONES).forEach(([risk, zones]) => {
+    zones.forEach((zone, index) => {
+      const color = risk === 'green' ? '#22c55e' : risk === 'yellow' ? '#eab308' : '#ef4444';
+      
+      // Create circular polygon from center point and radius
+      const coords = [];
+      const numPoints = 32; // Number of points to approximate circle
+      
+      for (let i = 0; i <= numPoints; i++) {
+        const angle = (i * 2 * Math.PI) / numPoints;
+        const lat = zone.lat + zone.radius * Math.cos(angle);
+        const lng = zone.lng + zone.radius * Math.sin(angle) / Math.cos(zone.lat * Math.PI / 180);
+        coords.push([lng, lat]);
+      }
+      
+      polygons.push({
+        id: `${risk}-zone-${index}`,
+        name: zone.name,
+        risk: risk,
+        color: color,
+        coordinates: [coords], // GeoJSON format
+        altitude: 0.01, // Slightly above sea level
+        capColor: color,
+        sideColor: color
+      });
+    });
+  });
+  
+  return polygons;
 };
 
 const HomePage: React.FC = () => {
@@ -431,7 +539,6 @@ const HomePage: React.FC = () => {
   const [hotspotData, setHotspotData] = useState<HotspotData[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(false);
-  const [isReportPanelVisible, setIsReportPanelVisible] = useState(false);
   const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
   const [agentMessages, setAgentMessages] = useState<
     { id: string; role: 'system' | 'user'; content: string; timestamp: Date }[]
@@ -482,9 +589,6 @@ const HomePage: React.FC = () => {
   }, [agentInput]);
 
 
-  // Agent panel state
-  const [agentPoint, setAgentPoint] = useState<AgentPoint | null>(null);
-  const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
 
   // Auth state
   const { user, hasAnyRole } = useAuth();
@@ -494,6 +598,8 @@ const HomePage: React.FC = () => {
 
   // Filter state
   const [showFilters, setShowFilters] = useState(false);
+  const [riskZoneOpacity, setRiskZoneOpacity] = useState({ green: 1, yellow: 1, red: 1 }); // Opacity control for risk zones
+  const [hoveredRiskZone, setHoveredRiskZone] = useState<string | null>(null); // Track hovered risk zone
   const [filters, setFilters] = useState({
     registered: 'all', // 'all', 'registered', 'unregistered'
     gearType: 'all', // 'all', 'trawler', 'longliner', 'purse_seiner', 'factory_trawler'
@@ -502,6 +608,9 @@ const HomePage: React.FC = () => {
     minYear: 2010, // Minimum year built
     maxYear: 2025, // Maximum year built
   });
+
+  // Generate risk zone polygons
+  const riskZonePolygons = useMemo(() => generateRiskZonePolygons(), []);
 
   const markerSvg = `<svg viewBox="-4 0 36 36">
     <path fill="currentColor" d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"></path>
@@ -693,13 +802,6 @@ const HomePage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setIsReportPanelVisible(true);
-    }, 120);
-
-    return () => window.clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -731,6 +833,7 @@ const HomePage: React.FC = () => {
       // Flag filter
       if (filters.flag !== 'all' && vessel.flag !== filters.flag) return false;
       
+      
       return true;
     });
   }, [vesselData, filters]);
@@ -760,6 +863,7 @@ const HomePage: React.FC = () => {
       
       // Year built filter (skip for unregistered vessels with unknown year)
       if (isRegistered && (zone.vessel.year_built < filters.minYear || zone.vessel.year_built > filters.maxYear)) return false;
+      
       
       return true;
     });
@@ -832,11 +936,52 @@ const HomePage: React.FC = () => {
           showAtmosphere={false}
           backgroundColor={'rgba(23,23,23,0)'}
 
-          polygonsData={landData.features}
-          polygonCapColor={() => 'rgba(130, 130, 130, 0.5)'}
-          polygonSideColor={() => 'rgba(23,23,23,0)'}
-          polygonAltitude={0}
-          polygonStrokeColor={() => 'rgba(255, 255, 255, 1)'}
+          polygonsData={[...landData.features, ...riskZonePolygons.map(zone => ({
+            type: 'Feature',
+            properties: { 
+              name: zone.name, 
+              risk: zone.risk,
+              id: zone.id 
+            },
+            geometry: {
+              type: 'Polygon',
+              coordinates: zone.coordinates
+            }
+          }))]}
+          polygonCapColor={(d: any) => {
+            if (d.properties?.risk) {
+              const risk = d.properties.risk;
+              const opacity = riskZoneOpacity[risk as keyof typeof riskZoneOpacity];
+              return risk === 'green' ? `rgba(34, 197, 94, ${0.3 * opacity})` : 
+                     risk === 'yellow' ? `rgba(234, 179, 8, ${0.3 * opacity})` : 
+                     `rgba(239, 68, 68, ${0.3 * opacity})`;
+            }
+            return 'rgba(130, 130, 130, 0.5)';
+          }}
+          polygonSideColor={(d: any) => {
+            if (d.properties?.risk) {
+              return 'rgba(23,23,23,0)';
+            }
+            return 'rgba(23,23,23,0)';
+          }}
+          polygonAltitude={(d: any) => d.properties?.risk ? 0.005 : 0}
+          polygonStrokeColor={(d: any) => {
+            if (d.properties?.risk) {
+              const risk = d.properties.risk;
+              const opacity = riskZoneOpacity[risk as keyof typeof riskZoneOpacity];
+              return risk === 'green' ? `rgba(34, 197, 94, ${0.8 * opacity})` : 
+                     risk === 'yellow' ? `rgba(234, 179, 8, ${0.8 * opacity})` : 
+                     `rgba(239, 68, 68, ${0.8 * opacity})`;
+            }
+            return 'rgba(255, 255, 255, 1)';
+          }}
+          onPolygonHover={(polygon: any) => {
+            if (polygon?.properties?.risk) {
+              setHoveredRiskZone(polygon.properties.risk);
+            } else {
+              setHoveredRiskZone(null);
+            }
+          }}
 
           showGraticules={true}
 
@@ -1002,6 +1147,60 @@ const HomePage: React.FC = () => {
           }}
           onZoom={() => { handleZoom(); }}
         />
+          </div>
+
+          
+          {/* Risk Zone Legend - Permanent bottom left */}
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '20px',
+            zIndex: 1000,
+            background: 'rgba(23, 23, 23, 0.9)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: '8px',
+            padding: '12px',
+            backdropFilter: 'blur(10px)',
+            minWidth: '200px'
+          }}>
+            <div style={{ 
+              color: '#e0f2fd', 
+              fontSize: '12px', 
+              fontWeight: '600', 
+              marginBottom: '8px',
+              textAlign: 'center'
+            }}>
+              MARITIME RISK ZONES
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ 
+                  width: '12px', 
+                  height: '12px', 
+                  backgroundColor: 'rgba(34, 197, 94, 0.8)', 
+                  borderRadius: '2px' 
+                }}></div>
+                <span style={{ color: '#e0f2fd', fontSize: '11px' }}>Green - Safe & High ROI</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ 
+                  width: '12px', 
+                  height: '12px', 
+                  backgroundColor: 'rgba(234, 179, 8, 0.8)', 
+                  borderRadius: '2px' 
+                }}></div>
+                <span style={{ color: '#e0f2fd', fontSize: '11px' }}>Yellow - Moderate Risk</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ 
+                  width: '12px', 
+                  height: '12px', 
+                  backgroundColor: 'rgba(239, 68, 68, 0.8)', 
+                  borderRadius: '2px' 
+                }}></div>
+                <span style={{ color: '#e0f2fd', fontSize: '11px' }}>Red - High Risk</span>
+              </div>
+            </div>
           </div>
 
           {/* Filter Toggle Button */}
@@ -1287,47 +1486,6 @@ const HomePage: React.FC = () => {
               </div> : null
           }
 
-          {!hoveredVessel.registered && hasAnyRole(['confidential', 'secret', 'top-secret']) && (
-            <button
-              onClick={() => {
-                const ap: AgentPoint = {
-                  lat: hoveredVessel.lat,
-                  lng: hoveredVessel.lng,
-                  timestamp: hoveredVessel.timestamp,
-                  mmsi: hoveredVessel.mmsi,
-                  imo: hoveredVessel.imo,
-                  flag: hoveredVessel.flag,
-                  shipName: hoveredVessel.shipName,
-                  geartype: hoveredVessel.geartype
-                };
-                setAgentPoint(ap);
-                setIsAgentPanelOpen(true);
-                setHoveredVessel(null);
-                setPopupPosition(null);
-              }}
-              style={{
-                width: '100%',
-                padding: '10px 16px',
-                backgroundColor: RED,
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: '600',
-                marginBottom: '10px',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = DARK_RED;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = RED;
-              }}
-            >
-              Open Agent
-            </button>
-          )}
 
           <button
             onClick={() => {
@@ -1366,216 +1524,151 @@ const HomePage: React.FC = () => {
                 position: 'fixed',
                 left: fishingZonePopupPosition.x,
                 top: fishingZonePopupPosition.y,
+                transform: 'translate(-50%, -50%)',
                 backgroundColor: 'rgba(23, 23, 23, 0.95)',
                 color: '#e0f2fd',
                 padding: '20px',
+                paddingTop: '24px',
                 borderRadius: '12px',
                 fontSize: '13px',
                 fontFamily: 'Arial, sans-serif',
                 zIndex: 1000,
                 boxShadow: '0 8px 32px rgba(70, 98, 171, 0.35)',
                 border: '1px solid rgba(198, 218, 236, 0.4)',
-                maxWidth: '360px',
-                minWidth: '340px',
+                maxWidth: '320px',
+                minWidth: '300px',
                 backdropFilter: 'blur(10px)'
               }}
             >
               {/* Header with vessel name */}
-              <div style={{ 
-                fontWeight: 'bold', 
-                marginBottom: '14px', 
-                color: '#ffffff',
-                fontSize: '16px',
-                borderBottom: '2px solid rgba(70, 98, 171, 0.5)',
-                paddingBottom: '10px'
-              }}>
-                {hoveredFishingZone.vessel.name}
-                <div style={{ fontSize: '11px', color: '#c0d9ef', fontWeight: 'normal', marginTop: '4px' }}>
-                  IMO: {hoveredFishingZone.vessel.imo_number}
-                </div>
-              </div>
-
-              {/* Coordinates */}
-              <div style={{ marginBottom: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div>
-                  <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px' }}>LATITUDE</div>
-                  <div style={{ fontWeight: '600' }}>{hoveredFishingZone.lat.toFixed(4)}°</div>
-                </div>
-                <div>
-                  <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px' }}>LONGITUDE</div>
-                  <div style={{ fontWeight: '600' }}>{hoveredFishingZone.lng.toFixed(4)}°</div>
-                </div>
-              </div>
-
-              {/* Location */}
-              <div style={{ marginBottom: '12px' }}>
-                <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px' }}>LOCATION</div>
-                <div style={{ fontWeight: '600' }}>{hoveredFishingZone.name}</div>
-              </div>
-
-              {/* Vessel Model */}
-              <div style={{ marginBottom: '12px' }}>
-                <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px' }}>VESSEL MODEL</div>
-                <div style={{ fontWeight: '600' }}>{hoveredFishingZone.vessel.model}</div>
-                <div style={{ fontSize: '11px', color: '#c0d9ef', marginTop: '2px' }}>
-                  {hoveredFishingZone.vessel.flag_state} • Built {hoveredFishingZone.vessel.year_built}
-                </div>
-              </div>
-
-              {/* Sustainability Score */}
-              <div style={{ 
-                marginBottom: '14px',
-                padding: '12px',
-                backgroundColor: 'rgba(70, 98, 171, 0.15)',
-                borderRadius: '8px',
-                border: '1px solid rgba(70, 98, 171, 0.3)'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <div style={{ color: '#9fb7d8', fontSize: '11px', fontWeight: '600' }}>SUSTAINABILITY SCORE</div>
-                  <div style={{ 
-                    fontSize: '24px', 
-                    fontWeight: 'bold',
-                    color: hoveredFishingZone.sustainability_score.total_score >= 80 ? '#2eb700' : 
-                           hoveredFishingZone.sustainability_score.total_score >= 70 ? '#f59e0b' : 
-                           hoveredFishingZone.sustainability_score.total_score >= 60 ? '#fb923c' : '#fc0303'
-                  }}>
-                    {hoveredFishingZone.sustainability_score.total_score}
-                    <span style={{ fontSize: '14px', marginLeft: '4px' }}>/ 100</span>
-                  </div>
-                </div>
-                <div style={{ 
-                  display: 'inline-block',
-                  padding: '4px 12px',
-                  borderRadius: '4px',
-                  backgroundColor: hoveredFishingZone.sustainability_score.total_score >= 80 ? 'rgba(46, 183, 0, 0.2)' : 
-                                   hoveredFishingZone.sustainability_score.total_score >= 70 ? 'rgba(245, 158, 11, 0.2)' : 
-                                   hoveredFishingZone.sustainability_score.total_score >= 60 ? 'rgba(251, 146, 60, 0.2)' : 'rgba(252, 3, 3, 0.2)',
-                  color: hoveredFishingZone.sustainability_score.total_score >= 80 ? '#2eb700' : 
-                         hoveredFishingZone.sustainability_score.total_score >= 70 ? '#f59e0b' : 
-                         hoveredFishingZone.sustainability_score.total_score >= 60 ? '#fb923c' : '#fc0303',
-                  fontSize: '12px',
-                  fontWeight: '700'
-                }}>
-                  Grade: {getSustainabilityGrade(hoveredFishingZone.sustainability_score.total_score)}
-                </div>
-              </div>
-
-              {/* Category Breakdown */}
-              <div style={{ marginBottom: '12px' }}>
-                <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '8px', fontWeight: '600' }}>CATEGORY SCORES</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {Object.entries(hoveredFishingZone.sustainability_score.categories).map(([key, value]: [string, any]) => (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ 
-                        fontSize: '10px', 
-                        flex: '1',
-                        textTransform: 'capitalize',
-                        color: '#d2deea'
-                      }}>
-                        {key.replace(/_/g, ' ')}
-                      </div>
-                      <div style={{
-                        width: '100px',
-                        height: '6px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        borderRadius: '3px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          width: `${value.score}%`,
-                          height: '100%',
-                          backgroundColor: value.score >= 80 ? '#2eb700' : 
-                                         value.score >= 70 ? '#f59e0b' : 
-                                         value.score >= 60 ? '#fb923c' : '#fc0303',
-                          transition: 'width 0.3s ease'
-                        }} />
-                      </div>
-                      <div style={{ fontSize: '11px', fontWeight: '600', minWidth: '30px', textAlign: 'right' }}>
-                        {value.score}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Close button */}
+              {/* Overlapping X Circle */}
               <button
                 onClick={() => {
                   setHoveredFishingZone(null);
                   setFishingZonePopupPosition(null);
                 }}
                 style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  right: '-12px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  border: '2px solid rgba(255, 255, 255, 0.4)',
+                  color: '#ffffff',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  zIndex: 1001,
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(252, 3, 3, 0.8)';
+                  e.currentTarget.style.borderColor = 'rgba(252, 3, 3, 1)';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                ×
+              </button>
+
+              {/* Header with vessel name */}
+              <div style={{ 
+                marginBottom: '16px',
+                paddingBottom: '12px',
+                borderBottom: '2px solid rgba(70, 98, 171, 0.5)'
+              }}>
+                <div style={{ 
+                  fontWeight: 'bold', 
+                  color: '#ffffff',
+                  fontSize: '16px',
+                  marginBottom: '2px'
+                }}>
+                  {hoveredFishingZone.vessel.name}
+                </div>
+                <div style={{ color: '#c0d9ef', fontSize: '11px' }}>
+                  IMO: {hoveredFishingZone.vessel.imo_number}
+                </div>
+              </div>
+
+              {/* Compact Info Row */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '16px',
+                marginBottom: '16px',
+                fontSize: '11px'
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px', fontWeight: '600' }}>RATING</div>
+                  <div style={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <div style={{ 
+                      fontSize: '16px', 
+                      fontWeight: 'bold',
+                      color: hoveredFishingZone.sustainability_score.total_score >= 80 ? '#2eb700' : 
+                             hoveredFishingZone.sustainability_score.total_score >= 70 ? '#f59e0b' : 
+                             hoveredFishingZone.sustainability_score.total_score >= 60 ? '#fb923c' : '#fc0303'
+                    }}>
+                      {getSustainabilityGrade(hoveredFishingZone.sustainability_score.total_score)}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#c0d9ef' }}>
+                      ({hoveredFishingZone.sustainability_score.total_score}%)
+                    </div>
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px', fontWeight: '600' }}>LOCATION</div>
+                  <div style={{ fontWeight: '600', fontSize: '11px' }}>{hoveredFishingZone.name}</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#9fb7d8', fontSize: '10px', marginBottom: '2px', fontWeight: '600' }}>MODEL</div>
+                  <div style={{ fontWeight: '600', fontSize: '11px' }}>{hoveredFishingZone.vessel.model}</div>
+                </div>
+              </div>
+
+
+              {/* Generate Report Button */}
+              <button
+                onClick={() => {
+                  // Generate report functionality here
+                  console.log('Generating report for:', hoveredFishingZone.vessel.name);
+                }}
+                style={{
                   width: '100%',
                   padding: '10px 16px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backgroundColor: 'rgba(70, 98, 171, 0.8)',
                   color: 'white',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  border: '1px solid rgba(70, 98, 171, 1)',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '13px',
-                  fontWeight: '500',
+                  fontWeight: '600',
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.backgroundColor = 'rgba(70, 98, 171, 1)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.backgroundColor = 'rgba(70, 98, 171, 0.8)';
                 }}
               >
-                Close
+                Generate Report
               </button>
             </div>
           )}
 
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: 0,
-              width: 'min(32vw, 420px)',
-              maxWidth: '100%',
-              background: 'rgba(16, 23, 34, 0.94)',
-              borderRight: '1px solid rgba(198, 218, 236, 0.22)',
-              boxShadow: '12px 0 32px rgba(10, 14, 28, 0.45)',
-              padding: '32px 32px 36px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '24px',
-              color: '#e0f2fd',
-              backdropFilter: 'blur(18px)',
-              transform: `translateX(${isReportPanelVisible ? '0' : '-110%'})`,
-              transition: 'transform 640ms cubic-bezier(0.23, 1, 0.32, 1)',
-              zIndex: 800,
-              pointerEvents: isReportPanelVisible ? 'auto' : 'none'
-            }}
-          >
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 600, letterSpacing: '0.04em' }}>
-                Report
-              </h2>
-              <p style={{ marginTop: '8px', color: '#9fb7d8', fontSize: '0.95rem', lineHeight: 1.5 }}>
-                Operational summary for the selected maritime theatre.
-              </p>
-            </div>
-
-          </div>
-
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: 'min(32vw, 420px)',
-              width: '2px',
-              background: 'linear-gradient(to bottom, transparent, rgba(70, 98, 171, 0.45), transparent)',
-              zIndex: 750,
-              pointerEvents: 'none',
-              opacity: isReportPanelVisible ? 1 : 0,
-              transition: 'opacity 420ms ease'
-            }}
-          />
 
           <div
             style={{
@@ -1761,8 +1854,6 @@ const HomePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Agent Panel */}
-          <AgentPanel open={isAgentPanelOpen} point={agentPoint} onClose={() => setIsAgentPanelOpen(false)} />
         </>
       )}
     </div>
