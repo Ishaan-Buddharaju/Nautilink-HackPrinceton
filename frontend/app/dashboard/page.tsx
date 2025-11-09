@@ -572,9 +572,8 @@ const HomePage: React.FC = () => {
     []
   );
   const handleAgentSubmit = useCallback(async () => {
-  const handleAgentSubmit = useCallback(async () => {
     const trimmed = agentInput.trim();
-    if (!trimmed) return;
+    if (!trimmed || agentThinking) return;
 
     const now = new Date();
     const userMessage = {
@@ -586,10 +585,34 @@ const HomePage: React.FC = () => {
 
     setAgentMessages((prev) => [...prev, userMessage]);
     setAgentInput('');
+    setAgentThinking(true);
 
-    window.setTimeout(() => {
-      const response = {
-        id: `agent-${Date.now()}`,
+    try {
+      const historyPayload = [...agentMessages, userMessage].map(({ role, content }) => ({
+        role,
+        content,
+      }));
+
+      const res = await fetch('/api/agent-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: trimmed,
+          history: historyPayload,
+        }),
+      });
+
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error || 'Failed to reach Gemini agent.');
+      }
+
+      const { reply } = await res.json();
+
+      setAgentMessages((prev) => [
+        ...prev,
+        {
+          id: `agent-${Date.now()}`,
           role: 'system',
           content: reply,
           timestamp: new Date(),
