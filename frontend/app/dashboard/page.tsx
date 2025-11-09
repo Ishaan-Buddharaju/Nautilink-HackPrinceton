@@ -187,7 +187,7 @@ const getRiskZone = (lat: number, lng: number): 'green' | 'yellow' | 'red' | nul
 
 // Generate circular polygon data for risk zone overlays
 const generateRiskZonePolygons = () => {
-  const polygons: RiskPolygon[] = [];
+  const polygons: any[] = [];
   
   Object.entries(MARITIME_RISK_ZONES).forEach(([risk, zones]) => {
     const riskKey = risk as 'green' | 'yellow' | 'red';
@@ -606,6 +606,7 @@ const HomePage: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionNodes, setTransactionNodes] = useState<TransactionNode[]>([]);
   const [transactionEdges, setTransactionEdges] = useState<any[]>([]);
+  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]); // Filter by transaction IDs
   const [isDataLoaded, setIsDataLoaded] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(false);
   const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
@@ -619,14 +620,14 @@ const HomePage: React.FC = () => {
   const reportErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const historyEntries = useMemo(
     () =>
-      [
-        { id: 'txn-3', timestamp: '2025-11-08T06:42:00Z' },
-        { id: 'txn-2', timestamp: '2025-11-08T06:15:00Z' },
-        { id: 'txn-1', timestamp: '2025-11-08T05:52:30Z' }
-      ].sort(
+      transactions.map((tx, idx) => ({
+        id: tx.tx_id,
+        timestamp: new Date(Date.now() - idx * 3600000).toISOString(), // 1 hour apart
+        status: tx.status
+      })).sort(
         (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       ),
-    []
+    [transactions]
   );
 
   const handleGenerateReport = useCallback(() => {
@@ -654,6 +655,15 @@ const HomePage: React.FC = () => {
     }, 5000);
   }, [reportTarget]);
 
+  const toggleTransactionFilter = useCallback((txId: string) => {
+    setSelectedTransactions(prev => {
+      if (prev.includes(txId)) {
+        return prev.filter(id => id !== txId); // Deselect
+      } else {
+        return [...prev, txId]; // Select
+      }
+    });
+  }, []);
 
   // Auth state
   const { user, hasAnyRole } = useAuth();
@@ -871,12 +881,14 @@ const HomePage: React.FC = () => {
         setTransactions(data.transactions);
         
         // Flatten all nodes with transaction ID prefix
-        const allNodes: TransactionNode[] = [];
+        const allNodes: any[] = [];
         data.transactions.forEach((tx: Transaction) => {
           tx.nodes.forEach((node: TransactionNode) => {
             allNodes.push({
               ...node,
-              id: `${tx.tx_id}-${node.id}`
+              id: `${tx.tx_id}-${node.id}`,
+              originalId: node.id,
+              tx_id: tx.tx_id
             });
           });
         });
@@ -1095,7 +1107,27 @@ const HomePage: React.FC = () => {
 
           showGraticules={true}
 
-          htmlElementsData={[...filteredFishingZones, ...clusteredData, ...transactionNodes]}
+          htmlElementsData={(() => {
+            // When transactions are selected, hide boats and only show transaction nodes
+            if (selectedTransactions.length > 0) {
+              const filtered = transactionNodes.filter((node: any) => {
+                const included = selectedTransactions.includes(node.tx_id);
+                console.log(`Node ${node.id} (tx: ${node.tx_id}): ${included ? 'SHOW' : 'HIDE'}`);
+                return included;
+              });
+              
+              console.log(`Total nodes: ${transactionNodes.length}, Filtered: ${filtered.length}, Selected TXs: [${selectedTransactions.join(', ')}]`);
+              
+              return [...filtered];
+            }
+            
+            // When no transactions selected, show boats and all transaction nodes
+            return [
+              ...filteredFishingZones, 
+              ...clusteredData, 
+              ...transactionNodes
+            ];
+          })()}
           htmlElement={(d: any) => {
             const el = document.createElement('div');
             el.style.pointerEvents = 'auto';
@@ -1311,7 +1343,10 @@ const HomePage: React.FC = () => {
             }
           }}
 
-          arcsData={transactionEdges}
+          arcsData={selectedTransactions.length > 0 
+            ? transactionEdges.filter((edge: any) => selectedTransactions.includes(edge.tx_id))
+            : transactionEdges
+          }
           arcStartLat={(d: any) => d.startLat}
           arcStartLng={(d: any) => d.startLng}
           arcEndLat={(d: any) => d.endLat}
@@ -1334,30 +1369,6 @@ const HomePage: React.FC = () => {
           }}
           onZoom={() => { handleZoom(); }}
         />
-          </div>
-
-          
-          {/* Transaction Network Debug Panel */}
-          <div style={{
-            position: 'absolute',
-            bottom: '160px',
-            left: '20px',
-            zIndex: 1000,
-            background: 'rgba(0, 255, 0, 0.2)',
-            border: '2px solid #00ff00',
-            borderRadius: '8px',
-            padding: '12px',
-            backdropFilter: 'blur(10px)',
-            minWidth: '200px'
-          }}>
-            <div style={{ color: '#00ff00', fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>
-              TRANSACTION NETWORK
-            </div>
-            <div style={{ color: '#ffffff', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div>Nodes: {transactionNodes.length}</div>
-              <div>Edges: {transactionEdges.length}</div>
-              <div>Transactions: {transactions.length}</div>
-            </div>
           </div>
 
           {/* Risk Zone Legend - Permanent bottom left */}
@@ -1421,9 +1432,23 @@ const HomePage: React.FC = () => {
 
           {/* Vessel information popup */}
       {hoveredVessel && popupPosition && (
-        <div
-          data-popup="vessel-info"
-          style={{
+        <>
+          {/* Backdrop to close popup */}
+          <div
+            onClick={() => {
+              setHoveredVessel(null);
+              setPopupPosition(null);
+            }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 999
+            }}
+          />
+          <div
+            data-popup="vessel-info"
+            onClick={(e) => e.stopPropagation()}
+            style={{
             position: 'fixed',
             left: popupPosition.x,
             top: popupPosition.y,
@@ -1508,13 +1533,28 @@ const HomePage: React.FC = () => {
             Close
           </button>
         </div>
+        </>
       )}
 
           {/* Fishing Zone Detailed Popup */}
           {hoveredFishingZone && fishingZonePopupPosition && (
-          <div
-              data-popup="fishing-zone-info"
-            style={{
+            <>
+              {/* Backdrop to close popup */}
+              <div
+                onClick={() => {
+                  setHoveredFishingZone(null);
+                  setFishingZonePopupPosition(null);
+                }}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 999
+                }}
+              />
+              <div
+                data-popup="fishing-zone-info"
+                onClick={(e) => e.stopPropagation()}
+                style={{
                 position: 'fixed',
                 left: fishingZonePopupPosition.x,
                 top: fishingZonePopupPosition.y,
@@ -1661,13 +1701,28 @@ const HomePage: React.FC = () => {
                 Generate Report
               </button>
             </div>
+            </>
           )}
 
           {/* Transaction Node Popup */}
           {hoveredTransactionNode && transactionNodePopupPosition && (
-            <div
-              data-popup="transaction-node-info"
-              style={{
+            <>
+              {/* Backdrop to close popup */}
+              <div
+                onClick={() => {
+                  setHoveredTransactionNode(null);
+                  setTransactionNodePopupPosition(null);
+                }}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 999
+                }}
+              />
+              <div
+                data-popup="transaction-node-info"
+                onClick={(e) => e.stopPropagation()}
+                style={{
                 position: 'fixed',
                 left: transactionNodePopupPosition.x,
                 top: transactionNodePopupPosition.y,
@@ -1770,45 +1825,8 @@ const HomePage: React.FC = () => {
               <div style={{ marginBottom: '12px' }}>
                 <strong style={{ color: '#ffffff' }}>Altitude:</strong> {hoveredTransactionNode.alt.toFixed(3)}
               </div>
-
-              {/* Shape indicator */}
-              <div style={{ marginBottom: '12px' }}>
-                <strong style={{ color: '#ffffff' }}>Shape:</strong> {hoveredTransactionNode.shape_top}
-              </div>
-
-              {/* Size */}
-              <div style={{ marginBottom: '16px' }}>
-                <strong style={{ color: '#ffffff' }}>Size:</strong> {hoveredTransactionNode.size.toFixed(2)}
-              </div>
-
-              {/* Close button at bottom */}
-              <button
-                onClick={() => {
-                  setHoveredTransactionNode(null);
-                  setTransactionNodePopupPosition(null);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '10px 16px',
-                  backgroundColor: 'rgba(0, 255, 0, 0.15)',
-                  color: '#00ff00',
-                  border: '1px solid rgba(0, 255, 0, 0.4)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.25)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 0, 0.15)';
-                }}
-              >
-                Close
-              </button>
             </div>
+            </>
           )}
 
 
@@ -1835,10 +1853,24 @@ const HomePage: React.FC = () => {
               pointerEvents: isHistoryPanelVisible ? 'auto' : 'none'
             }}
           >
-            <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <p style={{ margin: 0, color: '#94aacd', fontSize: '0.9rem', fontWeight: 500 }}>
-                Transaction History
-              </p>
+            <section style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: '0 0 auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <p style={{ margin: 0, color: '#94aacd', fontSize: '0.9rem', fontWeight: 500 }}>
+                  Transaction History
+                </p>
+                {selectedTransactions.length > 0 && (
+                  <span style={{ 
+                    fontSize: '0.75rem', 
+                    color: '#4662ab',
+                    backgroundColor: 'rgba(70, 98, 171, 0.2)',
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    fontWeight: 600
+                  }}>
+                    {selectedTransactions.length} selected
+                  </span>
+                )}
+              </div>
 
               <div
                 style={{
@@ -1848,32 +1880,77 @@ const HomePage: React.FC = () => {
                   backgroundColor: 'rgba(22, 30, 46, 0.75)',
                   display: 'grid',
                   gap: '12px',
-                  maxHeight: '240px',
+                  maxHeight: '180px',
                   overflowY: 'auto'
                 }}
               >
-                {historyEntries.map((entry, idx) => (
-                  <div
-                    key={entry.id}
-                    style={{
-                      borderRadius: '14px',
-                      padding: '12px 14px',
-                      backgroundColor: 'rgba(27, 36, 58, 0.85)',
-                      border: '1px solid rgba(198, 218, 236, 0.18)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px'
-                    }}
-                  >
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e8f3ff' }}>
-                      {`Transaction #${idx + 1}`}
-                    </span>
-                    <span style={{ fontSize: '0.82rem', color: '#b7c9e4', lineHeight: 1.35 }}>
-                      {new Date(entry.timestamp).toISOString().replace('T', ', ').replace('Z', '').slice(0, -3)}
-                    </span>
-                  </div>
-                ))}
+                {historyEntries.map((entry, idx) => {
+                  const isSelected = selectedTransactions.includes(entry.id);
+                  return (
+                    <div
+                      key={entry.id}
+                      onClick={() => toggleTransactionFilter(entry.id)}
+                      style={{
+                        borderRadius: '14px',
+                        padding: '12px 14px',
+                        backgroundColor: isSelected ? 'rgba(70, 98, 171, 0.45)' : 'rgba(27, 36, 58, 0.85)',
+                        border: isSelected ? '2px solid rgba(70, 98, 171, 0.8)' : '1px solid rgba(198, 218, 236, 0.18)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        transform: isSelected ? 'scale(1.02)' : 'scale(1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = 'rgba(27, 36, 58, 1)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = 'rgba(27, 36, 58, 0.85)';
+                        }
+                      }}
+                    >
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: isSelected ? '#ffffff' : '#e8f3ff' }}>
+                        {entry.id} {isSelected && '✓'}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#b7c9e4', lineHeight: 1.35 }}>
+                        Status: <span style={{ 
+                          color: entry.status === 'complete' ? '#00ff00' : '#ff8800',
+                          fontWeight: 600
+                        }}>{entry.status}</span>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
+              
+              {selectedTransactions.length > 0 && (
+                <button
+                  onClick={() => setSelectedTransactions([])}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'rgba(252, 3, 3, 0.15)',
+                    border: '1px solid rgba(252, 3, 3, 0.3)',
+                    borderRadius: '8px',
+                    color: '#ff6b6b',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(252, 3, 3, 0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(252, 3, 3, 0.15)';
+                  }}
+                >
+                  Clear Selection
+                </button>
+              )}
             </section>
 
             <section
@@ -1887,6 +1964,9 @@ const HomePage: React.FC = () => {
                 gap: '18px',
                 boxShadow: '-8px 12px 28px rgba(10, 14, 28, 0.25)',
                 backdropFilter: 'blur(16px)',
+                flex: '1 1 auto',
+                minHeight: 0,
+                overflowY: 'auto'
               }}
             >
               <div>
