@@ -15,7 +15,7 @@ load_dotenv()
 
 # Solana configuration
 SOLANA_RPC_URL = os.getenv("SOLANA_RPC_URL", "https://api.devnet.solana.com")
-PROGRAM_ID_STR = os.getenv("PROGRAM_ID", "FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta")
+PROGRAM_ID_STR = os.getenv("PROGRAM_ID", "6WVh9yhUaofmUMAsK1EuCJG5ptzZPzKqj7LcFDVzLgnA")
 PROGRAM_ID = PublicKey(PROGRAM_ID_STR) if PROGRAM_ID_STR else None
 IDL_PATH = os.getenv("IDL_PATH", "../web3/target/idl/nautilink.json")
 

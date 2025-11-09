@@ -36,12 +36,96 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
   const [customTitle, setCustomTitle] = useState<string>('');
 
   if (resolvedParams.reportId === 'template-summary') {
+    const lastUpdated = 'September 20, 2025';
+    const vesselProfile = {
+      name: 'FV Ocean Star',
+      imo: '9234567',
+      nationality: 'Norway',
+      homePort: 'Bergen, Norway',
+      owner: 'Nordic Harvest Fleet',
+      vesselModel: 'Purse Seiner 85m',
+      builtYear: 2012,
+      yearsAtSea: 13,
+      tonnage: '4,850 GT',
+      crewCount: 46,
+    };
+
+    const summaryParagraphs = [
+      'FV Ocean Star remains one of the fleet’s most reliable purse seiners, executing coordinated patrols across the North Atlantic Central corridor with consistent AIS visibility.',
+      'Recent inspections confirm compliance with Norway’s carbon-reduction standards. The vessel upgraded to hybrid trawl winches in late 2024, lowering average fuel consumption by 12%.',
+      'Risk indicators are low: no transshipment anomalies detected over the past 90 days and catch documentation aligns with ICCAT digital ledger filings.',
+    ];
+
+    const sustainabilitySnapshot = {
+      score: 78,
+      grade: 'B+',
+      badgeColor: '#f59e0b',
+      categories: [
+        { label: 'Vessel Efficiency', value: 70, color: '#f59e0b' },
+        { label: 'Fishing Method', value: 65, color: '#f97316' },
+        { label: 'Environmental Practices', value: 82, color: '#34d399' },
+        { label: 'Compliance & Transparency', value: 90, color: '#34d399' },
+        { label: 'Social Responsibility', value: 75, color: '#f59e0b' },
+      ],
+    };
+
+    const transactionHistory = [
+      {
+        date: '2025-09-18',
+        type: 'Catch Consignment',
+        location: 'Reykjavík, Iceland',
+        notes: 'Handed off 62 MT albacore to refrigerated carrier Nordic Dawn.',
+        status: 'Cleared',
+      },
+      {
+        date: '2025-09-08',
+        type: 'Port State Inspection',
+        location: 'St. John’s, Newfoundland',
+        notes: 'Verified logbooks, crew manifests, and coolant disposal receipts—no discrepancies.',
+        status: 'Passed',
+      },
+      {
+        date: '2025-08-27',
+        type: 'Satellite Alert Review',
+        location: 'North Atlantic Central',
+        notes: 'Triggered proximity review after course overlap with FV Tide Runner; no violation observed.',
+        status: 'Resolved',
+      },
+    ];
+
+    const handleExportTemplate = () => {
+      if (typeof window === 'undefined') return;
+      const node = document.getElementById('template-report-content');
+      if (!node) return;
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) return;
+      const styles = `
+        <style>
+          @page { size: A4; margin: 16mm; }
+          html, body { background: #ffffff; color: #171717; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+          h1,h2,h3 { color: #171717; margin: 0 0 8px 0; }
+          p { margin: 8px 0; line-height: 1.5; }
+          section { margin-bottom: 20px; }
+          .border { border-color: #d2deea; }
+          svg { max-width: 100% !important; height: auto !important; }
+        </style>
+      `;
+      printWindow.document.write(`<html><head><title>${vesselProfile.name} Report</title>${styles}</head><body>`);
+      printWindow.document.write(node.innerHTML);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 300);
+    };
+
     const [chatMessages, setChatMessages] = useState<Array<{ id: string; role: 'user' | 'assistant'; content: string }>>([
       {
         id: 'assistant-welcome',
         role: 'assistant',
-        content:
-          'Gemini 2.5 Flash is online. Ask me about this report template or how to generate a new analysis.',
+        content: 'ask me about the report or about how to break down each insight',
       },
     ]);
     const [chatInput, setChatInput] = useState('');
@@ -92,23 +176,199 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
 
     return (
       <div className="flex-1 p-8 text-[#e0f2fd] min-h-screen">
-        <div className="flex gap-8 h-full">
-          <div className="flex-1 max-w-3xl">
-            <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
+        <div className="flex gap-8 items-start">
+          <div className="flex-1 max-w-5xl space-y-8">
+            <Link href="/database" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd]">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5"/>
                 <path d="m12 19-7-7 7-7"/>
               </svg>
               <span>Database</span>
             </Link>
-            <h1 className="text-3xl font-bold mb-4 text-[#e0f2fd]">Template Summary</h1>
-            <p className="text-[#c0d9ef] text-sm">This template is empty—use the generator to produce content or consult the Gemini assistant for guidance.</p>
+            <div
+              id="template-report-content"
+              className="bg-[#121c2a] border border-[rgba(198,218,236,0.18)] rounded-3xl shadow-[0_30px_80px_rgba(10,14,28,0.35)] overflow-hidden"
+            >
+              <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between px-8 pt-8">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.35em] text-[#88a8c9]">Report</p>
+                  <h1 className="text-3xl md:text-[2.4rem] font-bold text-[#e0f2fd] mt-2 leading-tight">
+                    {vesselProfile.name}
+                  </h1>
+                  <p className="text-sm text-[#9fb7d8] mt-3">Last updated: {lastUpdated}</p>
+                </div>
+                <button
+                  onClick={handleExportTemplate}
+                  className="inline-flex items-center gap-2 bg-[#4662ab] text-[#e0f2fd] px-5 py-2.5 rounded-full font-semibold tracking-wide uppercase text-xs hover:bg-[#c6daec] hover:text-[#171717] transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                    <polyline points="16 6 12 2 8 6"/>
+                    <line x1="12" x2="12" y1="2" y2="15"/>
+                  </svg>
+                  Export
+                </button>
+              </header>
+
+              <section className="px-8 pt-8 pb-6">
+                <div className="grid gap-8 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+                  <div className="space-y-6">
+                    <div className="h-52 rounded-2xl bg-gradient-to-br from-[#1b2a3f] via-[#1f324a] to-[#273f5f] border border-[rgba(198,218,236,0.18)] flex items-center justify-center text-[#c6daec] text-sm tracking-[0.35em] uppercase">
+                      Vessel Imagery Placeholder
+                    </div>
+                    <div className="bg-[#101a29] border border-[rgba(198,218,236,0.12)] rounded-2xl p-6 space-y-4">
+                      <h2 className="text-sm uppercase tracking-[0.3em] text-[#88a8c9]">Profile Details</h2>
+                      <dl className="space-y-3 text-sm text-[#d2deea]">
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-[#9fb7d8] uppercase tracking-[0.25em] text-xs">IMO</dt>
+                          <dd>{vesselProfile.imo}</dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-[#9fb7d8] uppercase tracking-[0.25em] text-xs">Nationality</dt>
+                          <dd>{vesselProfile.nationality}</dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-[#9fb7d8] uppercase tracking-[0.25em] text-xs">Home Port</dt>
+                          <dd>{vesselProfile.homePort}</dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-[#9fb7d8] uppercase tracking-[0.25em] text-xs">Owner</dt>
+                          <dd>{vesselProfile.owner}</dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-[#9fb7d8] uppercase tracking-[0.25em] text-xs">Model</dt>
+                          <dd>{vesselProfile.vesselModel}</dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-[#9fb7d8] uppercase tracking-[0.25em] text-xs">Built</dt>
+                          <dd>{vesselProfile.builtYear}</dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-[#9fb7d8] uppercase tracking-[0.25em] text-xs">Years Active</dt>
+                          <dd>{vesselProfile.yearsAtSea}</dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-[#9fb7d8] uppercase tracking-[0.25em] text-xs">Tonnage</dt>
+                          <dd>{vesselProfile.tonnage}</dd>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <dt className="text-[#9fb7d8] uppercase tracking-[0.25em] text-xs">Crew</dt>
+                          <dd>{vesselProfile.crewCount} personnel</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#101a29] border border-[rgba(198,218,236,0.12)] rounded-2xl p-6 flex flex-col gap-4">
+                    <h2 className="text-sm uppercase tracking-[0.3em] text-[#88a8c9]">Summary</h2>
+                    <div className="space-y-4 text-[#d2deea] leading-relaxed">
+                      {summaryParagraphs.map((paragraph, idx) => (
+                        <p key={idx}>{paragraph}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="px-8 pb-6">
+                <div className="bg-[#101a29] border border-[rgba(198,218,236,0.12)] rounded-2xl p-6">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm uppercase tracking-[0.3em] text-[#88a8c9]">Sustainability Score</p>
+                      <h3 className="text-2xl font-semibold text-[#e0f2fd] mt-2">
+                        {sustainabilitySnapshot.score} <span className="text-base text-[#9fb7d8]">/ 100</span>
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm uppercase tracking-[0.3em] text-[#9fb7d8]">Grade</span>
+                      <span
+                        className="px-3 py-1 rounded-full text-sm font-semibold"
+                        style={{ backgroundColor: `${sustainabilitySnapshot.badgeColor}33`, color: sustainabilitySnapshot.badgeColor }}
+                      >
+                        {sustainabilitySnapshot.grade}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-6 space-y-4">
+                    {sustainabilitySnapshot.categories.map((category) => (
+                      <div key={category.label}>
+                        <div className="flex justify-between text-sm text-[#d2deea] mb-2">
+                          <span>{category.label}</span>
+                          <span>{category.value}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-[#1f2a3d] overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${category.value}%`, backgroundColor: category.color }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <section className="px-8 pb-6">
+                <div className="bg-[#101a29] border border-[rgba(198,218,236,0.12)] rounded-2xl p-6">
+                  <h2 className="text-sm uppercase tracking-[0.3em] text-[#88a8c9] mb-5">Transaction Log · 90 Days</h2>
+                  <div className="space-y-4">
+                    {transactionHistory.map((entry, idx) => (
+                      <div
+                        key={entry.date}
+                        className="rounded-xl border border-[rgba(198,218,236,0.12)] bg-[#121f31] px-5 py-4 grid gap-2 md:grid-cols-[140px_auto_110px]"
+                      >
+                        <div className="text-sm text-[#9fb7d8]">
+                          <p className="font-semibold text-[#e0f2fd]">{entry.date}</p>
+                          <p className="uppercase tracking-[0.25em] text-xs mt-1">{entry.type}</p>
+                        </div>
+                        <p className="text-sm text-[#d2deea]">{entry.notes}</p>
+                        <div className="flex items-center md:justify-end">
+                          <span
+                            className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-[0.25em]"
+                            style={{
+                              backgroundColor:
+                                entry.status === 'Cleared'
+                                  ? 'rgba(52, 211, 153, 0.12)'
+                                  : entry.status === 'Passed'
+                                  ? 'rgba(96, 165, 250, 0.12)'
+                                  : 'rgba(249, 115, 22, 0.12)',
+                              color:
+                                entry.status === 'Cleared'
+                                  ? '#34d399'
+                                  : entry.status === 'Passed'
+                                  ? '#60a5fa'
+                                  : '#f97316',
+                            }}
+                          >
+                            {entry.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <section className="px-8 pb-10">
+                <div className="border border-dashed border-[rgba(198,218,236,0.24)] rounded-2xl bg-[#0e1726] p-8 text-center">
+                  <p className="text-sm uppercase tracking-[0.35em] text-[#88a8c9]">Reserved Analysis Slot</p>
+                  <p className="text-[#9fb7d8] mt-3 max-w-md mx-auto">
+                    Future spotlight for crew interviews, ESG partner attestations, or satellite-anomaly overlays. Add your findings here when they become available.
+                  </p>
+                  <div className="flex justify-center mt-4 gap-2 text-[#4662ab]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
 
           <aside className="w-96 ml-auto flex flex-col bg-[#171717] border border-[rgba(198,218,236,0.18)] rounded-lg shadow-lg h-[calc(100vh-4rem)] sticky top-8">
             <header className="px-4 py-3 border-b border-[rgba(198,218,236,0.18)]">
-              <h2 className="text-lg font-semibold text-[#e0f2fd]">Gemini 2.5 Flash Assistant</h2>
-              <p className="text-xs text-[#9fb7d8] mt-1">Ask anything about report generation or this template.</p>
+              <h2 className="text-lg font-semibold text-[#e0f2fd]">Research Assistant</h2>
             </header>
 
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -212,7 +472,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
     return (
       <div className="flex-1 p-8 text-[#e0f2fd]">
         <div className="max-w-4xl">
-          <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
+          <Link href="/database" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             <span>Database</span>
           </Link>
@@ -403,7 +663,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
   return (
     <div className="flex-1 p-8 text-[#e0f2fd]">
       <div className="max-w-4xl">
-        <Link href="/reports" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
+        <Link href="/database" className="flex items-center space-x-2 text-[#c0d9ef] hover:text-[#e0f2fd] mb-6">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
           <span>Database</span>
         </Link>
@@ -503,7 +763,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
                     <ResponsiveContainer>
                         <PieChart>
                             <Pie
-                                data={reportData.agentPerformance.call_outcomes}
+                                data={reportData.agentPerformance.call_outcomes as unknown as any[]}
                                 cx="50%"
                                 cy="50%"
                                 innerRadius={60}
