@@ -1,0 +1,96 @@
+[
+  {
+    "tx_id": "TX-SHAME-001",
+    "status": "incomplete",
+    "nodes": [
+      { "type": "HARVEST", "zone_id": "fishing-zone-38", "lat": 18, "lng": 110, "name": "South China Sea (Unregistered)", "shape_top": "circle" },
+      { "type": "STORAGE/TRANSIT", "lat": 18.5, "lng": 112, "name": "Mid-Storage A", "shape_top": "triangle" },
+      { "type": "STORAGE/TRANSIT", "lat": 19, "lng": 114, "name": "Mid-Storage B", "shape_top": "triangle" },
+      { "type": "LANDING", "lat": 19.5, "lng": 115, "name": "Hainan Port", "shape_top": "flat" },
+      { "type": "PROCESSING", "lat": 20, "lng": 116, "name": "Generic Plant", "shape_top": "square" }
+    ]
+  },
+
+  {
+    "tx_id": "TX-X-101",
+    "nodes": [
+      { "type": "HARVEST", "zone_id": "fishing-zone-20", "lat": 65, "lng": 12, "name": "Norwegian Sea", "shape_top": "circle" },
+      { "type": "LANDING", "lat": 69, "lng": 18, "name": "Tromsø Port", "shape_top": "flat" },
+      { "type": "PROCESSING", "lat": 70, "lng": 19, "name": "Ice Plant 12", "shape_top": "square" },
+      { "type": "EXPORT", "lat": 59, "lng": 10, "name": "Oslo Export Hub", "shape_top": "hex" },
+      { "type": "IMPORT/WHOLESALE", "lat": 47, "lng": -52, "name": "US Seafood Warehouse", "shape_top": "triangle" },
+      { "type": "RETAIL", "lat": 40, "lng": -74, "name": "Retail Shelf NYC", "shape_top": "pin" }
+    ]
+  },
+
+  {
+    "tx_id": "TX-X-102",
+    "nodes": [
+      { "type": "HARVEST", "zone_id": "fishing-zone-25", "lat": 42, "lng": -67, "name": "Georges Bank", "shape_top": "circle" },
+      { "type": "LANDING", "lat": 42.3, "lng": -70, "name": "Boston Port", "shape_top": "flat" },
+      { "type": "PROCESSING", "lat": 42.4, "lng": -71, "name": "Atlantic Plant GL07", "shape_top": "square" },
+      { "type": "EXPORT", "lat": 42.5, "lng": -72, "name": "Boston Export Hub", "shape_top": "hex" },
+      { "type": "IMPORT/WHOLESALE", "lat": 45, "lng": -63, "name": "Halifax Cold Storage", "shape_top": "triangle" },
+      { "type": "RETAIL", "lat": 43, "lng": -79, "name": "Retail Shelf Toronto", "shape_top": "pin" }
+    ]
+  },
+
+  {
+    "tx_id": "TX-X-103",
+    "nodes": [
+      { "type": "HARVEST", "zone_id": "fishing-zone-33", "lat": 48, "lng": -135, "name": "Gulf of Alaska", "shape_top": "circle" },
+      { "type": "LANDING", "lat": 57, "lng": -135, "name": "Sitka Port", "shape_top": "flat" },
+      { "type": "PROCESSING", "lat": 58, "lng": -134, "name": "Sitka Processing AK21", "shape_top": "square" },
+      { "type": "EXPORT", "lat": 60, "lng": -149, "name": "Anchorage Export Terminal", "shape_top": "hex" },
+      { "type": "IMPORT/WHOLESALE", "lat": 35, "lng": 140, "name": "Hokkaido Cold Chain", "shape_top": "triangle" },
+      { "type": "RETAIL", "lat": 35.7, "lng": 139.7, "name": "Tokyo Retail Shelf", "shape_top": "pin" }
+    ]
+  },
+
+  {
+    "tx_id": "TX-X-OPT-A",
+    "nodes": [
+      { "type": "HARVEST", "zone_id": "fishing-zone-16", "lat": 40, "lng": 15, "name": "Mediterranean Sea", "shape_top": "circle" },
+      { "type": "LANDING", "lat": 40.8, "lng": 14.3, "name": "Naples Port", "shape_top": "flat" },
+      { "type": "PROCESSING", "lat": 41, "lng": 13.8, "name": "Med Plant 05 (Curing)", "shape_top": "square" },
+      { "type": "EXPORT", "lat": 43.6, "lng": 7.2, "name": "Italian Export Point", "shape_top": "hex" },
+      { "type": "IMPORT/WHOLESALE", "lat": 48.8, "lng": 2.3, "name": "Paris Seafood Market", "shape_top": "triangle" },
+      { "type": "RETAIL", "lat": 43.3, "lng": 5.4, "name": "Marseille Retail Shelf", "shape_top": "pin" }
+    ]
+  },
+
+  {
+    "tx_id": "TX-X-OPT-B",
+    "nodes": [
+      { "type": "HARVEST", "zone_id": "fishing-zone-15", "lat": -28, "lng": 16, "name": "Benguela Current", "shape_top": "circle" },
+      { "type": "LANDING", "lat": -22.9, "lng": 14.5, "name": "Walvis Bay Port", "shape_top": "flat" },
+      { "type": "PROCESSING", "lat": -23, "lng": 15, "name": "Namibian Plant ATL-02", "shape_top": "square" },
+      { "type": "EXPORT", "lat": -26, "lng": 28, "name": "Windhoek Export Hub", "shape_top": "hex" },
+      { "type": "IMPORT/WHOLESALE", "lat": 52, "lng": 5, "name": "Rotterdam Cold Storage", "shape_top": "triangle" },
+      { "type": "RETAIL", "lat": 52.5, "lng": 13.4, "name": "Berlin Retail Shelf", "shape_top": "pin" }
+    ]
+  },
+
+  {
+    "tx_id": "TX-BACKUP-1",
+    "nodes": [
+      { "type": "HARVEST", "zone_id": "fishing-zone-6", "lat": -42, "lng": 148, "name": "Tasmania Coast", "shape_top": "circle" },
+      { "type": "LANDING", "lat": -43, "lng": 147, "name": "Hobart Port", "shape_top": "flat" },
+      { "type": "PROCESSING", "lat": -42.9, "lng": 147.2, "name": "Tasman Plant 03", "shape_top": "square" },
+      { "type": "EXPORT", "lat": -37.8, "lng": 144.9, "name": "Melbourne Export", "shape_top": "hex" },
+      { "type": "IMPORT/WHOLESALE", "lat": 1.3, "lng": 103.8, "name": "Singapore Cold Hub", "shape_top": "triangle" },
+      { "type": "RETAIL", "lat": 1.28, "lng": 103.85, "name": "Singapore Retail Shelf", "shape_top": "pin" }
+    ]
+  },
+
+  {
+    "tx_id": "TX-BACKUP-2",
+    "status": "incomplete",
+    "nodes": [
+      { "type": "HARVEST", "zone_id": "fishing-zone-14", "lat": 14, "lng": -17, "name": "West Africa (Senegal)", "shape_top": "circle" },
+      { "type": "LANDING", "lat": 14.7, "lng": -17.5, "name": "Dakar Port", "shape_top": "flat" },
+      { "type": "PROCESSING", "lat": 14.5, "lng": -16.8, "name": "Senegal Plant ATL-01", "shape_top": "square" },
+      { "type": "EXPORT", "lat": 6.4, "lng": 3.3, "name": "Lagos Export Hub", "shape_top": "hex" }
+    ]
+  }
+]

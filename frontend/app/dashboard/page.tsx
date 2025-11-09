@@ -35,6 +35,41 @@ interface HotspotData {
   size: number;
 }
 
+interface TransactionNode {
+  id: string;
+  type: string;
+  zone_id?: string;
+  lat: number;
+  lng: number;
+  alt: number;
+  name: string;
+  shape_top: string;
+  color: string;
+  size: number;
+}
+
+interface TransactionEdge {
+  source: string;
+  target: string;
+  lift: number;
+  color: string;
+  thickness: number;
+  dashed: boolean;
+  particles: number;
+  integrity: number;
+  incomplete?: boolean;
+  fade_at?: number;
+}
+
+interface Transaction {
+  tx_id: string;
+  status: string;
+  compliance: string;
+  color_scheme: string;
+  nodes: TransactionNode[];
+  edges: TransactionEdge[];
+}
+
 // Utility function to compute grade from score with new scale
 const getSustainabilityGrade = (score: number) => {
   if (score >= 93) return 'A';
@@ -537,6 +572,9 @@ const HomePage: React.FC = () => {
   const [fishingZonePopupPosition, setFishingZonePopupPosition] = useState<{ x: number; y: number } | null>(null);
 
   const [hotspotData, setHotspotData] = useState<HotspotData[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionNodes, setTransactionNodes] = useState<TransactionNode[]>([]);
+  const [transactionEdges, setTransactionEdges] = useState<any[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(false);
   const [isHistoryPanelVisible, setIsHistoryPanelVisible] = useState(false);
@@ -553,7 +591,7 @@ const HomePage: React.FC = () => {
   const [agentInput, setAgentInput] = useState('');
   const [agentThinking, setAgentThinking] = useState(false);
   const [reportTarget, setReportTarget] = useState<
-    { type: 'zone'; data: FishingZone } | { type: 'vessel'; data: VesselData } | null
+    { type: 'zone'; data: any } | { type: 'vessel'; data: VesselData } | null
   >(null);
   const [reportVisible, setReportVisible] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
@@ -873,6 +911,52 @@ const HomePage: React.FC = () => {
         setLandData(featureCollection as unknown as { features: any[] });
       });
 
+    // Load transaction network data
+    fetch('/transaction-network-final.json')
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('🔥 TRANSACTION DATA LOADED:', data);
+        setTransactions(data.transactions);
+        
+        // Flatten all nodes with transaction ID prefix
+        const allNodes: TransactionNode[] = [];
+        data.transactions.forEach((tx: Transaction) => {
+          tx.nodes.forEach((node: TransactionNode) => {
+            allNodes.push({
+              ...node,
+              id: `${tx.tx_id}-${node.id}`
+            });
+          });
+        });
+        console.log('🔥 TRANSACTION NODES:', allNodes.length, allNodes);
+        setTransactionNodes(allNodes);
+        
+        // Process edges for rendering
+        const allEdges: any[] = [];
+        data.transactions.forEach((tx: Transaction) => {
+          tx.edges.forEach((edge: TransactionEdge) => {
+            const sourceNode = tx.nodes.find((n: TransactionNode) => n.id === edge.source);
+            const targetNode = tx.nodes.find((n: TransactionNode) => n.id === edge.target);
+            
+            if (sourceNode && targetNode) {
+              allEdges.push({
+                ...edge,
+                startLat: sourceNode.lat,
+                startLng: sourceNode.lng,
+                endLat: targetNode.lat,
+                endLng: targetNode.lng,
+                tx_id: tx.tx_id,
+                sourceNode,
+                targetNode
+              });
+            }
+          });
+        });
+        console.log('🔥 TRANSACTION EDGES:', allEdges.length, allEdges);
+        setTransactionEdges(allEdges);
+      })
+      .catch((error) => console.log('❌ Error loading transaction network:', error));
+
     fetchData();
   }, [fetchData]);
 
@@ -1059,11 +1143,43 @@ const HomePage: React.FC = () => {
 
           showGraticules={true}
 
-          htmlElementsData={[...filteredFishingZones, ...clusteredData]}
+          htmlElementsData={[...filteredFishingZones, ...clusteredData, ...transactionNodes]}
           htmlElement={(d: any) => {
             const el = document.createElement('div');
             el.style.pointerEvents = 'auto';
             el.style.cursor = 'pointer';
+
+            // Render transaction nodes as WHITE PINS like boats
+            if (d.shape_top) {
+              console.log('🎯 Rendering transaction node:', d.name, d.shape_top);
+              const svgNS = 'http://www.w3.org/2000/svg';
+              const svg = document.createElementNS(svgNS, 'svg');
+              svg.setAttribute('viewBox', '0 0 24 36');
+              svg.setAttribute('width', '24px');
+              svg.setAttribute('height', '36px');
+
+              // White pin shape (same as boats)
+              const path = document.createElementNS(svgNS, 'path');
+              path.setAttribute('d', 'M12 0C7 0 3 4 3 9c0 7.5 9 17 9 17s9-9.5 9-17C21 4 17 0 12 0z');
+              path.setAttribute('fill', '#ffffff');
+              path.setAttribute('opacity', '0.9');
+              
+              // Colored center circle to distinguish node type
+              const circle = document.createElementNS(svgNS, 'circle');
+              circle.setAttribute('cx', '12');
+              circle.setAttribute('cy', '9');
+              circle.setAttribute('r', '4.5');
+              circle.setAttribute('fill', d.color || '#2eb700');
+              
+              svg.appendChild(path);
+              svg.appendChild(circle);
+              el.appendChild(svg);
+              
+              // Add hover tooltip
+              el.title = `${d.name} (${d.type})`;
+              
+              return el;
+            }
 
             // Render white pins for fishing zones
             if (d.id && typeof d.id === 'string' && d.id.startsWith('fishing-zone-')) {
@@ -1212,6 +1328,20 @@ const HomePage: React.FC = () => {
             }
           }}
 
+          arcsData={transactionEdges}
+          arcStartLat={(d: any) => d.startLat}
+          arcStartLng={(d: any) => d.startLng}
+          arcEndLat={(d: any) => d.endLat}
+          arcEndLng={(d: any) => d.endLng}
+          arcColor={() => 'rgba(0, 255, 0, 0.4)'}
+          arcStroke={0.3}
+          arcDashLength={(d: any) => d.dashed ? 0.3 : 1}
+          arcDashGap={(d: any) => d.dashed ? 0.15 : 0}
+          arcDashAnimateTime={(d: any) => d.dashed ? 1500 : 0}
+          arcAltitude={0.12}
+          arcAltitudeAutoScale={0.3}
+          arcsTransitionDuration={0}
+
           onGlobeReady={() => { 
             clusterMarkers(vesselData); // Use filtered data on ready
             // Disable autorotation for dashboard
@@ -1224,6 +1354,29 @@ const HomePage: React.FC = () => {
           </div>
 
           
+          {/* Transaction Network Debug Panel */}
+          <div style={{
+            position: 'absolute',
+            bottom: '160px',
+            left: '20px',
+            zIndex: 1000,
+            background: 'rgba(0, 255, 0, 0.2)',
+            border: '2px solid #00ff00',
+            borderRadius: '8px',
+            padding: '12px',
+            backdropFilter: 'blur(10px)',
+            minWidth: '200px'
+          }}>
+            <div style={{ color: '#00ff00', fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>
+              TRANSACTION NETWORK
+            </div>
+            <div style={{ color: '#ffffff', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div>Nodes: {transactionNodes.length}</div>
+              <div>Edges: {transactionEdges.length}</div>
+              <div>Transactions: {transactions.length}</div>
+            </div>
+          </div>
+
           {/* Risk Zone Legend - Permanent bottom left */}
           <div style={{
             position: 'absolute',

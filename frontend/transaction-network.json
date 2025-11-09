@@ -1,0 +1,514 @@
+{
+  "transactions": [
+    {
+      "tx_id": "TX-SHAME-001",
+      "sku": "x",
+      "compliance_status": "NON_COMPLIANT",
+      "nodes": [
+        {
+          "node_id": "TX-SHAME-001-N0",
+          "type": "HARVEST",
+          "stage": "Origin",
+          "position": {
+            "lat": 18,
+            "lng": 110,
+            "alt": 0.05
+          },
+          "data": {
+            "zone_id": "fishing-zone-38",
+            "name": "South China Sea (Unregistered)",
+            "vessel_name": "[UNREGISTERED VESSEL]",
+            "imo": "UNKNOWN",
+            "registered": false,
+            "timestamp": "2025-05-01T02:40:00Z",
+            "gear_type": "trawl"
+          },
+          "visual": {
+            "color": "#fc0303",
+            "size": 1.2,
+            "glow": true,
+            "pulse_speed": 2.0,
+            "warning": true
+          }
+        },
+        {
+          "node_id": "TX-SHAME-001-N1",
+          "type": "STORAGE/TRANSIT",
+          "stage": "Mid-Chain Storage",
+          "position": {
+            "lat": 18.5,
+            "lng": 111.2,
+            "alt": 0.08
+          },
+          "data": {
+            "facility_id": "SCN-MID-01",
+            "handoff_id": "HND-UNREG-001",
+            "temp_c": null,
+            "custody_doc_hash": null
+          },
+          "visual": {
+            "color": "#ff6b00",
+            "size": 0.8,
+            "glow": false,
+            "pulse_speed": 0,
+            "warning": true
+          }
+        },
+        {
+          "node_id": "TX-SHAME-001-N2",
+          "type": "STORAGE/TRANSIT",
+          "stage": "Secondary Storage",
+          "position": {
+            "lat": 19.8,
+            "lng": 110.5,
+            "alt": 0.06
+          },
+          "data": {
+            "facility_id": "SCN-MID-02",
+            "handoff_id": "HND-UNREG-002",
+            "temp_c": -5,
+            "custody_doc_hash": null
+          },
+          "visual": {
+            "color": "#ff8c00",
+            "size": 0.8,
+            "glow": false,
+            "pulse_speed": 0,
+            "warning": true
+          }
+        },
+        {
+          "node_id": "TX-SHAME-001-N3",
+          "type": "LANDING/PORT",
+          "stage": "Port Entry",
+          "position": {
+            "lat": 20.0,
+            "lng": 110.3,
+            "alt": 0.04
+          },
+          "data": {
+            "port_name": "Hainan (unspecified)",
+            "country": "CN",
+            "landing_id": "LND-NA",
+            "weigh_in_kg": null,
+            "inspector_id": null,
+            "timestamp": "2025-05-02T15:10:00Z"
+          },
+          "visual": {
+            "color": "#ffa500",
+            "size": 0.9,
+            "glow": false,
+            "pulse_speed": 0,
+            "warning": true
+          }
+        },
+        {
+          "node_id": "TX-SHAME-001-N4",
+          "type": "PROCESSING",
+          "stage": "Processing Plant",
+          "position": {
+            "lat": 20.1,
+            "lng": 110.35,
+            "alt": 0.03
+          },
+          "data": {
+            "plant_id": "PROC-UNK",
+            "country": "CN",
+            "process": ["unknown"],
+            "haccp_cert": null,
+            "batch_id": "BATCH-UNK-001"
+          },
+          "visual": {
+            "color": "#ffb84d",
+            "size": 0.85,
+            "glow": false,
+            "pulse_speed": 0,
+            "warning": true
+          }
+        },
+        {
+          "node_id": "TX-SHAME-001-N5",
+          "type": "EXPORT/CUSTOMS",
+          "stage": "Export Declaration",
+          "position": {
+            "lat": 20.15,
+            "lng": 110.4,
+            "alt": 0.035
+          },
+          "data": {
+            "export_country": "CN",
+            "export_decl_id": "CN-EX-UNK",
+            "health_cert_id": null
+          },
+          "visual": {
+            "color": "#ffcc66",
+            "size": 0.75,
+            "glow": false,
+            "pulse_speed": 0,
+            "warning": true
+          }
+        },
+        {
+          "node_id": "TX-SHAME-001-N6",
+          "type": "IMPORT/WHOLESALE",
+          "stage": "Import Entry",
+          "position": {
+            "lat": 25.0,
+            "lng": 115.0,
+            "alt": 0.04
+          },
+          "data": {
+            "import_country": "??",
+            "importer_id": null,
+            "lot_id": "LOT-UNK",
+            "coldchain_ok": false
+          },
+          "visual": {
+            "color": "#ffd480",
+            "size": 0.7,
+            "glow": false,
+            "pulse_speed": 0,
+            "warning": true
+          }
+        },
+        {
+          "node_id": "TX-SHAME-001-N7",
+          "type": "RETAIL/SHELF",
+          "stage": "Final Destination",
+          "position": {
+            "lat": 28.0,
+            "lng": 118.0,
+            "alt": 0.02
+          },
+          "data": {
+            "retailer_id": "Unknown-wholesale",
+            "store_country": "??",
+            "sku": "x",
+            "best_by": null
+          },
+          "visual": {
+            "color": "#ffe699",
+            "size": 0.65,
+            "glow": false,
+            "pulse_speed": 0,
+            "warning": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "edge_id": "TX-SHAME-001-E0",
+          "source": "TX-SHAME-001-N0",
+          "target": "TX-SHAME-001-N1",
+          "flow_direction": "forward",
+          "curve": {
+            "type": "catmull-rom",
+            "tension": 0.5,
+            "control_points": [
+              { "lat": 18, "lng": 110, "alt": 0.05 },
+              { "lat": 18.2, "lng": 110.6, "alt": 0.12 },
+              { "lat": 18.5, "lng": 111.2, "alt": 0.08 }
+            ]
+          },
+          "visual": {
+            "color": "#fc0303",
+            "opacity": 0.7,
+            "thickness": 0.015,
+            "dashed": true,
+            "dash_pattern": [0.05, 0.03]
+          },
+          "animation": {
+            "particles": {
+              "count": 8,
+              "speed": 0.8,
+              "size": 0.012,
+              "color": "#ff0000",
+              "glow_intensity": 1.5
+            },
+            "pulse": {
+              "enabled": true,
+              "frequency": 1.2,
+              "intensity": 0.3
+            }
+          },
+          "data_integrity": {
+            "score": 0.15,
+            "missing_fields": ["custody_doc_hash", "temp_c"],
+            "warnings": ["unregistered_origin", "no_documentation"]
+          }
+        },
+        {
+          "edge_id": "TX-SHAME-001-E1",
+          "source": "TX-SHAME-001-N1",
+          "target": "TX-SHAME-001-N2",
+          "flow_direction": "forward",
+          "curve": {
+            "type": "catmull-rom",
+            "tension": 0.5,
+            "control_points": [
+              { "lat": 18.5, "lng": 111.2, "alt": 0.08 },
+              { "lat": 19.15, "lng": 110.85, "alt": 0.10 },
+              { "lat": 19.8, "lng": 110.5, "alt": 0.06 }
+            ]
+          },
+          "visual": {
+            "color": "#ff6b00",
+            "opacity": 0.65,
+            "thickness": 0.012,
+            "dashed": true,
+            "dash_pattern": [0.04, 0.03]
+          },
+          "animation": {
+            "particles": {
+              "count": 6,
+              "speed": 0.75,
+              "size": 0.01,
+              "color": "#ff6b00",
+              "glow_intensity": 1.3
+            },
+            "pulse": {
+              "enabled": true,
+              "frequency": 1.0,
+              "intensity": 0.25
+            }
+          },
+          "data_integrity": {
+            "score": 0.25,
+            "missing_fields": ["custody_doc_hash"],
+            "warnings": ["partial_documentation"]
+          }
+        },
+        {
+          "edge_id": "TX-SHAME-001-E2",
+          "source": "TX-SHAME-001-N2",
+          "target": "TX-SHAME-001-N3",
+          "flow_direction": "forward",
+          "curve": {
+            "type": "catmull-rom",
+            "tension": 0.5,
+            "control_points": [
+              { "lat": 19.8, "lng": 110.5, "alt": 0.06 },
+              { "lat": 19.9, "lng": 110.4, "alt": 0.07 },
+              { "lat": 20.0, "lng": 110.3, "alt": 0.04 }
+            ]
+          },
+          "visual": {
+            "color": "#ff8c00",
+            "opacity": 0.6,
+            "thickness": 0.011,
+            "dashed": true,
+            "dash_pattern": [0.04, 0.02]
+          },
+          "animation": {
+            "particles": {
+              "count": 5,
+              "speed": 0.7,
+              "size": 0.009,
+              "color": "#ff8c00",
+              "glow_intensity": 1.2
+            },
+            "pulse": {
+              "enabled": true,
+              "frequency": 0.9,
+              "intensity": 0.2
+            }
+          },
+          "data_integrity": {
+            "score": 0.3,
+            "missing_fields": ["custody_doc_hash"],
+            "warnings": ["incomplete_handoff"]
+          }
+        },
+        {
+          "edge_id": "TX-SHAME-001-E3",
+          "source": "TX-SHAME-001-N3",
+          "target": "TX-SHAME-001-N4",
+          "flow_direction": "forward",
+          "curve": {
+            "type": "catmull-rom",
+            "tension": 0.5,
+            "control_points": [
+              { "lat": 20.0, "lng": 110.3, "alt": 0.04 },
+              { "lat": 20.05, "lng": 110.325, "alt": 0.05 },
+              { "lat": 20.1, "lng": 110.35, "alt": 0.03 }
+            ]
+          },
+          "visual": {
+            "color": "#ffa500",
+            "opacity": 0.55,
+            "thickness": 0.01,
+            "dashed": true,
+            "dash_pattern": [0.03, 0.02]
+          },
+          "animation": {
+            "particles": {
+              "count": 4,
+              "speed": 0.65,
+              "size": 0.008,
+              "color": "#ffa500",
+              "glow_intensity": 1.1
+            },
+            "pulse": {
+              "enabled": false,
+              "frequency": 0,
+              "intensity": 0
+            }
+          },
+          "data_integrity": {
+            "score": 0.2,
+            "missing_fields": ["weigh_in_kg", "inspector_id"],
+            "warnings": ["no_inspection", "no_weight_verification"]
+          }
+        },
+        {
+          "edge_id": "TX-SHAME-001-E4",
+          "source": "TX-SHAME-001-N4",
+          "target": "TX-SHAME-001-N5",
+          "flow_direction": "forward",
+          "curve": {
+            "type": "catmull-rom",
+            "tension": 0.5,
+            "control_points": [
+              { "lat": 20.1, "lng": 110.35, "alt": 0.03 },
+              { "lat": 20.125, "lng": 110.375, "alt": 0.04 },
+              { "lat": 20.15, "lng": 110.4, "alt": 0.035 }
+            ]
+          },
+          "visual": {
+            "color": "#ffb84d",
+            "opacity": 0.5,
+            "thickness": 0.009,
+            "dashed": true,
+            "dash_pattern": [0.03, 0.02]
+          },
+          "animation": {
+            "particles": {
+              "count": 3,
+              "speed": 0.6,
+              "size": 0.007,
+              "color": "#ffb84d",
+              "glow_intensity": 1.0
+            },
+            "pulse": {
+              "enabled": false,
+              "frequency": 0,
+              "intensity": 0
+            }
+          },
+          "data_integrity": {
+            "score": 0.15,
+            "missing_fields": ["haccp_cert", "process"],
+            "warnings": ["unknown_processing", "no_certification"]
+          }
+        },
+        {
+          "edge_id": "TX-SHAME-001-E5",
+          "source": "TX-SHAME-001-N5",
+          "target": "TX-SHAME-001-N6",
+          "flow_direction": "forward",
+          "curve": {
+            "type": "catmull-rom",
+            "tension": 0.5,
+            "control_points": [
+              { "lat": 20.15, "lng": 110.4, "alt": 0.035 },
+              { "lat": 22.5, "lng": 112.7, "alt": 0.08 },
+              { "lat": 25.0, "lng": 115.0, "alt": 0.04 }
+            ]
+          },
+          "visual": {
+            "color": "#ffcc66",
+            "opacity": 0.45,
+            "thickness": 0.008,
+            "dashed": true,
+            "dash_pattern": [0.05, 0.04]
+          },
+          "animation": {
+            "particles": {
+              "count": 4,
+              "speed": 0.55,
+              "size": 0.006,
+              "color": "#ffcc66",
+              "glow_intensity": 0.9
+            },
+            "pulse": {
+              "enabled": false,
+              "frequency": 0,
+              "intensity": 0
+            }
+          },
+          "data_integrity": {
+            "score": 0.1,
+            "missing_fields": ["health_cert_id"],
+            "warnings": ["no_health_certificate", "unknown_route"]
+          }
+        },
+        {
+          "edge_id": "TX-SHAME-001-E6",
+          "source": "TX-SHAME-001-N6",
+          "target": "TX-SHAME-001-N7",
+          "flow_direction": "forward",
+          "curve": {
+            "type": "catmull-rom",
+            "tension": 0.5,
+            "control_points": [
+              { "lat": 25.0, "lng": 115.0, "alt": 0.04 },
+              { "lat": 26.5, "lng": 116.5, "alt": 0.06 },
+              { "lat": 28.0, "lng": 118.0, "alt": 0.02 }
+            ]
+          },
+          "visual": {
+            "color": "#ffd480",
+            "opacity": 0.4,
+            "thickness": 0.007,
+            "dashed": true,
+            "dash_pattern": [0.06, 0.05]
+          },
+          "animation": {
+            "particles": {
+              "count": 2,
+              "speed": 0.5,
+              "size": 0.005,
+              "color": "#ffd480",
+              "glow_intensity": 0.8
+            },
+            "pulse": {
+              "enabled": false,
+              "frequency": 0,
+              "intensity": 0
+            }
+          },
+          "data_integrity": {
+            "score": 0.05,
+            "missing_fields": ["importer_id", "import_country"],
+            "warnings": ["unknown_importer", "coldchain_failure", "unknown_destination"]
+          }
+        }
+      ],
+      "metadata": {
+        "total_nodes": 8,
+        "total_edges": 7,
+        "average_integrity": 0.17,
+        "compliance_color": "#fc0303",
+        "visual_complexity": "high",
+        "warning_level": "critical"
+      }
+    }
+  ],
+  "visualization_config": {
+    "globe": {
+      "radius": 100,
+      "camera_altitude": 2.5
+    },
+    "edge_rendering": {
+      "curve_segments": 64,
+      "particle_trail_length": 0.15,
+      "animation_speed_multiplier": 1.0
+    },
+    "color_legend": {
+      "compliant": "#2eb700",
+      "conditional": "#f59e0b",
+      "non_compliant": "#fc0303",
+      "warning": "#ff6b00"
+    }
+  }
+}
