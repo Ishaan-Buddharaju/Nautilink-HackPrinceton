@@ -1573,9 +1573,6 @@ const HomePage: React.FC = () => {
                 }}>
                   Filter Fleet Insights
                 </h3>
-                <p style={{ margin: '6px 0 0', color: '#9fb7d8', fontSize: '12px' }}>
-                  Focus the globe on the vessels that matter most.
-                </p>
               </div>
 
               {/* Registration Status */}
