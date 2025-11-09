@@ -397,7 +397,7 @@ const ReportDisplayPage = ({ params }: { params: Promise<{ reportId:string }> })
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 className="flex-1 bg-[#101726] border border-[rgba(198,218,236,0.22)] rounded-md px-3 py-2 text-sm text-[#e0f2fd] focus:outline-none focus:ring-2 focus:ring-[#4662ab]"
-                placeholder="Ask the Gemini agent anything…"
+                placeholder="Ask the agent anything…"
               />
               <button
                 type="submit"
