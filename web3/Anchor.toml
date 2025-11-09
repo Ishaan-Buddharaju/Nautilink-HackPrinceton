@@ -7,13 +7,16 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-nautilink = "FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta"
+nautilink = "6WVh9yhUaofmUMAsK1EuCJG5ptzZPzKqj7LcFDVzLgnA"
+
+[programs.devnet]
+nautilink = "6WVh9yhUaofmUMAsK1EuCJG5ptzZPzKqj7LcFDVzLgnA"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

@@ -1,0 +1,8 @@
+Update your backend/.env file:
+
+Change:
+PROGRAM_ID=FHzgesT5QzphL5eucFCjL9KL59TLs3jztw7Qe9RZjHta
+
+To:
+PROGRAM_ID=6WVh9yhUaofmUMAsK1EuCJG5ptzZPzKqj7LcFDVzLgnA
+
