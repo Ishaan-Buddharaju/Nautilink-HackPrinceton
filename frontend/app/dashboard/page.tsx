@@ -551,6 +551,15 @@ const HomePage: React.FC = () => {
     }
   ]);
   const [agentInput, setAgentInput] = useState('');
+  const [agentThinking, setAgentThinking] = useState(false);
+  const [reportTarget, setReportTarget] = useState<
+    { type: 'zone'; data: FishingZone } | { type: 'vessel'; data: VesselData } | null
+  >(null);
+  const [reportVisible, setReportVisible] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const reportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reportErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const historyEntries = useMemo(
     () =>
       [
@@ -564,7 +573,7 @@ const HomePage: React.FC = () => {
   );
   const handleAgentSubmit = useCallback(async () => {
     const trimmed = agentInput.trim();
-    if (!trimmed) return;
+    if (!trimmed || agentThinking) return;
 
     const now = new Date();
     const userMessage = {
@@ -576,19 +585,84 @@ const HomePage: React.FC = () => {
 
     setAgentMessages((prev) => [...prev, userMessage]);
     setAgentInput('');
+    setAgentThinking(true);
 
-    window.setTimeout(() => {
-      const response = {
-        id: `agent-${Date.now()}`,
-        role: 'system' as const,
-        content: 'Acknowledged. Compiling response...',
-        timestamp: new Date()
-      };
-      setAgentMessages((prev) => [...prev, response]);
-    }, 600);
-  }, [agentInput]);
+    try {
+      const historyPayload = [...agentMessages, userMessage].map(({ role, content }) => ({
+        role,
+        content,
+      }));
+
+      const res = await fetch('/api/agent-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: trimmed,
+          history: historyPayload,
+        }),
+      });
+
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error || 'Failed to reach Gemini agent.');
+      }
+
+      const { reply } = await res.json();
+
+      setAgentMessages((prev) => [
+        ...prev,
+        {
+          id: `agent-${Date.now()}`,
+          role: 'system',
+          content: reply,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (error: any) {
+      setAgentMessages((prev) => [
+        ...prev,
+        {
+          id: `agent-error-${Date.now()}`,
+          role: 'system',
+          content: "I'm sorry, I ran into a problem answering that. Please try again in a moment.",
+          timestamp: new Date(),
+        },
+      ]);
+      console.error('Agent chat error', error);
+    } finally {
+      setAgentThinking(false);
+    }
+  }, [agentInput, agentMessages, agentThinking]);
+
+  const handleGenerateReport = useCallback(() => {
+    if (!reportTarget) {
+      setReportError('Select a vessel or fishing zone first to generate a report.');
+      if (reportErrorTimeoutRef.current) clearTimeout(reportErrorTimeoutRef.current);
+      reportErrorTimeoutRef.current = setTimeout(() => setReportError(null), 3500);
+      return;
+    }
+
+    if (reportErrorTimeoutRef.current) {
+      clearTimeout(reportErrorTimeoutRef.current);
+      reportErrorTimeoutRef.current = null;
+    }
+
+    if (reportTimeoutRef.current) clearTimeout(reportTimeoutRef.current);
+
+    setReportError(null);
+    setReportVisible(false);
+    setReportLoading(true);
+
+    reportTimeoutRef.current = setTimeout(() => {
+      setReportLoading(false);
+      setReportVisible(true);
+    }, 5000);
+  }, [reportTarget]);
 
 
+  // Agent panel state
+  const [agentPoint, setAgentPoint] = useState<AgentPoint | null>(null);
+  const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
 
   // Auth state
   const { user, hasAnyRole } = useAuth();

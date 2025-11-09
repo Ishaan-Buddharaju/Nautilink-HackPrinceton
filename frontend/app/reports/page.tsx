@@ -13,8 +13,8 @@ interface Report {
 
 const reports: Report[] = [
   {
-    id: 'weekly-iuu-summary-2025-09-20',
-    title: 'Weekly IUU Summary',
+    id: 'template-summary',
+    title: 'Template Summary',
     date: '2025-09-20',
     clearance: 'Public Trust',
   },
@@ -146,7 +146,7 @@ const ReportsPage = () => {
     <div className="flex-1 p-8 text-[#e0f2fd] flex" style={{marginLeft:"104px"}}>
       {/* Left side: Reports List */}
       <div className="w-1/2 pr-8 border-r border-[rgba(198,218,236,0.18)]">
-        <h1 className="text-3xl font-bold mb-4 text-[#e0f2fd]">Reports</h1>
+        <h1 className="text-3xl font-bold mb-4 text-[#e0f2fd]">Database</h1>
         <p className="text-[#c0d9ef] mb-8">
           Review and share weekly summaries, performance analyses, and incident reports.
         </p>
